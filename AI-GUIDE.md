@@ -1,6 +1,6 @@
 # 🤖 AI Agent Guide - Human Benchmark German Kids
 
-**Last Updated:** 2025-01-03  
+**Last Updated:** 2025-10-03 (ONLY UPDATE AFTER LOOKING UP TODAYS DATE, DONT RECALL IT FROM MEMORY)  
 **Primary Purpose:** Kid-friendly German language games based on Human Benchmark  
 **Tech Stack:** SvelteKit 2.x + Svelte 5 + Tailwind CSS v4 + MongoDB + Docker
 
@@ -552,36 +552,11 @@ git commit -m "Clear description of what and why"
 - Svelte 5 has fine-grained reactivity (minimal re-renders)
 - Tailwind CSS is JIT compiled (only used classes)
 - No client-side routing overhead (SvelteKit handles it)
-
----
-
-## 🔐 Security Notes
-
-**Current:** Local-only deployment, no authentication needed
-
-**For Production (Future):**
-- Add user authentication
-- Validate all inputs server-side
-- Use environment variables for secrets
-- Enable CORS restrictions
-- Add rate limiting
-- Implement HTTPS
-
----
-
-## 📅 Version Info
-
-- **Node:** 24.9.0 (minimum: 24.0.0 or 22.12.0)
-- **npm:** 11.6.0
-- **SvelteKit:** 2.43.2
-- **Svelte:** 5.39.5
-- **Tailwind CSS:** 4.1.13
-- **MongoDB Driver:** 6.20.0
-- **Vite:** 7.1.7
-
 ---
 
 **Next Steps:**
+(only read if needed for your task!)
+
 1. Read [ARCHITECTURE.md](./ARCHITECTURE.md) for system design
 2. Read [TECH-STACK.md](./TECH-STACK.md) for tech details
 3. Run through [QUICKSTART.md](./QUICKSTART.md) to test everything

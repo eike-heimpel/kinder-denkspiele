@@ -68,12 +68,15 @@ export class GameEngine {
 
         const canShowOldWord = this.session.seenWords.size > 0;
 
-        if (canShowOldWord && this.wordService.shouldShowNewWord()) {
-            this.currentWord = this.wordService.getRandomSeenWord(this.session.seenWords);
-            this.isCurrentWordNew = false;
-        } else {
+        // FIXED: Logic was inverted
+        // If we should show a NEW word OR we can't show old words, show NEW
+        if (!canShowOldWord || this.wordService.shouldShowNewWord()) {
             this.currentWord = this.wordService.getRandomWord(this.session.seenWords);
             this.isCurrentWordNew = true;
+        } else {
+            // Show an OLD word (one we've seen before)
+            this.currentWord = this.wordService.getRandomSeenWord(this.session.seenWords);
+            this.isCurrentWordNew = false;
         }
 
         return this.createGameState(this.currentWord, this.isCurrentWordNew, null, false, null);
@@ -98,6 +101,11 @@ export class GameEngine {
         }
 
         this.session.wordsShown.push(this.currentWord);
+
+        // FIXED: Don't let lives go negative
+        if (this.session.lives < 0) {
+            this.session.lives = 0;
+        }
 
         await this.repository.update(this.session._id!, {
             score: this.session.score,
