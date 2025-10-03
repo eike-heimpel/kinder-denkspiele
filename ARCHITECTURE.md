@@ -225,9 +225,23 @@ $effect(() => {
 
 ### RESTful Principles
 
-- **GET**: Retrieve data (users, stats)
+- **GET**: Retrieve data (users, stats, individual user)
 - **POST**: Create/execute actions (create user, start game, submit answer)
 - **DELETE**: Remove data (delete user)
+
+### Routes
+
+**Pages:**
+- `/` - Home (user selection, game selection)
+- `/game/verbal-memory` - Verbal memory game  
+- `/stats/[userId]` - Historical statistics per user
+
+**API:**
+- `/api/users` - GET (all), POST (create)
+- `/api/users/[id]` - GET (single), DELETE
+- `/api/game/verbal-memory/start` - POST
+- `/api/game/verbal-memory/answer` - POST
+- `/api/game/verbal-memory/stats` - GET (with userId & difficulty params)
 
 ### Error Handling
 

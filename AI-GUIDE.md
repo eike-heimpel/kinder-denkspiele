@@ -154,9 +154,12 @@ src/
     │           ├── answer/+server.ts
     │           └── stats/+server.ts
     │
-    └── game/               # Game pages
-        └── verbal-memory/
-            └── +page.svelte
+    ├── game/               # Game pages
+    │   └── verbal-memory/
+    │       └── +page.svelte
+    │
+    └── stats/              # Stats pages
+        └── [userId]/+page.svelte
 ```
 
 ---
@@ -539,7 +542,11 @@ git commit -m "Clear description of what and why"
 - ✅ Two difficulty levels
 - ✅ 145 German words
 - ✅ Score tracking
+- ✅ Historical stats page
+- ✅ No consecutive duplicate words
+- ✅ Round counter
 - ✅ MongoDB persistence
+- ✅ Unit tests (12 tests)
 
 ### Future Expansion
 - [ ] More games (reaction time, number memory, etc.)

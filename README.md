@@ -24,8 +24,9 @@ Complete documentation for AI agents includes:
 - **Verbales Gedächtnis**: Teste dein Gedächtnis mit deutschen Wörtern
 - **Zwei Schwierigkeitsgrade**: Einfach (für 5-6 Jahre) und Schwer (für 7-8 Jahre)
 - **Mehrere Spieler**: Jedes Kind kann sein eigenes Profil haben
-- **Statistiken**: Verfolge Punktzahlen und Fortschritt
+- **Statistiken-Seite**: Zeige historische Performance (Höchstwerte, Durchschnitt, Spiele gespielt)
 - **Kid-Friendly UI**: Große Buttons, bunte Farben, einfache Navigation
+- **Keine Duplikate**: Gleiches Wort nie zweimal hintereinander
 
 ## 🏗️ Architektur
 
@@ -106,6 +107,7 @@ src/
 4. **Spielen**: Entscheide, ob du jedes Wort schon gesehen hast oder nicht
    - Tastatur: `←` oder `N` für NEU, `→` oder `G` für GESEHEN
    - Oder klicke die großen Buttons
+5. **Statistiken ansehen**: Klicke "Statistiken ansehen" um historische Performance zu sehen
 
 ## 📦 Erweiterbarkeit
 
