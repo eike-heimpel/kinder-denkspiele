@@ -72,10 +72,12 @@ export class ReactionTimeEngine {
             state.currentRound += 1;
         }
 
+        // Calculate score after every reaction (or keep at 0 if no reactions yet)
+        session.score = this.calculateAverageReactionTime(state.reactionTimes);
+
         if (state.currentRound > state.totalRounds) {
             session.isActive = false;
             session.endedAt = new Date();
-            session.score = this.calculateAverageReactionTime(state.reactionTimes);
         }
 
         await this.repository.update(sessionId, session);

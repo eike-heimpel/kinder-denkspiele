@@ -548,13 +548,14 @@ git commit -m "Clear description of what and why"
 - ✅ Tablet-optimized UI
 - ✅ Round counter
 - ✅ MongoDB persistence
-- ✅ Unit tests (32 tests for Verbal Memory, 31 passing)
+- ✅ Unit tests (51 total tests, 50 passing, 1 skipped)
   - GameEngine: 12 tests
   - WordService: 20 tests
-- ✅ Manual testing with Playwright for Visual Memory
+  - ReactionTimeEngine: 19 tests
+- ✅ Manual testing with Playwright for Visual Memory and Reaction Time
 
 ### Future Expansion
-- [ ] More games (reaction time, number memory, etc.)
+- [ ] More games (number memory, sequence memory, etc.)
 - [ ] Leaderboards
 - [ ] User profiles with avatars
 - [ ] Achievements/badges

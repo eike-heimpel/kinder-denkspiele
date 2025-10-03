@@ -844,6 +844,256 @@ GET /api/game/visual-memory/stats?userId=507f1f77bcf86cd799439011&difficulty=eas
 
 ---
 
+## Reaction Time Game
+
+### POST /game/reaction-time/start
+
+Start a new reaction time game session.
+
+**Endpoint:** `/api/game/reaction-time/start`  
+**Method:** `POST`  
+**Authentication:** None
+
+**Request:**
+```http
+POST /api/game/reaction-time/start HTTP/1.1
+Content-Type: application/json
+
+{
+  "userId": "507f1f77bcf86cd799439011",
+  "difficulty": "easy"
+}
+```
+
+**Request Body:**
+- `userId` (string, required): User's MongoDB ObjectId
+- `difficulty` (string, required): Either "easy" or "hard"
+
+**Response:** `200 OK`
+```json
+{
+  "sessionId": "507f1f77bcf86cd799439020",
+  "score": 0,
+  "round": 1,
+  "reactionTimeState": {
+    "currentRound": 1,
+    "totalRounds": 5,
+    "reactionTimes": [],
+    "minDelay": 2000,
+    "maxDelay": 4000,
+    "falseStarts": 0
+  }
+}
+```
+
+**Response Fields:**
+- `sessionId` (string): Unique game session identifier
+- `score` (number): Current score (average reaction time, 0 at start)
+- `round` (number): Current round number
+- `reactionTimeState` (object): Game state containing:
+  - `currentRound` (number): Current round (1-5)
+  - `totalRounds` (number): Total rounds in game (always 5)
+  - `reactionTimes` (number[]): Array of completed reaction times in ms
+  - `minDelay` (number): Minimum delay before green screen (ms)
+  - `maxDelay` (number): Maximum delay before green screen (ms)
+  - `falseStarts` (number): Count of premature clicks
+
+**Errors:**
+
+**400 Bad Request** - Missing required fields
+```json
+{
+  "error": "Missing userId or difficulty"
+}
+```
+
+**400 Bad Request** - Invalid difficulty
+```json
+{
+  "error": "Invalid difficulty level"
+}
+```
+
+**Game Rules:**
+- **Easy Mode:** 5 rounds, 2-4 second delays before green screen
+- **Hard Mode:** 5 rounds, 1-3 second delays (faster = harder to predict)
+- Score = average reaction time in milliseconds (lower is better)
+- False starts increment counter but don't end game
+- Game ends after 5 successful reactions
+
+**File:** `src/routes/api/game/reaction-time/start/+server.ts`
+
+---
+
+### POST /game/reaction-time/submit
+
+Submit a reaction time or false start.
+
+**Endpoint:** `/api/game/reaction-time/submit`  
+**Method:** `POST`  
+**Authentication:** None
+
+**Request (Normal Reaction):**
+```http
+POST /api/game/reaction-time/submit HTTP/1.1
+Content-Type: application/json
+
+{
+  "sessionId": "507f1f77bcf86cd799439020",
+  "reactionTime": 245,
+  "isFalseStart": false
+}
+```
+
+**Request (False Start):**
+```http
+POST /api/game/reaction-time/submit HTTP/1.1
+Content-Type: application/json
+
+{
+  "sessionId": "507f1f77bcf86cd799439020",
+  "isFalseStart": true
+}
+```
+
+**Request Body:**
+- `sessionId` (string, required): Game session ID
+- `reactionTime` (number, required if not false start): Reaction time in milliseconds
+- `isFalseStart` (boolean, optional): True if user clicked too early
+
+**Response (Game Continues):** `200 OK`
+```json
+{
+  "gameOver": false,
+  "score": 0,
+  "reactionTimeState": {
+    "currentRound": 2,
+    "totalRounds": 5,
+    "reactionTimes": [245],
+    "minDelay": 2000,
+    "maxDelay": 4000,
+    "falseStarts": 0
+  }
+}
+```
+
+**Response (Game Over):** `200 OK`
+```json
+{
+  "gameOver": true,
+  "score": 267,
+  "reactionTimeState": {
+    "currentRound": 6,
+    "totalRounds": 5,
+    "reactionTimes": [245, 289, 256, 301, 244],
+    "minDelay": 2000,
+    "maxDelay": 4000,
+    "falseStarts": 1
+  },
+  "message": "Durchschnittliche Reaktionszeit: 267ms"
+}
+```
+
+**Response Fields:**
+- `gameOver` (boolean): True if all 5 rounds completed
+- `score` (number): Average reaction time in ms (only meaningful when game over)
+- `reactionTimeState` (object): Updated game state
+- `message` (string, optional): Game over message with average time
+
+**Important Notes:**
+- False starts increment the counter but don't count as a round
+- User must complete 5 successful reactions to finish
+- Average is calculated only from successful reactions, not false starts
+- Score is stored as average reaction time (lower = better)
+
+**Errors:**
+
+**400 Bad Request** - Missing fields
+```json
+{
+  "error": "Missing sessionId or reactionTime"
+}
+```
+
+**500 Internal Server Error** - Invalid session
+```json
+{
+  "error": "Failed to submit reaction"
+}
+```
+
+**File:** `src/routes/api/game/reaction-time/submit/+server.ts`
+
+---
+
+### GET /game/reaction-time/stats
+
+Get player statistics for reaction time game.
+
+**Endpoint:** `/api/game/reaction-time/stats`  
+**Method:** `GET`  
+**Authentication:** None
+
+**Request:**
+```http
+GET /api/game/reaction-time/stats?userId=507f1f77bcf86cd799439011&difficulty=easy HTTP/1.1
+```
+
+**Query Parameters:**
+- `userId` (string, required): User's MongoDB ObjectId
+- `difficulty` (string, optional): Filter by "easy" or "hard"
+
+**Response (With Difficulty):** `200 OK`
+```json
+{
+  "totalGames": 10,
+  "highScore": 235,
+  "averageScore": 289,
+  "lastPlayed": "2025-01-03T15:30:00.000Z"
+}
+```
+
+**Response (Without Difficulty):** `200 OK`
+```json
+{
+  "easy": {
+    "totalGames": 10,
+    "highScore": 235,
+    "averageScore": 289,
+    "lastPlayed": "2025-01-03T15:30:00.000Z"
+  },
+  "hard": {
+    "totalGames": 5,
+    "highScore": 198,
+    "averageScore": 245,
+    "lastPlayed": "2025-01-03T14:20:00.000Z"
+  }
+}
+```
+
+**Response Fields:**
+- `totalGames` (number): Number of completed games
+- `highScore` (number): Best (lowest) average reaction time in ms
+- `averageScore` (number): Average of all game averages in ms
+- `lastPlayed` (Date, optional): When last game ended
+
+**Important Note:**
+- For reaction time, "highScore" means the LOWEST average time (best performance)
+- This is opposite of other games where higher is better
+
+**Errors:**
+
+**400 Bad Request** - Missing userId
+```json
+{
+  "error": "Missing userId"
+}
+```
+
+**File:** `src/routes/api/game/reaction-time/stats/+server.ts`
+
+---
+
 ## Future Endpoints
 
 ### Planned (Not Yet Implemented)
@@ -858,10 +1108,12 @@ GET /api/game/visual-memory/stats?userId=507f1f77bcf86cd799439011&difficulty=eas
 
 **Leaderboard:**
 - `GET /game/verbal-memory/leaderboard` - Get top scores
+- `GET /game/visual-memory/leaderboard` - Get top scores
+- `GET /game/reaction-time/leaderboard` - Get best times
 
 **New Games:**
-- `POST /game/reaction-time/start`
 - `POST /game/number-memory/start`
+- `POST /game/sequence-memory/start`
 
 ---
 
@@ -884,6 +1136,9 @@ Game endpoints use:
   - `GameSessionRepository` for persistence
 - **Visual Memory:**
   - `VisualMemoryEngine` for game state management
+  - `GameSessionRepository` for persistence
+- **Reaction Time:**
+  - `ReactionTimeEngine` for game state management
   - `GameSessionRepository` for persistence
 
 ### Type Safety
