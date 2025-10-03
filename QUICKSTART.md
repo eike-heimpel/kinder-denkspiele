@@ -11,7 +11,7 @@ related_docs: ["CLAUDE.md", "TROUBLESHOOTING.md", "README.md"]
 
 ## ✅ What's Already Done
 
-Your Human Benchmark app is **fully set up and running**!
+Your Kinder Denkspiele app is **fully set up and running**!
 
 - ✅ SvelteKit with Svelte 5 installed
 - ✅ Tailwind CSS configured
@@ -58,7 +58,7 @@ docker-compose down
 
 ### View MongoDB Data
 ```bash
-docker exec -it humanbenchmark-mongo mongosh humanbenchmark
+docker exec -it kinder-denkspiele-mongo mongosh kinder-denkspiele
 
 # In mongosh:
 db.users.find()

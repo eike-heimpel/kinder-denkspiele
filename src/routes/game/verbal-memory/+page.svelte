@@ -110,7 +110,7 @@
 <svelte:window onkeydown={handleKeyPress} />
 
 <svelte:head>
-    <title>Verbales Gedächtnis - Human Benchmark</title>
+    <title>Verbales Gedächtnis - Kinder Denkspiele</title>
 </svelte:head>
 
 <div

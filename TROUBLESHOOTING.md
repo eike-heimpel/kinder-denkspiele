@@ -61,7 +61,7 @@ curl -s http://localhost:5173 | grep "tailwindcss"
 **1. Missing Environment Variable**
 Create `.env` file in project root:
 ```bash
-echo "MONGODB_URI=mongodb://localhost:27017/humanbenchmark" > .env
+echo "MONGODB_URI=mongodb://localhost:27017/kinder-denkspiele" > .env
 ```
 
 **2. Missing Type Declaration**
@@ -84,7 +84,7 @@ docker ps | grep mongo
 **4. Wrong Connection String**
 Check `.env` file has correct format:
 ```
-MONGODB_URI=mongodb://localhost:27017/humanbenchmark
+MONGODB_URI=mongodb://localhost:27017/kinder-denkspiele
 ```
 
 ---
@@ -421,7 +421,7 @@ const doc = await collection.findOne({ _id: id });
 
 **4. Inspect MongoDB Data**
 ```bash
-docker exec -it humanbenchmark-mongo mongosh humanbenchmark
+docker exec -it kinder-denkspiele-mongo mongosh kinder-denkspiele
 db.users.find().pretty()
 db.game_sessions.find().pretty()
 ```
@@ -477,7 +477,7 @@ $effect(() => {
 
 **Connect:**
 ```bash
-docker exec -it humanbenchmark-mongo mongosh humanbenchmark
+docker exec -it kinder-denkspiele-mongo mongosh kinder-denkspiele
 ```
 
 **Useful Commands:**
@@ -486,7 +486,7 @@ docker exec -it humanbenchmark-mongo mongosh humanbenchmark
 show dbs
 
 // Use database
-use humanbenchmark
+use kinder-denkspiele
 
 // List collections
 show collections

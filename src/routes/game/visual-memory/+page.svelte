@@ -183,7 +183,7 @@
 </script>
 
 <svelte:head>
-    <title>Visuelles Gedächtnis - Human Benchmark</title>
+    <title>Visuelles Gedächtnis - Kinder Denkspiele</title>
 </svelte:head>
 
 <div

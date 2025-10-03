@@ -53,7 +53,9 @@
 </script>
 
 <svelte:head>
-    <title>Human Benchmark - Deutsche Spiele für Kinder</title>
+    <title
+        >Kinder Denkspiele - Spielerisch lernen und Gedächtnis trainieren</title
+    >
 </svelte:head>
 
 <div
@@ -67,10 +69,10 @@
             <h1
                 class="text-3xl font-black text-white mb-1 drop-shadow-2xl tracking-tight"
             >
-                Human Benchmark
+                Kinder Denkspiele
             </h1>
             <p class="text-lg font-bold text-white/90 drop-shadow-lg">
-                Deutsche Spiele für Kinder
+                Spielerisch lernen und trainieren
             </p>
         </div>
 

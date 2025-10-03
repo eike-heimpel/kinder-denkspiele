@@ -370,7 +370,7 @@ docker-compose down
 docker-compose logs mongodb
 
 # Access MongoDB shell
-docker exec -it humanbenchmark-mongo mongosh humanbenchmark
+docker exec -it kinder-denkspiele-mongo mongosh kinder-denkspiele
 
 # View databases
 show dbs
@@ -442,7 +442,7 @@ nvm alias default 24
 
 **Required:**
 ```bash
-MONGODB_URI=mongodb://localhost:27017/humanbenchmark
+MONGODB_URI=mongodb://localhost:27017/kinder-denkspiele
 ```
 
 **Type Declaration:** `src/env.d.ts`

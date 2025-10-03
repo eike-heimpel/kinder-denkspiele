@@ -153,7 +153,7 @@
 </script>
 
 <svelte:head>
-    <title>Reaktionszeit - Human Benchmark</title>
+    <title>Reaktionszeit - Kinder Denkspiele</title>
 </svelte:head>
 
 <div
@@ -192,8 +192,8 @@
                         <div class="flex items-start gap-3">
                             <span class="text-2xl">⏳</span>
                             <p class="text-lg text-gray-700">
-                                Warte auf den <span class="text-red-600 font-bold"
-                                    >roten</span
+                                Warte auf den <span
+                                    class="text-red-600 font-bold">roten</span
                                 > Bildschirm
                             </p>
                         </div>
@@ -230,11 +230,7 @@
                         </p>
                     </div>
 
-                    <Button
-                        variant="success"
-                        size="lg"
-                        onclick={startRound}
-                    >
+                    <Button variant="success" size="lg" onclick={startRound}>
                         <div class="flex items-center gap-2">
                             <span class="text-3xl">🚀</span>
                             <span>Los geht's!</span>
@@ -329,11 +325,7 @@
                     </div>
 
                     {#if currentRound <= totalRounds}
-                        <Button
-                            variant="primary"
-                            size="lg"
-                            onclick={nextRound}
-                        >
+                        <Button variant="primary" size="lg" onclick={nextRound}>
                             <div class="flex items-center gap-2">
                                 <span class="text-3xl">➡️</span>
                                 <span>Nächste Runde</span>
@@ -353,9 +345,7 @@
             <Card>
                 <div class="text-center py-8">
                     <div class="mb-6">
-                        <h2
-                            class="text-2xl font-bold text-gray-700 mb-4"
-                        >
+                        <h2 class="text-2xl font-bold text-gray-700 mb-4">
                             Deine Ergebnisse
                         </h2>
 
@@ -410,11 +400,7 @@
                     </div>
 
                     <div class="flex gap-4 justify-center flex-wrap">
-                        <Button
-                            variant="success"
-                            size="lg"
-                            onclick={startGame}
-                        >
+                        <Button variant="success" size="lg" onclick={startGame}>
                             <div class="flex items-center gap-2">
                                 <span class="text-3xl">🔄</span>
                                 <span>Nochmal spielen</span>
@@ -489,4 +475,3 @@
         animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
 </style>
-

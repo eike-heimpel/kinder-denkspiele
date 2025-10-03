@@ -1,5 +1,5 @@
 ---
-title: "AI Agent Guide - Human Benchmark German Kids"
+title: "AI Agent Guide - Kinder Denkspiele"
 purpose: "Entry point for AI agents working on this codebase"
 audience: "AI agents (Claude, GPT, Cursor)"
 last_updated: "2025-10-03"
@@ -7,10 +7,10 @@ version: "2.0"
 keywords: ["sveltekit", "svelte-5", "tailwind-v4", "mongodb", "german", "games", "kids", "layered-architecture"]
 ---
 
-# 🤖 AI Agent Guide - Human Benchmark German Kids
+# 🤖 AI Agent Guide - Kinder Denkspiele
 
 **Last Updated:** 2025-10-03 (ONLY UPDATE AFTER LOOKING UP TODAYS DATE, DONT RECALL IT FROM MEMORY)  
-**Primary Purpose:** Kid-friendly German language games based on Human Benchmark  
+**Primary Purpose:** Kid-friendly German language cognitive training games  
 **Tech Stack:** SvelteKit 2.x + Svelte 5 + Tailwind CSS v4 + MongoDB + Docker
 
 ---

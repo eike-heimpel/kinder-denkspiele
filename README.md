@@ -1,6 +1,6 @@
-# Human Benchmark - Deutsche Spiele für Kinder
+# Kinder Denkspiele
 
-Ein kinderfreundliches deutsches Spiel basierend auf Human Benchmark, entwickelt mit SvelteKit und Svelte 5.
+Spielerisch lernen und Gedächtnis trainieren - Ein kinderfreundliches deutsches Spiel entwickelt mit SvelteKit und Svelte 5.
 
 ---
 
@@ -78,7 +78,7 @@ src/
 
 1. **Repository klonen**
    ```bash
-   cd humanbenchmark-german-kids
+   cd kinder-denkspiele
    ```
 
 2. **Dependencies installieren**
@@ -90,7 +90,7 @@ src/
    
    Erstelle eine `.env` Datei im Projekt-Root:
    ```bash
-   MONGODB_URI=mongodb://localhost:27017/humanbenchmark
+   MONGODB_URI=mongodb://localhost:27017/kinder-denkspiele
    ```
 
 4. **MongoDB starten**
