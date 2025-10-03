@@ -593,29 +593,34 @@ git log -- path/to/file
 
 ### Before Committing
 ```bash
-# 1. Type check
+# 1. Run tests
+npm test -- --run
+
+# 2. Type check
 npm run check
 
-# 2. Test in browser
+# 3. Test in browser
 # - Create user
 # - Start game
 # - Play through game
 # - Check console for errors
 
-# 3. Review changes
+# 4. Review changes
 git diff
 
-# 4. Descriptive commit message
+# 5. Descriptive commit message
 git commit -m "What changed and why"
 ```
 
 ### Code Review Checklist
+- [ ] Tests pass (`npm test -- --run`)
 - [ ] Types defined for complex objects
 - [ ] Error handling in API endpoints
 - [ ] Input validation
 - [ ] Console.logs removed (or commented)
 - [ ] No hardcoded values
 - [ ] Comments explain "why", not "what"
+- [ ] Critical logic has unit tests
 
 ---
 

@@ -385,6 +385,23 @@ grep -r "\$state" src/
 
 ## 🧪 Testing
 
+### Automated Tests
+
+**Run tests:**
+```bash
+npm test              # Run tests once
+npm test -- --watch   # Watch mode
+npm run test:ui       # Visual UI
+```
+
+**Test files:**
+- `src/lib/services/game-engine.test.ts` - GameEngine unit tests (11 tests)
+
+**Coverage:**
+- Game logic (score, lives, word selection)
+- Edge cases (negative lives, game over)
+- Word tracking (seen vs. new)
+
 ### Manual Testing Checklist
 
 **User Flow:**
@@ -454,12 +471,15 @@ npm run check
 ### Before Committing
 
 ```bash
-# 1. Type check
+# 1. Run tests
+npm test -- --run
+
+# 2. Type check
 npm run check
 
-# 2. Test manually in browser
+# 3. Test manually in browser
 
-# 3. Write descriptive commit
+# 4. Write descriptive commit
 git add -A
 git commit -m "Clear description of what and why"
 ```
@@ -552,6 +572,7 @@ git commit -m "Clear description of what and why"
 - Svelte 5 has fine-grained reactivity (minimal re-renders)
 - Tailwind CSS is JIT compiled (only used classes)
 - No client-side routing overhead (SvelteKit handles it)
+
 ---
 
 **Next Steps:**
