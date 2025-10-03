@@ -111,14 +111,19 @@
 </svelte:head>
 
 <div
-    class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-8"
+    class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-8 animate-gradient"
 >
-    <div class="max-w-4xl mx-auto">
-        <h1
-            class="text-5xl font-bold text-white text-center mb-8 drop-shadow-lg"
-        >
-            🗣️ Verbales Gedächtnis
-        </h1>
+    <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-10 animate-fade-in">
+            <span class="text-7xl inline-block mb-4 animate-bounce-slow"
+                >🗣️</span
+            >
+            <h1
+                class="text-6xl font-black text-white drop-shadow-2xl tracking-tight"
+            >
+                Verbales Gedächtnis
+            </h1>
+        </div>
 
         <Card class="mb-6">
             <GameStats {score} {lives} />
@@ -132,68 +137,106 @@
                     </p>
                 </div>
             </Card>
-        {:else if gameOver}
-            <Card>
-                <div class="text-center py-12">
-                    <p class="text-5xl mb-6">🎮</p>
-                    <p class="text-4xl font-bold text-gray-800 mb-4">
-                        {message}
-                    </p>
-                    <p class="text-2xl text-gray-600 mb-8">
-                        Schwierigkeit: {difficulty === "easy"
-                            ? "🟢 Einfach"
-                            : "🔴 Schwer"}
-                    </p>
-                    <div class="flex gap-4 justify-center">
-                        <Button variant="success" size="lg" onclick={startGame}>
-                            🔄 Nochmal spielen
-                        </Button>
-                        <Button
-                            variant="secondary"
-                            size="lg"
-                            onclick={() => goto("/")}
-                        >
-                            🏠 Zur Startseite
-                        </Button>
-                    </div>
-                </div>
-            </Card>
-        {:else if currentWord}
-            <Card>
-                <div class="text-center py-16">
-                    <p
-                        class="text-7xl font-bold text-gray-800 mb-12 animate-pulse"
-                    >
-                        {currentWord}
-                    </p>
+         {:else if gameOver}
+             <Card>
+                 <div class="text-center py-16 animate-fade-in">
+                     <div class="mb-8">
+                         <span class="text-8xl inline-block animate-bounce-slow"
+                             >🎮</span
+                         >
+                     </div>
+                     <h2
+                         class="text-5xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-6"
+                     >
+                         Spiel vorbei!
+                     </h2>
+                     <div
+                         class="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl p-8 mb-6 border-4 border-yellow-300"
+                     >
+                         <p class="text-2xl text-gray-700 font-bold mb-2">
+                             Deine Punktzahl
+                         </p>
+                         <p
+                             class="text-7xl font-black bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent"
+                         >
+                             {score}
+                         </p>
+                     </div>
+                     <p class="text-2xl text-gray-600 font-semibold mb-10">
+                         Schwierigkeit: {difficulty === "easy"
+                             ? "🟢 Einfach"
+                             : "🔴 Schwer"}
+                     </p>
+                     <div class="flex gap-6 justify-center flex-wrap">
+                         <Button variant="success" size="lg" onclick={startGame}>
+                             <div class="flex items-center gap-3">
+                                 <span class="text-4xl">🔄</span>
+                                 <span>Nochmal spielen</span>
+                             </div>
+                         </Button>
+                         <Button
+                             variant="secondary"
+                             size="lg"
+                             onclick={() => goto("/")}
+                         >
+                             <div class="flex items-center gap-3">
+                                 <span class="text-4xl">🏠</span>
+                                 <span>Zur Startseite</span>
+                             </div>
+                         </Button>
+                     </div>
+                 </div>
+             </Card>
+         {:else if currentWord}
+             <Card>
+                 <div class="text-center py-20">
+                     <div class="word-display mb-16">
+                         <p
+                             class="text-8xl font-black bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent drop-shadow-2xl animate-word-appear"
+                         >
+                             {currentWord}
+                         </p>
+                     </div>
 
-                    <p class="text-2xl text-gray-600 mb-8">
-                        Hast du dieses Wort schon gesehen?
-                    </p>
+                     <p
+                         class="text-3xl font-bold text-gray-700 mb-12 animate-fade-in"
+                     >
+                         Hast du dieses Wort schon gesehen?
+                     </p>
 
-                    <div class="flex gap-6 justify-center">
-                        <Button
-                            variant="danger"
-                            size="xl"
-                            onclick={() => submitAnswer("new")}
-                            disabled={answering}
-                        >
-                            NEU<br />
-                            <span class="text-sm">(← oder N)</span>
-                        </Button>
-                        <Button
-                            variant="success"
-                            size="xl"
-                            onclick={() => submitAnswer("seen")}
-                            disabled={answering}
-                        >
-                            GESEHEN<br />
-                            <span class="text-sm">(→ oder G)</span>
-                        </Button>
-                    </div>
-                </div>
-            </Card>
-        {/if}
+                     <div class="flex gap-8 justify-center flex-wrap">
+                         <Button
+                             variant="danger"
+                             size="xl"
+                             onclick={() => submitAnswer("new")}
+                             disabled={answering}
+                         >
+                             <div class="flex flex-col items-center gap-2">
+                                 <span class="text-5xl">🆕</span>
+                                 <span>NEU</span>
+                                 <span class="text-sm normal-case font-normal opacity-75"
+                                     >(← oder N)</span
+                                 >
+                             </div>
+                         </Button>
+                         <Button
+                             variant="success"
+                             size="xl"
+                             onclick={() => submitAnswer("seen")}
+                             disabled={answering}
+                         >
+                             <div class="flex flex-col items-center gap-2">
+                                 <span class="text-5xl">👀</span>
+                                 <span>Gesehen</span>
+                                 <span class="text-sm normal-case font-normal opacity-75"
+                                     >(→ oder G)</span
+                                 >
+                             </div>
+                         </Button>
+                     </div>
+                 </div>
+             </Card>
+         {/if}
 
         <div class="text-center mt-6">
             <Button variant="secondary" onclick={() => goto("/")}>
@@ -204,19 +247,82 @@
 </div>
 
 <style>
-    @keyframes pulse {
-        0%,
+    @keyframes wordAppear {
+        0% {
+            opacity: 0;
+            transform: scale(0.5) translateY(-30px);
+        }
+        60% {
+            transform: scale(1.1);
+        }
         100% {
             opacity: 1;
-            transform: scale(1);
-        }
-        50% {
-            opacity: 0.9;
-            transform: scale(1.05);
+            transform: scale(1) translateY(0);
         }
     }
 
-    .animate-pulse {
-        animation: pulse 2s ease-in-out infinite;
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes float {
+        0%,
+        100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    .animate-word-appear {
+        animation: wordAppear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .animate-fade-in {
+        animation: fadeIn 0.8s ease-out 0.3s both;
+    }
+
+    .word-display {
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes bounceSlow {
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-20px);
+        }
+    }
+
+    @keyframes gradient {
+        0% {
+            background-position: 0% 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
+        100% {
+            background-position: 0% 50%;
+        }
+    }
+
+    .animate-bounce-slow {
+        animation: bounceSlow 3s ease-in-out infinite;
+    }
+
+    .animate-gradient {
+        background-size: 200% 200%;
+        animation: gradient 15s ease infinite;
     }
 </style>
+

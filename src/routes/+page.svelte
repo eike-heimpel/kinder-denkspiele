@@ -53,41 +53,55 @@
     <title>Human Benchmark - Deutsche Spiele für Kinder</title>
 </svelte:head>
 
-<div
-    class="min-h-screen bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 p-8"
->
-    <div class="max-w-4xl mx-auto">
-        <h1
-            class="text-6xl font-bold text-white text-center mb-4 drop-shadow-lg"
-        >
-            🧠 Human Benchmark
-        </h1>
-        <p class="text-2xl text-white text-center mb-12 drop-shadow">
-            Deutsche Spiele für Kinder
-        </p>
+ <div
+     class="min-h-screen bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 p-8 animate-gradient"
+ >
+     <div class="max-w-5xl mx-auto">
+         <div class="text-center mb-16 animate-fade-in">
+             <div class="inline-block mb-6">
+                 <span class="text-9xl animate-bounce-slow">🧠</span>
+             </div>
+             <h1
+                 class="text-7xl font-black text-white mb-4 drop-shadow-2xl tracking-tight"
+             >
+                 Human Benchmark
+             </h1>
+             <p
+                 class="text-3xl font-bold text-white/90 drop-shadow-lg tracking-wide"
+             >
+                 Deutsche Spiele für Kinder
+             </p>
+         </div>
 
         {#if loading}
             <Card>
                 <p class="text-center text-xl">Lädt...</p>
             </Card>
-        {:else if !selectedUser}
-            <Card>
-                <h2 class="text-3xl font-bold mb-6 text-gray-800">
-                    Wer spielt?
-                </h2>
+         {:else if !selectedUser}
+             <Card>
+                 <div class="text-center mb-8">
+                     <span class="text-6xl mb-4 inline-block">👥</span>
+                     <h2 class="text-4xl font-black text-gray-800">
+                         Wer spielt?
+                     </h2>
+                 </div>
 
-                {#if users.length > 0}
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        {#each users as user}
-                            <button
-                                class="bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white text-2xl font-bold py-8 px-6 rounded-xl transition-all transform hover:scale-105 active:scale-95"
-                                onclick={() => selectUser(user)}
-                            >
-                                {user.name}
-                            </button>
-                        {/each}
-                    </div>
-                {/if}
+                 {#if users.length > 0}
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                         {#each users as user}
+                             <button
+                                 class="group relative bg-gradient-to-br from-blue-400 via-blue-500 to-purple-500 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 text-white text-3xl font-black py-10 px-8 rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-xl hover:shadow-2xl border-4 border-white/30"
+                                 onclick={() => selectUser(user)}
+                             >
+                                 <span
+                                     class="absolute top-2 right-2 text-4xl opacity-50 group-hover:opacity-100 transition-opacity"
+                                     >🎮</span
+                                 >
+                                 {user.name}
+                             </button>
+                         {/each}
+                     </div>
+                 {/if}
 
                 {#if !showNewUserForm}
                     <Button
@@ -120,47 +134,113 @@
                     </div>
                 {/if}
             </Card>
-        {:else}
-            <Card>
-                <h2 class="text-3xl font-bold mb-2 text-gray-800">
-                    Hallo, {selectedUser.name}! 👋
-                </h2>
-                <p class="text-xl text-gray-600 mb-8">Wähle ein Spiel:</p>
+         {:else}
+             <Card>
+                 <div class="text-center mb-10">
+                     <h2 class="text-5xl font-black text-gray-800 mb-3">
+                         Hallo, {selectedUser.name}! 👋
+                     </h2>
+                     <p class="text-2xl text-gray-600 font-semibold">
+                         Wähle ein Spiel:
+                     </p>
+                 </div>
 
-                <div class="mb-8">
-                    <h3 class="text-2xl font-bold mb-4 text-purple-600">
-                        🗣️ Verbales Gedächtnis
-                    </h3>
-                    <p class="text-gray-700 mb-6">
-                        Hast du dieses Wort schon einmal gesehen? Teste dein
-                        Gedächtnis!
-                    </p>
+                 <div
+                     class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl p-8 mb-8 border-4 border-purple-200 hover:border-purple-300 transition-all duration-300"
+                 >
+                     <div class="text-center mb-6">
+                         <span class="text-6xl mb-4 inline-block">🗣️</span>
+                         <h3 class="text-4xl font-black text-purple-700 mb-3">
+                             Verbales Gedächtnis
+                         </h3>
+                         <p class="text-xl text-gray-700 font-medium">
+                             Hast du dieses Wort schon einmal gesehen? Teste
+                             dein Gedächtnis!
+                         </p>
+                     </div>
 
-                    <div class="flex gap-4">
-                        <Button
-                            variant="success"
-                            size="lg"
-                            onclick={() => startGame("easy")}
-                        >
-                            🟢 Einfach
-                        </Button>
-                        <Button
-                            variant="danger"
-                            size="lg"
-                            onclick={() => startGame("hard")}
-                        >
-                            🔴 Schwer
-                        </Button>
-                    </div>
-                </div>
+                     <div class="flex gap-6 justify-center flex-wrap">
+                         <Button
+                             variant="success"
+                             size="lg"
+                             onclick={() => startGame("easy")}
+                         >
+                             <div class="flex items-center gap-3">
+                                 <span class="text-4xl">🟢</span>
+                                 <span>Einfach</span>
+                             </div>
+                         </Button>
+                         <Button
+                             variant="danger"
+                             size="lg"
+                             onclick={() => startGame("hard")}
+                         >
+                             <div class="flex items-center gap-3">
+                                 <span class="text-4xl">🔴</span>
+                                 <span>Schwer</span>
+                             </div>
+                         </Button>
+                     </div>
+                 </div>
 
-                <Button
-                    variant="secondary"
-                    onclick={() => (selectedUser = null)}
-                >
-                    ← Zurück
-                </Button>
-            </Card>
-        {/if}
+                 <div class="text-center">
+                     <Button
+                         variant="secondary"
+                         size="md"
+                         onclick={() => (selectedUser = null)}
+                     >
+                         ← Zurück
+                     </Button>
+                 </div>
+             </Card>
+         {/if}
     </div>
 </div>
+
+<style>
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes bounceSlow {
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-20px);
+        }
+    }
+
+    @keyframes gradient {
+        0% {
+            background-position: 0% 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
+        100% {
+            background-position: 0% 50%;
+        }
+    }
+
+    .animate-fade-in {
+        animation: fadeIn 0.8s ease-out;
+    }
+
+    .animate-bounce-slow {
+        animation: bounceSlow 3s ease-in-out infinite;
+    }
+
+    .animate-gradient {
+        background-size: 200% 200%;
+        animation: gradient 15s ease infinite;
+    }
+</style>
