@@ -1,7 +1,16 @@
+---
+title: "Tech Stack Reference"
+purpose: "Detailed technical specifications for all technologies used"
+audience: "AI agents, developers"
+last_updated: "2025-10-03"
+keywords: ["sveltekit", "svelte-5", "tailwind-v4", "mongodb", "typescript", "vite"]
+related_docs: ["CLAUDE.md", "ARCHITECTURE.md", "TROUBLESHOOTING.md"]
+---
+
 # 🛠️ Tech Stack Reference
 
 **Purpose:** Deep technical details for AI agents working with this codebase.  
-**Related Docs:** [AI-GUIDE.md](./AI-GUIDE.md) | [ARCHITECTURE.md](./ARCHITECTURE.md) | [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
+**Related Docs:** [CLAUDE.md](./CLAUDE.md) | [ARCHITECTURE.md](./ARCHITECTURE.md) | [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
 
 ---
 

@@ -1,7 +1,16 @@
+---
+title: "API Reference"
+purpose: "Complete API endpoint documentation with examples"
+audience: "AI agents, developers"
+last_updated: "2025-10-03"
+keywords: ["api", "endpoints", "rest", "http", "requests", "responses"]
+related_docs: ["CLAUDE.md", "src/routes/api/CLAUDE.md", "ARCHITECTURE.md"]
+---
+
 # 📡 API Reference
 
 **Purpose:** Complete reference for all API endpoints.  
-**Related Docs:** [AI-GUIDE.md](./AI-GUIDE.md) | [ARCHITECTURE.md](./ARCHITECTURE.md)
+**Related Docs:** [CLAUDE.md](./CLAUDE.md) | [ARCHITECTURE.md](./ARCHITECTURE.md) | [src/routes/api/CLAUDE.md](./src/routes/api/CLAUDE.md)
 
 **Base URL:** `http://localhost:5173/api` (development)
 

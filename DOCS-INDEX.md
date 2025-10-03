@@ -1,28 +1,56 @@
+---
+title: "Documentation Index"
+purpose: "Central index for all AI agent documentation"
+audience: "AI agents"
+last_updated: "2025-10-03"
+version: "2.0"
+keywords: ["documentation", "index", "navigation", "guide"]
+---
+
 # 📚 Documentation Index
 
-**Total Documentation:** 88KB across 9 files  
+**Total Documentation:** ~120KB across 16 files  
 **Target Audience:** AI Agents and Future Developers  
-**Last Updated:** 2025-01-03
+**Last Updated:** 2025-10-03  
+**Version:** 2.0 (Hierarchical module documentation)
 
 ---
 
 ## 🎯 Quick Start
 
 **New to this codebase?** Start here:
-1. Read [AI-GUIDE.md](./AI-GUIDE.md) (15KB) - **MAIN ENTRY POINT**
-2. Skim [ARCHITECTURE.md](./ARCHITECTURE.md) (10KB) - Understand the system
-3. Run through [QUICKSTART.md](./QUICKSTART.md) (4KB) - Get it running
+1. Read [CLAUDE.md](./CLAUDE.md) (16KB) - **MAIN ENTRY POINT**
+2. Skim [ARCHITECTURE.md](./ARCHITECTURE.md) (11KB) - Understand the system
+3. Run through [QUICKSTART.md](./QUICKSTART.md) (5KB) - Get it running
 
 **Need to make changes?** Check:
-1. [TECH-STACK.md](./TECH-STACK.md) (12KB) - Tech details
-2. [API-REFERENCE.md](./API-REFERENCE.md) (12KB) - Endpoint specs
-3. [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) (11KB) - When things break
+1. **Module-specific CLAUDE.md files** (see below) - Focused context
+2. [TECH-STACK.md](./TECH-STACK.md) (13KB) - Tech details
+3. [API-REFERENCE.md](./API-REFERENCE.md) (13KB) - Endpoint specs
+4. [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) (12KB) - When things break
 
 **Why is it built this way?**
-1. [DECISIONS.md](./DECISIONS.md) (14KB) - Technical rationale
+1. [DECISIONS.md](./DECISIONS.md) (15KB) - Technical rationale
 
 **Want to change colors/design?**
-1. [THEMING.md](./THEMING.md) (6KB) - Customization guide
+1. [THEMING.md](./THEMING.md) (7KB) - Customization guide
+
+---
+
+## 📂 Module-Level Documentation (NEW)
+
+### Core Library (`src/lib/`)
+- **[src/lib/CLAUDE.md](./src/lib/CLAUDE.md)** (5KB) - Shared utilities, types, data layer
+- **[src/lib/services/CLAUDE.md](./src/lib/services/CLAUDE.md)** (10KB) - Game engines & business logic
+- **[src/lib/components/CLAUDE.md](./src/lib/components/CLAUDE.md)** (8KB) - Reusable UI components
+- **[src/lib/repositories/CLAUDE.md](./src/lib/repositories/CLAUDE.md)** (9KB) - Database operations
+
+### Routes (`src/routes/`)
+- **[src/routes/CLAUDE.md](./src/routes/CLAUDE.md)** (6KB) - Routing structure overview
+- **[src/routes/api/CLAUDE.md](./src/routes/api/CLAUDE.md)** (11KB) - API endpoint implementation
+- **[src/routes/game/CLAUDE.md](./src/routes/game/CLAUDE.md)** (10KB) - Game page components & UI logic
+
+**💡 Tip:** When working on a specific module, read its CLAUDE.md for focused, relevant context.
 
 ---
 
@@ -177,6 +205,47 @@
 
 ---
 
+## 🏗️ Documentation Architecture
+
+This project uses **hierarchical module documentation** to provide focused, contextual information:
+
+### Structure
+
+```
+Root Documentation (High-Level)
+├── CLAUDE.md (Entry point with Q&A and navigation)
+├── ARCHITECTURE.md (System design)
+├── API-REFERENCE.md (Complete API specs)
+├── TECH-STACK.md (Technology details)
+└── ... (other root docs)
+
+Module Documentation (Focused)
+├── src/lib/CLAUDE.md (Lib layer overview)
+│   ├── src/lib/services/CLAUDE.md (Business logic)
+│   ├── src/lib/components/CLAUDE.md (UI components)
+│   └── src/lib/repositories/CLAUDE.md (Data access)
+│
+└── src/routes/CLAUDE.md (Routes overview)
+    ├── src/routes/api/CLAUDE.md (API endpoints)
+    └── src/routes/game/CLAUDE.md (Game pages)
+```
+
+### Benefits
+
+1. **Focused Context:** Get only relevant information for the module you're working on
+2. **Reduced Cognitive Load:** Smaller, targeted docs instead of monolithic files
+3. **Better Navigation:** Clear hierarchy with cross-references
+4. **Scalability:** Easy to add docs as codebase grows
+
+### Usage Pattern
+
+1. Start at [CLAUDE.md](./CLAUDE.md) for overview and navigation
+2. Navigate to specific module CLAUDE.md for focused context
+3. Reference root-level docs for comprehensive information
+4. Use Q&A section in CLAUDE.md for quick lookups
+
+---
+
 ## 🔍 Finding Information
 
 ### By Topic
@@ -210,19 +279,37 @@
 
 ## 📊 Documentation Stats
 
+### Root-Level Documentation
+
 | File | Size | Lines | Purpose |
 |------|------|-------|---------|
-| AI-GUIDE.md | 15KB | 700+ | Main entry point |
-| DECISIONS.md | 14KB | 650+ | Technical rationale |
-| TECH-STACK.md | 12KB | 550+ | Technology details |
-| API-REFERENCE.md | 12KB | 600+ | API documentation |
-| TROUBLESHOOTING.md | 11KB | 500+ | Problem solving |
-| ARCHITECTURE.md | 10KB | 400+ | System design |
-| THEMING.md | 6KB | 260+ | UI customization |
+| CLAUDE.md | 16KB | 700+ | Main entry point with Q&A |
+| DECISIONS.md | 15KB | 650+ | Technical rationale |
+| TECH-STACK.md | 13KB | 550+ | Technology details |
+| API-REFERENCE.md | 13KB | 600+ | API documentation |
+| TROUBLESHOOTING.md | 12KB | 500+ | Problem solving |
+| ARCHITECTURE.md | 11KB | 400+ | System design |
+| THEMING.md | 7KB | 260+ | UI customization |
 | README.md | 5KB | 165+ | General overview |
-| QUICKSTART.md | 4KB | 170+ | Quick setup |
+| QUICKSTART.md | 5KB | 170+ | Quick setup |
 
-**Total:** ~88KB of AI-optimized documentation
+**Root Total:** ~97KB
+
+### Module-Level Documentation
+
+| File | Size | Lines | Purpose |
+|------|------|-------|---------|
+| src/routes/api/CLAUDE.md | 11KB | 500+ | API endpoint implementation |
+| src/routes/game/CLAUDE.md | 10KB | 450+ | Game page components |
+| src/lib/services/CLAUDE.md | 10KB | 500+ | Business logic layer |
+| src/lib/repositories/CLAUDE.md | 9KB | 400+ | Data access layer |
+| src/lib/components/CLAUDE.md | 8KB | 400+ | UI components |
+| src/routes/CLAUDE.md | 6KB | 350+ | Routes overview |
+| src/lib/CLAUDE.md | 5KB | 300+ | Lib layer overview |
+
+**Module Total:** ~59KB
+
+**Grand Total:** ~156KB of AI-optimized hierarchical documentation across 16 files
 
 ---
 

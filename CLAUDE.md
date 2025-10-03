@@ -1,3 +1,12 @@
+---
+title: "AI Agent Guide - Human Benchmark German Kids"
+purpose: "Entry point for AI agents working on this codebase"
+audience: "AI agents (Claude, GPT, Cursor)"
+last_updated: "2025-10-03"
+version: "2.0"
+keywords: ["sveltekit", "svelte-5", "tailwind-v4", "mongodb", "german", "games", "kids", "layered-architecture"]
+---
+
 # 🤖 AI Agent Guide - Human Benchmark German Kids
 
 **Last Updated:** 2025-10-03 (ONLY UPDATE AFTER LOOKING UP TODAYS DATE, DONT RECALL IT FROM MEMORY)  
@@ -34,6 +43,56 @@ This is the **entry point** for AI agents working on this codebase. Read this fi
 ### For Development
 7. **[QUICKSTART.md](./QUICKSTART.md)** - Get up and running quickly
 8. **[API-REFERENCE.md](./API-REFERENCE.md)** - Complete API endpoint documentation
+
+---
+
+## 🔍 Quick Reference for AI Queries
+
+<!-- Optimized for conversational AI queries -->
+
+### "How do I..."
+- **Add a new game** → [Common Tasks > Adding a New Game](#adding-a-new-game)
+- **Change theme colors** → [Changing Theme Colors](#changing-theme-colors)
+- **Fix Tailwind issues** → [TROUBLESHOOTING.md](./TROUBLESHOOTING.md#tailwind-not-working)
+- **Add/modify words** → [Modifying Word Pools](#modifying-word-pools)
+- **Test the API** → [API-REFERENCE.md](./API-REFERENCE.md#testing)
+- **Create a new component** → [src/lib/components/CLAUDE.md](./src/lib/components/CLAUDE.md)
+- **Add an API endpoint** → [src/routes/api/CLAUDE.md](./src/routes/api/CLAUDE.md)
+
+### "Where is..."
+- **User data stored** → MongoDB via `UserRepository` ([ARCHITECTURE.md](./ARCHITECTURE.md#database-schema))
+- **Game logic** → `src/lib/services/` ([src/lib/services/CLAUDE.md](./src/lib/services/CLAUDE.md))
+- **API endpoints** → `src/routes/api/` ([src/routes/api/CLAUDE.md](./src/routes/api/CLAUDE.md))
+- **UI components** → `src/lib/components/` ([src/lib/components/CLAUDE.md](./src/lib/components/CLAUDE.md))
+- **Type definitions** → `src/lib/types/index.ts` ([src/lib/CLAUDE.md](./src/lib/CLAUDE.md))
+- **Database operations** → `src/lib/repositories/` ([src/lib/repositories/CLAUDE.md](./src/lib/repositories/CLAUDE.md))
+- **Game pages** → `src/routes/game/` ([src/routes/game/CLAUDE.md](./src/routes/game/CLAUDE.md))
+
+### "What is..."
+- **The Svelte version** → Svelte 5 with runes ([Svelte 5 Runes](#svelte-5-runes))
+- **The Tailwind version** → Tailwind CSS v4 ([Tailwind CSS v4](#tailwind-css-v4))
+- **The database** → MongoDB with repositories ([ARCHITECTURE.md](./ARCHITECTURE.md#database-schema))
+- **The architecture** → Layered, decoupled ([Layered Architecture](#layered-architecture))
+- **The testing approach** → Vitest unit tests + manual Playwright ([Testing](#testing))
+
+---
+
+## 📂 Module-Specific Documentation
+
+For detailed information about specific parts of the codebase, see these module-level guides:
+
+### Core Library (`src/lib/`)
+- **[src/lib/CLAUDE.md](./src/lib/CLAUDE.md)** - Shared utilities, types, and data layer overview
+- **[src/lib/services/CLAUDE.md](./src/lib/services/CLAUDE.md)** - Game engines & business logic
+- **[src/lib/components/CLAUDE.md](./src/lib/components/CLAUDE.md)** - Reusable UI components
+- **[src/lib/repositories/CLAUDE.md](./src/lib/repositories/CLAUDE.md)** - Database operations & data access
+
+### Routes (`src/routes/`)
+- **[src/routes/CLAUDE.md](./src/routes/CLAUDE.md)** - Routing structure overview
+- **[src/routes/api/CLAUDE.md](./src/routes/api/CLAUDE.md)** - API endpoint implementation
+- **[src/routes/game/CLAUDE.md](./src/routes/game/CLAUDE.md)** - Game page components & UI logic
+
+**💡 Tip:** When working on a specific module, read the module-level CLAUDE.md for focused context.
 
 ---
 

@@ -1,3 +1,12 @@
+---
+title: "Architecture Documentation"
+purpose: "System design, data flow, and design patterns"
+audience: "AI agents, developers"
+last_updated: "2025-10-03"
+keywords: ["architecture", "layered", "data-flow", "patterns", "design"]
+related_docs: ["CLAUDE.md", "TECH-STACK.md", "API-REFERENCE.md"]
+---
+
 # 🏗️ Architecture Documentation
 
 ## Overview

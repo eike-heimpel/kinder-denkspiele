@@ -1,7 +1,16 @@
+---
+title: "Troubleshooting Guide"
+purpose: "Solutions to common development issues and errors"
+audience: "AI agents, developers"
+last_updated: "2025-10-03"
+keywords: ["troubleshooting", "debugging", "errors", "issues", "fixes", "problems"]
+related_docs: ["CLAUDE.md", "TECH-STACK.md", "QUICKSTART.md"]
+---
+
 # 🔧 Troubleshooting Guide
 
 **Purpose:** Solutions to common issues encountered while developing this project.  
-**Related Docs:** [AI-GUIDE.md](./AI-GUIDE.md) | [TECH-STACK.md](./TECH-STACK.md)
+**Related Docs:** [CLAUDE.md](./CLAUDE.md) | [TECH-STACK.md](./TECH-STACK.md)
 
 ---
 

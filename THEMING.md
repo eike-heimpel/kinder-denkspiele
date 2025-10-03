@@ -1,3 +1,12 @@
+---
+title: "Theming Guide"
+purpose: "UI customization - colors, gradients, animations"
+audience: "AI agents, developers, designers"
+last_updated: "2025-10-03"
+keywords: ["theming", "colors", "gradients", "tailwind", "styling", "ui", "customization"]
+related_docs: ["CLAUDE.md", "src/lib/components/CLAUDE.md", "TECH-STACK.md"]
+---
+
 # 🎨 Theming Guide
 
 ## Overview

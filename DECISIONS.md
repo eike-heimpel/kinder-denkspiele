@@ -1,7 +1,16 @@
+---
+title: "Technical Decisions Log"
+purpose: "Document rationale behind technical choices"
+audience: "AI agents, developers"
+last_updated: "2025-10-03"
+keywords: ["decisions", "rationale", "why", "choices", "tradeoffs", "alternatives"]
+related_docs: ["CLAUDE.md", "ARCHITECTURE.md", "TECH-STACK.md"]
+---
+
 # 📋 Technical Decisions Log
 
 **Purpose:** Document WHY we made specific technical choices for AI agents to understand context.  
-**Related Docs:** [AI-GUIDE.md](./AI-GUIDE.md) | [ARCHITECTURE.md](./ARCHITECTURE.md) | [TECH-STACK.md](./TECH-STACK.md)
+**Related Docs:** [CLAUDE.md](./CLAUDE.md) | [ARCHITECTURE.md](./ARCHITECTURE.md) | [TECH-STACK.md](./TECH-STACK.md)
 
 ---
 

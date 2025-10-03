@@ -1,3 +1,12 @@
+---
+title: "Quick Start Guide"
+purpose: "Get the development environment running quickly"
+audience: "AI agents, developers"
+last_updated: "2025-10-03"
+keywords: ["quickstart", "setup", "installation", "getting-started", "dev-environment"]
+related_docs: ["CLAUDE.md", "TROUBLESHOOTING.md", "README.md"]
+---
+
 # 🚀 Quick Start Guide
 
 ## ✅ What's Already Done
