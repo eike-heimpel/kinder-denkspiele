@@ -54,20 +54,20 @@
 </svelte:head>
 
  <div
-     class="min-h-screen bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 p-8 animate-gradient"
+     class="min-h-screen bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 p-4 animate-gradient"
  >
-     <div class="max-w-5xl mx-auto">
-         <div class="text-center mb-16 animate-fade-in">
-             <div class="inline-block mb-6">
-                 <span class="text-9xl animate-bounce-slow">🧠</span>
+     <div class="max-w-4xl mx-auto">
+         <div class="text-center mb-4 animate-fade-in">
+             <div class="inline-block mb-1">
+                 <span class="text-5xl animate-bounce-slow">🧠</span>
              </div>
              <h1
-                 class="text-7xl font-black text-white mb-4 drop-shadow-2xl tracking-tight"
+                 class="text-3xl font-black text-white mb-1 drop-shadow-2xl tracking-tight"
              >
                  Human Benchmark
              </h1>
              <p
-                 class="text-3xl font-bold text-white/90 drop-shadow-lg tracking-wide"
+                 class="text-lg font-bold text-white/90 drop-shadow-lg"
              >
                  Deutsche Spiele für Kinder
              </p>
@@ -79,22 +79,22 @@
             </Card>
          {:else if !selectedUser}
              <Card>
-                 <div class="text-center mb-8">
-                     <span class="text-6xl mb-4 inline-block">👥</span>
-                     <h2 class="text-4xl font-black text-gray-800">
+                 <div class="text-center mb-4">
+                     <span class="text-4xl mb-2 inline-block">👥</span>
+                     <h2 class="text-3xl font-black text-gray-800">
                          Wer spielt?
                      </h2>
                  </div>
 
                  {#if users.length > 0}
-                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                          {#each users as user}
                              <button
-                                 class="group relative bg-gradient-to-br from-blue-400 via-blue-500 to-purple-500 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 text-white text-3xl font-black py-10 px-8 rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-xl hover:shadow-2xl border-4 border-white/30"
+                                 class="group relative bg-gradient-to-br from-blue-400 via-blue-500 to-purple-500 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 text-white text-2xl font-black py-6 px-6 rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-xl hover:shadow-2xl border-4 border-white/30"
                                  onclick={() => selectUser(user)}
                              >
                                  <span
-                                     class="absolute top-2 right-2 text-4xl opacity-50 group-hover:opacity-100 transition-opacity"
+                                     class="absolute top-2 right-2 text-3xl opacity-50 group-hover:opacity-100 transition-opacity"
                                      >🎮</span
                                  >
                                  {user.name}
@@ -112,15 +112,15 @@
                         ➕ Neuer Spieler
                     </Button>
                 {:else}
-                    <div class="bg-gray-50 p-6 rounded-xl">
+                    <div class="bg-gray-50 p-4 rounded-xl">
                         <input
                             type="text"
                             bind:value={newUserName}
                             placeholder="Dein Name"
-                            class="w-full px-4 py-3 text-xl border-2 border-gray-300 rounded-lg mb-4"
+                            class="w-full px-3 py-2 text-lg border-2 border-gray-300 rounded-lg mb-3"
                             onkeydown={(e) => e.key === "Enter" && createUser()}
                         />
-                        <div class="flex gap-4">
+                        <div class="flex gap-3">
                             <Button variant="success" onclick={createUser}>
                                 Erstellen
                             </Button>
@@ -136,37 +136,37 @@
             </Card>
          {:else}
              <Card>
-                 <div class="text-center mb-10">
-                     <h2 class="text-5xl font-black text-gray-800 mb-3">
+                 <div class="text-center mb-4">
+                     <h2 class="text-3xl font-black text-gray-800 mb-2">
                          Hallo, {selectedUser.name}! 👋
                      </h2>
-                     <p class="text-2xl text-gray-600 font-semibold">
+                     <p class="text-xl text-gray-600 font-semibold">
                          Wähle ein Spiel:
                      </p>
                  </div>
 
                  <div
-                     class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl p-8 mb-8 border-4 border-purple-200 hover:border-purple-300 transition-all duration-300"
+                     class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl p-5 mb-4 border-4 border-purple-200 hover:border-purple-300 transition-all duration-300"
                  >
-                     <div class="text-center mb-6">
-                         <span class="text-6xl mb-4 inline-block">🗣️</span>
-                         <h3 class="text-4xl font-black text-purple-700 mb-3">
+                     <div class="text-center mb-4">
+                         <span class="text-4xl mb-2 inline-block">🗣️</span>
+                         <h3 class="text-2xl font-black text-purple-700 mb-2">
                              Verbales Gedächtnis
                          </h3>
-                         <p class="text-xl text-gray-700 font-medium">
+                         <p class="text-base text-gray-700 font-medium">
                              Hast du dieses Wort schon einmal gesehen? Teste
                              dein Gedächtnis!
                          </p>
                      </div>
 
-                     <div class="flex gap-6 justify-center flex-wrap">
+                     <div class="flex gap-4 justify-center flex-wrap">
                          <Button
                              variant="success"
                              size="lg"
                              onclick={() => startGame("easy")}
                          >
-                             <div class="flex items-center gap-3">
-                                 <span class="text-4xl">🟢</span>
+                             <div class="flex items-center gap-2">
+                                 <span class="text-3xl">🟢</span>
                                  <span>Einfach</span>
                              </div>
                          </Button>
@@ -175,8 +175,8 @@
                              size="lg"
                              onclick={() => startGame("hard")}
                          >
-                             <div class="flex items-center gap-3">
-                                 <span class="text-4xl">🔴</span>
+                             <div class="flex items-center gap-2">
+                                 <span class="text-3xl">🔴</span>
                                  <span>Schwer</span>
                              </div>
                          </Button>
