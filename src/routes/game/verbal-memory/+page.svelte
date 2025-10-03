@@ -140,108 +140,110 @@
                     </p>
                 </div>
             </Card>
-         {:else if gameOver}
-             <Card>
-                 <div class="text-center py-16 animate-fade-in">
-                     <div class="mb-8">
-                         <span class="text-8xl inline-block animate-bounce-slow"
-                             >🎮</span
-                         >
-                     </div>
-                     <h2
-                         class="text-5xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-6"
-                     >
-                         Spiel vorbei!
-                     </h2>
-                     <div
-                         class="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl p-8 mb-6 border-4 border-yellow-300"
-                     >
-                         <p class="text-2xl text-gray-700 font-bold mb-2">
-                             Deine Punktzahl
-                         </p>
-                         <p
-                             class="text-7xl font-black bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent"
-                         >
-                             {score}
-                         </p>
-                     </div>
-                     <p class="text-2xl text-gray-600 font-semibold mb-10">
-                         Schwierigkeit: {difficulty === "easy"
-                             ? "🟢 Einfach"
-                             : "🔴 Schwer"}
-                     </p>
-                     <div class="flex gap-6 justify-center flex-wrap">
-                         <Button variant="success" size="lg" onclick={startGame}>
-                             <div class="flex items-center gap-3">
-                                 <span class="text-4xl">🔄</span>
-                                 <span>Nochmal spielen</span>
-                             </div>
-                         </Button>
-                         <Button
-                             variant="secondary"
-                             size="lg"
-                             onclick={() => goto("/")}
-                         >
-                             <div class="flex items-center gap-3">
-                                 <span class="text-4xl">🏠</span>
-                                 <span>Zur Startseite</span>
-                             </div>
-                         </Button>
-                     </div>
-                 </div>
-             </Card>
-         {:else if currentWord}
-             <Card>
-                 <div class="text-center py-20">
-                     {#key round}
-                     <div class="word-display mb-16">
-                         <p
-                             class="text-8xl font-black bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent drop-shadow-2xl animate-word-appear"
-                         >
-                             {currentWord}
-                         </p>
-                     </div>
-                     {/key}
+        {:else if gameOver}
+            <Card>
+                <div class="text-center py-16 animate-fade-in">
+                    <div class="mb-8">
+                        <span class="text-8xl inline-block animate-bounce-slow"
+                            >🎮</span
+                        >
+                    </div>
+                    <h2
+                        class="text-5xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-6"
+                    >
+                        Spiel vorbei!
+                    </h2>
+                    <div
+                        class="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl p-8 mb-6 border-4 border-yellow-300"
+                    >
+                        <p class="text-2xl text-gray-700 font-bold mb-2">
+                            Deine Punktzahl
+                        </p>
+                        <p
+                            class="text-7xl font-black bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent"
+                        >
+                            {score}
+                        </p>
+                    </div>
+                    <p class="text-2xl text-gray-600 font-semibold mb-10">
+                        Schwierigkeit: {difficulty === "easy"
+                            ? "🟢 Einfach"
+                            : "🔴 Schwer"}
+                    </p>
+                    <div class="flex gap-6 justify-center flex-wrap">
+                        <Button variant="success" size="lg" onclick={startGame}>
+                            <div class="flex items-center gap-3">
+                                <span class="text-4xl">🔄</span>
+                                <span>Nochmal spielen</span>
+                            </div>
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            size="lg"
+                            onclick={() => goto("/")}
+                        >
+                            <div class="flex items-center gap-3">
+                                <span class="text-4xl">🏠</span>
+                                <span>Zur Startseite</span>
+                            </div>
+                        </Button>
+                    </div>
+                </div>
+            </Card>
+        {:else if currentWord}
+            <Card>
+                <div class="text-center py-20">
+                    {#key round}
+                        <div class="word-display mb-16">
+                            <p
+                                class="text-8xl font-black bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent drop-shadow-2xl animate-word-appear"
+                            >
+                                {currentWord}
+                            </p>
+                        </div>
+                    {/key}
 
-                     <p
-                         class="text-3xl font-bold text-gray-700 mb-12 animate-fade-in"
-                     >
-                         Hast du dieses Wort schon gesehen?
-                     </p>
+                    <p
+                        class="text-3xl font-bold text-gray-700 mb-12 animate-fade-in"
+                    >
+                        Hast du dieses Wort schon gesehen?
+                    </p>
 
-                     <div class="flex gap-8 justify-center flex-wrap">
-                         <Button
-                             variant="danger"
-                             size="xl"
-                             onclick={() => submitAnswer("new")}
-                             disabled={answering}
-                         >
-                             <div class="flex flex-col items-center gap-2">
-                                 <span class="text-5xl">🆕</span>
-                                 <span>NEU</span>
-                                 <span class="text-sm normal-case font-normal opacity-75"
-                                     >(← oder N)</span
-                                 >
-                             </div>
-                         </Button>
-                         <Button
-                             variant="success"
-                             size="xl"
-                             onclick={() => submitAnswer("seen")}
-                             disabled={answering}
-                         >
-                             <div class="flex flex-col items-center gap-2">
-                                 <span class="text-5xl">👀</span>
-                                 <span>Gesehen</span>
-                                 <span class="text-sm normal-case font-normal opacity-75"
-                                     >(→ oder G)</span
-                                 >
-                             </div>
-                         </Button>
-                     </div>
-                 </div>
-             </Card>
-         {/if}
+                    <div class="flex gap-8 justify-center flex-wrap">
+                        <Button
+                            variant="danger"
+                            size="xl"
+                            onclick={() => submitAnswer("new")}
+                            disabled={answering}
+                        >
+                            <div class="flex flex-col items-center gap-2">
+                                <span class="text-5xl">🆕</span>
+                                <span>NEU</span>
+                                <span
+                                    class="text-sm normal-case font-normal opacity-75"
+                                    >(← oder N)</span
+                                >
+                            </div>
+                        </Button>
+                        <Button
+                            variant="success"
+                            size="xl"
+                            onclick={() => submitAnswer("seen")}
+                            disabled={answering}
+                        >
+                            <div class="flex flex-col items-center gap-2">
+                                <span class="text-5xl">👀</span>
+                                <span>Gesehen</span>
+                                <span
+                                    class="text-sm normal-case font-normal opacity-75"
+                                    >(→ oder G)</span
+                                >
+                            </div>
+                        </Button>
+                    </div>
+                </div>
+            </Card>
+        {/if}
 
         <div class="text-center mt-6">
             <Button variant="secondary" onclick={() => goto("/")}>
@@ -330,4 +332,3 @@
         animation: gradient 15s ease infinite;
     }
 </style>
-

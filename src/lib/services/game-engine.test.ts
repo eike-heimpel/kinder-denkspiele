@@ -180,6 +180,36 @@ describe('GameEngine', () => {
             expect(session?.wordsShown).toContain(word2);
         });
     });
+
+    describe('No Consecutive Duplicates', () => {
+        it('should NEVER show the same word twice in a row', async () => {
+            const state1 = await engine.startGame('test-user', 'easy');
+            const firstWord = state1.currentWord;
+            expect(firstWord).toBeTruthy();
+
+            // Play 20 rounds and verify no consecutive duplicates
+            let previousWord = firstWord;
+
+            for (let i = 0; i < 20; i++) {
+                // Determine correct answer based on whether word is in seen set
+                const isNew = !state1.session?.seenWords.has(previousWord!);
+                const answer = isNew ? 'new' : 'seen';
+                
+                const nextState = await engine.submitAnswer(answer);
+                const currentWord = nextState.currentWord;
+                
+                if (nextState.gameOver) {
+                    break;
+                }
+                
+                // THE KEY ASSERTION: Current word must NEVER equal previous word
+                expect(currentWord).not.toBe(previousWord);
+                expect(currentWord).toBeTruthy();
+                
+                previousWord = currentWord;
+            }
+        });
+    });
 });
 
 describe('GameEngine - Bug Reproduction', () => {

@@ -75,38 +75,60 @@ export class GameEngine {
         // Increment round counter
         this.session.round++;
 
-        const canShowOldWord = this.session.seenWords.size > 0;
+        // The word we need to avoid showing again is the CURRENT word (the one just shown)
+        // NOT session.previousWord (which is the word from 2 rounds ago)
+        const wordToAvoid = this.session.currentWord;
 
-        // Create exclusion set: exclude previously seen words AND the previous word
-        const excludeWords = new Set(this.session.seenWords);
-        if (this.session.previousWord) {
-            excludeWords.add(this.session.previousWord);
+        // Check if we can show an old word that's different from the word to avoid
+        const canShowOldWord = this.session.seenWords.size > 0;
+        let canShowDifferentOldWord = false;
+        
+        if (canShowOldWord && wordToAvoid) {
+            // Can we show a seen word that's NOT the word to avoid?
+            canShowDifferentOldWord = Array.from(this.session.seenWords).some(
+                word => word !== wordToAvoid
+            );
+        } else if (canShowOldWord) {
+            // No word to avoid
+            canShowDifferentOldWord = true;
         }
 
-        // FIXED: Logic was inverted
-        // If we should show a NEW word OR we can't show old words, show NEW
-        if (!canShowOldWord || this.wordService.shouldShowNewWord()) {
+        // Create exclusion set: exclude previously seen words AND the word to avoid
+        const excludeWords = new Set(this.session.seenWords);
+        if (wordToAvoid) {
+            excludeWords.add(wordToAvoid);
+        }
+
+        // Decide: show NEW or OLD word
+        // Show NEW if: no old words available, can't show different old word, or randomly decided
+        const shouldShowNew = !canShowOldWord || !canShowDifferentOldWord || this.wordService.shouldShowNewWord();
+        
+        if (shouldShowNew) {
             // Get a NEW word (not in seen words, and not the previous word)
             this.currentWord = this.wordService.getRandomWord(excludeWords);
             this.isCurrentWordNew = true;
         } else {
-            // Show an OLD word (from seen words, but not the previous word)
+            // Show an OLD word (from seen words, but not the word to avoid)
             this.currentWord = this.wordService.getRandomSeenWord(
                 this.session.seenWords,
-                this.session.previousWord
+                wordToAvoid
             );
             this.isCurrentWordNew = false;
         }
 
-        // Save previous word and update current word state
-        this.session.previousWord = this.session.currentWord;
+        // Save the CURRENT word as the previous word for NEXT round
+        // (but only if currentWord is not null - on first round it's null)
+        const newPreviousWord = this.session.currentWord;
+        
+        // Update session with new word
         this.session.currentWord = this.currentWord;
+        this.session.previousWord = newPreviousWord;
         this.session.isCurrentWordNew = this.isCurrentWordNew;
 
         await this.repository.update(this.session._id!, {
             round: this.session.round,
             currentWord: this.currentWord,
-            previousWord: this.session.previousWord,
+            previousWord: newPreviousWord,
             isCurrentWordNew: this.isCurrentWordNew
         });
 

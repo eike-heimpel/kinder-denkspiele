@@ -43,7 +43,11 @@
         >
         <div class="flex gap-2">
             {#each Array(3) as _, i}
-                <span class="text-4xl transition-all duration-300 {i < lives ? 'scale-110 drop-shadow-lg' : 'scale-90 grayscale'}">
+                <span
+                    class="text-4xl transition-all duration-300 {i < lives
+                        ? 'scale-110 drop-shadow-lg'
+                        : 'scale-90 grayscale'}"
+                >
                     {i < lives ? "❤️" : "🖤"}
                 </span>
             {/each}

@@ -24,12 +24,12 @@ export class WordService {
 
     getRandomSeenWord(seenWords: Set<string>, excludeWord: string | null = null): string {
         let availableWords = Array.from(seenWords);
-        
+
         // Filter out the excluded word if provided
         if (excludeWord) {
             availableWords = availableWords.filter(word => word !== excludeWord);
         }
-        
+
         if (availableWords.length === 0) {
             throw new Error('No seen words available');
         }
