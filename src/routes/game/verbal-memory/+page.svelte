@@ -114,66 +114,66 @@
 </svelte:head>
 
 <div
-    class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-8 animate-gradient"
+    class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4 animate-gradient"
 >
-    <div class="max-w-5xl mx-auto">
-        <div class="text-center mb-10 animate-fade-in">
-            <span class="text-7xl inline-block mb-4 animate-bounce-slow"
+    <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-4 animate-fade-in">
+            <span class="text-5xl inline-block mb-2 animate-bounce-slow"
                 >🗣️</span
             >
             <h1
-                class="text-6xl font-black text-white drop-shadow-2xl tracking-tight"
+                class="text-4xl font-black text-white drop-shadow-2xl tracking-tight"
             >
                 Verbales Gedächtnis
             </h1>
         </div>
 
-        <Card class="mb-6">
+        <Card class="mb-4">
             <GameStats {score} {lives} {round} />
         </Card>
 
         {#if loading}
             <Card>
-                <div class="text-center py-20">
-                    <p class="text-3xl font-bold text-gray-700">
+                <div class="text-center py-12">
+                    <p class="text-2xl font-bold text-gray-700">
                         Spiel wird geladen...
                     </p>
                 </div>
             </Card>
         {:else if gameOver}
             <Card>
-                <div class="text-center py-16 animate-fade-in">
-                    <div class="mb-8">
-                        <span class="text-8xl inline-block animate-bounce-slow"
+                <div class="text-center py-8 animate-fade-in">
+                    <div class="mb-4">
+                        <span class="text-6xl inline-block animate-bounce-slow"
                             >🎮</span
                         >
                     </div>
                     <h2
-                        class="text-5xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-6"
+                        class="text-4xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-4"
                     >
                         Spiel vorbei!
                     </h2>
                     <div
-                        class="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl p-8 mb-6 border-4 border-yellow-300"
+                        class="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl p-6 mb-4 border-4 border-yellow-300"
                     >
-                        <p class="text-2xl text-gray-700 font-bold mb-2">
+                        <p class="text-xl text-gray-700 font-bold mb-1">
                             Deine Punktzahl
                         </p>
                         <p
-                            class="text-7xl font-black bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent"
+                            class="text-6xl font-black bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent"
                         >
                             {score}
                         </p>
                     </div>
-                    <p class="text-2xl text-gray-600 font-semibold mb-10">
+                    <p class="text-xl text-gray-600 font-semibold mb-6">
                         Schwierigkeit: {difficulty === "easy"
                             ? "🟢 Einfach"
                             : "🔴 Schwer"}
                     </p>
-                    <div class="flex gap-6 justify-center flex-wrap">
+                    <div class="flex gap-4 justify-center flex-wrap">
                         <Button variant="success" size="lg" onclick={startGame}>
-                            <div class="flex items-center gap-3">
-                                <span class="text-4xl">🔄</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-3xl">🔄</span>
                                 <span>Nochmal spielen</span>
                             </div>
                         </Button>
@@ -182,8 +182,8 @@
                             size="lg"
                             onclick={() => goto("/")}
                         >
-                            <div class="flex items-center gap-3">
-                                <span class="text-4xl">🏠</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-3xl">🏠</span>
                                 <span>Zur Startseite</span>
                             </div>
                         </Button>
@@ -192,11 +192,11 @@
             </Card>
         {:else if currentWord}
             <Card>
-                <div class="text-center py-20">
+                <div class="text-center py-8">
                     {#key round}
-                        <div class="word-display mb-16">
+                        <div class="word-display mb-8">
                             <p
-                                class="text-8xl font-black bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent drop-shadow-2xl animate-word-appear"
+                                class="text-7xl font-black bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent drop-shadow-2xl animate-word-appear"
                             >
                                 {currentWord}
                             </p>
@@ -204,38 +204,38 @@
                     {/key}
 
                     <p
-                        class="text-3xl font-bold text-gray-700 mb-12 animate-fade-in"
+                        class="text-2xl font-bold text-gray-700 mb-6 animate-fade-in"
                     >
                         Hast du dieses Wort schon gesehen?
                     </p>
 
-                    <div class="flex gap-8 justify-center flex-wrap">
+                    <div class="flex gap-6 justify-center flex-wrap">
                         <Button
                             variant="danger"
-                            size="xl"
+                            size="lg"
                             onclick={() => submitAnswer("new")}
                             disabled={answering}
                         >
-                            <div class="flex flex-col items-center gap-2">
-                                <span class="text-5xl">🆕</span>
+                            <div class="flex flex-col items-center gap-1">
+                                <span class="text-4xl">🆕</span>
                                 <span>NEU</span>
                                 <span
-                                    class="text-sm normal-case font-normal opacity-75"
+                                    class="text-xs normal-case font-normal opacity-75"
                                     >(← oder N)</span
                                 >
                             </div>
                         </Button>
                         <Button
                             variant="success"
-                            size="xl"
+                            size="lg"
                             onclick={() => submitAnswer("seen")}
                             disabled={answering}
                         >
-                            <div class="flex flex-col items-center gap-2">
-                                <span class="text-5xl">👀</span>
+                            <div class="flex flex-col items-center gap-1">
+                                <span class="text-4xl">👀</span>
                                 <span>Gesehen</span>
                                 <span
-                                    class="text-sm normal-case font-normal opacity-75"
+                                    class="text-xs normal-case font-normal opacity-75"
                                     >(→ oder G)</span
                                 >
                             </div>
@@ -245,7 +245,7 @@
             </Card>
         {/if}
 
-        <div class="text-center mt-6">
+        <div class="text-center mt-3">
             <Button variant="secondary" onclick={() => goto("/")}>
                 ← Zurück zur Startseite
             </Button>

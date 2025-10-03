@@ -82,7 +82,7 @@ export class GameEngine {
         // Check if we can show an old word that's different from the word to avoid
         const canShowOldWord = this.session.seenWords.size > 0;
         let canShowDifferentOldWord = false;
-        
+
         if (canShowOldWord && wordToAvoid) {
             // Can we show a seen word that's NOT the word to avoid?
             canShowDifferentOldWord = Array.from(this.session.seenWords).some(
@@ -102,7 +102,7 @@ export class GameEngine {
         // Decide: show NEW or OLD word
         // Show NEW if: no old words available, can't show different old word, or randomly decided
         const shouldShowNew = !canShowOldWord || !canShowDifferentOldWord || this.wordService.shouldShowNewWord();
-        
+
         if (shouldShowNew) {
             // Get a NEW word (not in seen words, and not the previous word)
             this.currentWord = this.wordService.getRandomWord(excludeWords);
@@ -119,7 +119,7 @@ export class GameEngine {
         // Save the CURRENT word as the previous word for NEXT round
         // (but only if currentWord is not null - on first round it's null)
         const newPreviousWord = this.session.currentWord;
-        
+
         // Update session with new word
         this.session.currentWord = this.currentWord;
         this.session.previousWord = newPreviousWord;

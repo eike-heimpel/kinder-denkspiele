@@ -67,7 +67,7 @@ describe('GameEngine', () => {
     describe('submitAnswer - NEW word logic', () => {
         it('should increase score when correctly identifying a NEW word', async () => {
             await engine.startGame('user123', 'easy');
-            
+
             // First word is always new
             const result = await engine.submitAnswer('new');
 
@@ -77,7 +77,7 @@ describe('GameEngine', () => {
 
         it('should decrease lives when incorrectly saying NEW word is SEEN', async () => {
             await engine.startGame('user123', 'easy');
-            
+
             // First word is always new, but we say it's seen
             const result = await engine.submitAnswer('seen');
 
@@ -88,7 +88,7 @@ describe('GameEngine', () => {
         it('should add word to seenWords when correctly identified as NEW', async () => {
             const initialState = await engine.startGame('user123', 'easy');
             const firstWord = initialState.currentWord!;
-            
+
             await engine.submitAnswer('new');
 
             const session = engine.getSession();
@@ -101,12 +101,12 @@ describe('GameEngine', () => {
             // Start game
             const state1 = await engine.startGame('user123', 'easy');
             expect(state1.isCurrentWordNew).toBe(true);
-            
+
             // Answer first word correctly as NEW
             const state2 = await engine.submitAnswer('new');
             expect(state2.session?.score).toBe(1);
             expect(state2.session?.lives).toBe(3);
-            
+
             // If second word is also NEW, we should not lose a life
             if (state2.isCurrentWordNew) {
                 const state3 = await engine.submitAnswer('new');
@@ -119,18 +119,18 @@ describe('GameEngine', () => {
             // Mock WordService to control word selection
             const wordService = new WordService('easy');
             const mockShouldShowNewWord = vi.spyOn(wordService, 'shouldShowNewWord');
-            
+
             // Start game and answer first word
             const state1 = await engine.startGame('user123', 'easy');
             const firstWord = state1.currentWord!;
-            
+
             await engine.submitAnswer('new'); // Correctly identify as NEW
-            
+
             // Force next word to be the same (seen)
             mockShouldShowNewWord.mockReturnValue(false); // Should show OLD word
-            
+
             const state2 = await engine.submitAnswer('seen'); // This test will fail with current bug
-            
+
             // If the word was actually SEEN, score should increase
             if (!state2.isCurrentWordNew) {
                 expect(state2.session?.score).toBe(2);
@@ -142,7 +142,7 @@ describe('GameEngine', () => {
     describe('game over logic', () => {
         it('should end game when lives reach 0', async () => {
             await engine.startGame('user123', 'easy');
-            
+
             // Make 3 wrong answers
             await engine.submitAnswer('seen'); // Wrong (word is new)
             await engine.submitAnswer('seen'); // Wrong
@@ -155,7 +155,7 @@ describe('GameEngine', () => {
 
         it('should not decrease lives below 0', async () => {
             await engine.startGame('user123', 'easy');
-            
+
             await engine.submitAnswer('seen');
             await engine.submitAnswer('seen');
             await engine.submitAnswer('seen');
@@ -169,10 +169,10 @@ describe('GameEngine', () => {
         it('should track all words shown', async () => {
             const state1 = await engine.startGame('user123', 'easy');
             const word1 = state1.currentWord!;
-            
+
             const state2 = await engine.submitAnswer('new');
             const word2 = state2.currentWord!;
-            
+
             await engine.submitAnswer('new');
 
             const session = engine.getSession();
@@ -194,18 +194,18 @@ describe('GameEngine', () => {
                 // Determine correct answer based on whether word is in seen set
                 const isNew = !state1.session?.seenWords.has(previousWord!);
                 const answer = isNew ? 'new' : 'seen';
-                
+
                 const nextState = await engine.submitAnswer(answer);
                 const currentWord = nextState.currentWord;
-                
+
                 if (nextState.gameOver) {
                     break;
                 }
-                
+
                 // THE KEY ASSERTION: Current word must NEVER equal previous word
                 expect(currentWord).not.toBe(previousWord);
                 expect(currentWord).toBeTruthy();
-                
+
                 previousWord = currentWord;
             }
         });
@@ -215,7 +215,7 @@ describe('GameEngine', () => {
 describe('GameEngine - Bug Reproduction', () => {
     it('CURRENT BUG: Second NEW word should not decrease lives', async () => {
         const engine = new GameEngine();
-        
+
         // Start game
         const state1 = await engine.startGame('user123', 'easy');
         console.log('State 1:', {
@@ -224,7 +224,7 @@ describe('GameEngine - Bug Reproduction', () => {
             lives: state1.session?.lives,
             score: state1.session?.score
         });
-        
+
         // First word is NEW, answer correctly
         const state2 = await engine.submitAnswer('new');
         console.log('State 2 (after answering NEW):', {
@@ -234,7 +234,7 @@ describe('GameEngine - Bug Reproduction', () => {
             score: state2.session?.score,
             seenWordsCount: state2.session?.seenWords.size
         });
-        
+
         // Second word might also be NEW
         // If it IS new and we answer NEW, we should NOT lose a life
         if (state2.isCurrentWordNew) {
@@ -245,7 +245,7 @@ describe('GameEngine - Bug Reproduction', () => {
                 lives: state3.session?.lives,
                 score: state3.session?.score
             });
-            
+
             // This assertion will FAIL with the current bug
             expect(state3.session?.lives).toBe(3); // Should still have 3 lives
             expect(state3.session?.score).toBe(2); // Should have score of 2
