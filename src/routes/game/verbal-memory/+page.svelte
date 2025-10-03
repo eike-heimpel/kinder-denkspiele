@@ -12,6 +12,7 @@
     let currentWord = $state<string | null>(null);
     let score = $state(0);
     let lives = $state(3);
+    let round = $state(0);
     let gameOver = $state(false);
     let message = $state<string | null>(null);
     let loading = $state(true);
@@ -44,6 +45,7 @@
             currentWord = data.currentWord;
             score = data.score;
             lives = data.lives;
+            round = data.round || 0;
             gameOver = false;
             message = null;
         } catch (error) {
@@ -76,6 +78,7 @@
                 currentWord = data.currentWord;
                 score = data.score;
                 lives = data.lives;
+                round = data.round || 0;
             }
         } catch (error) {
             console.error("Failed to submit answer:", error);
@@ -126,7 +129,7 @@
         </div>
 
         <Card class="mb-6">
-            <GameStats {score} {lives} />
+            <GameStats {score} {lives} {round} />
         </Card>
 
         {#if loading}
@@ -190,6 +193,7 @@
          {:else if currentWord}
              <Card>
                  <div class="text-center py-20">
+                     {#key round}
                      <div class="word-display mb-16">
                          <p
                              class="text-8xl font-black bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent drop-shadow-2xl animate-word-appear"
@@ -197,6 +201,7 @@
                              {currentWord}
                          </p>
                      </div>
+                     {/key}
 
                      <p
                          class="text-3xl font-bold text-gray-700 mb-12 animate-fade-in"

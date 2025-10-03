@@ -41,9 +41,11 @@ export class GameEngine {
             difficulty,
             score: 0,
             lives: 3,
+            round: 0,
             wordsShown: [],
             seenWords: new Set(),
             currentWord: null,
+            previousWord: null,
             isCurrentWordNew: false,
             isActive: true,
             startedAt: new Date()
@@ -70,25 +72,41 @@ export class GameEngine {
             return this.createGameState(null, false, null, true, 'Game is not active');
         }
 
+        // Increment round counter
+        this.session.round++;
+
         const canShowOldWord = this.session.seenWords.size > 0;
+
+        // Create exclusion set: exclude previously seen words AND the previous word
+        const excludeWords = new Set(this.session.seenWords);
+        if (this.session.previousWord) {
+            excludeWords.add(this.session.previousWord);
+        }
 
         // FIXED: Logic was inverted
         // If we should show a NEW word OR we can't show old words, show NEW
         if (!canShowOldWord || this.wordService.shouldShowNewWord()) {
-            this.currentWord = this.wordService.getRandomWord(this.session.seenWords);
+            // Get a NEW word (not in seen words, and not the previous word)
+            this.currentWord = this.wordService.getRandomWord(excludeWords);
             this.isCurrentWordNew = true;
         } else {
-            // Show an OLD word (one we've seen before)
-            this.currentWord = this.wordService.getRandomSeenWord(this.session.seenWords);
+            // Show an OLD word (from seen words, but not the previous word)
+            this.currentWord = this.wordService.getRandomSeenWord(
+                this.session.seenWords,
+                this.session.previousWord
+            );
             this.isCurrentWordNew = false;
         }
 
-        // Save the current word state to the session
+        // Save previous word and update current word state
+        this.session.previousWord = this.session.currentWord;
         this.session.currentWord = this.currentWord;
         this.session.isCurrentWordNew = this.isCurrentWordNew;
 
         await this.repository.update(this.session._id!, {
+            round: this.session.round,
             currentWord: this.currentWord,
+            previousWord: this.session.previousWord,
             isCurrentWordNew: this.isCurrentWordNew
         });
 

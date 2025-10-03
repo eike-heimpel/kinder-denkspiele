@@ -2,14 +2,28 @@
     interface Props {
         score: number;
         lives: number;
+        round: number;
     }
 
-    let { score, lives }: Props = $props();
+    let { score, lives, round }: Props = $props();
 </script>
 
 <div
     class="flex justify-between items-center gap-8 text-2xl font-extrabold bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-200"
 >
+    <div class="flex items-center gap-3">
+        <span class="text-blue-700 text-3xl">🎯</span>
+        <div class="flex flex-col">
+            <span class="text-sm text-blue-600 uppercase tracking-wider"
+                >Runde</span
+            >
+            <span
+                class="text-4xl bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-black"
+                >{round}</span
+            >
+        </div>
+    </div>
+
     <div class="flex items-center gap-3">
         <span class="text-purple-700 text-3xl">🏆</span>
         <div class="flex flex-col">

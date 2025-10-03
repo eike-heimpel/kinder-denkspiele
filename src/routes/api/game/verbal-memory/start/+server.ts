@@ -24,6 +24,7 @@ export const POST: RequestHandler = async ({ request }) => {
         sessionId: gameState.session?._id,
         currentWord: gameState.currentWord,
         score: gameState.session?.score,
-        lives: gameState.session?.lives
+        lives: gameState.session?.lives,
+        round: gameState.session?.round
     });
 };

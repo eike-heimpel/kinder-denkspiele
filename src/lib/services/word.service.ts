@@ -22,14 +22,20 @@ export class WordService {
         return availableWords[randomIndex];
     }
 
-    getRandomSeenWord(seenWords: Set<string>): string {
-        const seenArray = Array.from(seenWords);
-        if (seenArray.length === 0) {
+    getRandomSeenWord(seenWords: Set<string>, excludeWord: string | null = null): string {
+        let availableWords = Array.from(seenWords);
+        
+        // Filter out the excluded word if provided
+        if (excludeWord) {
+            availableWords = availableWords.filter(word => word !== excludeWord);
+        }
+        
+        if (availableWords.length === 0) {
             throw new Error('No seen words available');
         }
 
-        const randomIndex = Math.floor(Math.random() * seenArray.length);
-        return seenArray[randomIndex];
+        const randomIndex = Math.floor(Math.random() * availableWords.length);
+        return availableWords[randomIndex];
     }
 
     shouldShowNewWord(): boolean {
