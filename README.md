@@ -21,12 +21,17 @@ Complete documentation for AI agents includes:
 
 ## 🎮 Features
 
-- **Verbales Gedächtnis**: Teste dein Gedächtnis mit deutschen Wörtern
+### Spiele
+- **Verbales Gedächtnis** 🗣️: Teste dein Gedächtnis mit deutschen Wörtern
+- **Visuelles Gedächtnis** 🎯: Merke dir die Position von farbigen Quadraten (3x3 oder 4x4 Grid)
+
+### Allgemein
 - **Zwei Schwierigkeitsgrade**: Einfach (für 5-6 Jahre) und Schwer (für 7-8 Jahre)
 - **Mehrere Spieler**: Jedes Kind kann sein eigenes Profil haben
-- **Statistiken-Seite**: Zeige historische Performance (Höchstwerte, Durchschnitt, Spiele gespielt)
+- **Statistiken-Seite**: Zeige historische Performance für alle Spiele
+- **Tablet-Optimiert**: Große Touch-Targets, keine Hover-Abhängigkeiten
 - **Kid-Friendly UI**: Große Buttons, bunte Farben, einfache Navigation
-- **Keine Duplikate**: Gleiches Wort nie zweimal hintereinander
+- **Wissenschaftlich fundiert**: Spiele trainieren kognitive Fähigkeiten (Arbeitsgedächtnis, Verarbeitungsgeschwindigkeit)
 
 ## 🏗️ Architektur
 
@@ -38,15 +43,17 @@ src/
 │   ├── types/              # TypeScript Typ-Definitionen
 │   ├── db/                 # Datenbankverbindung
 │   ├── repositories/       # Datenbank-Operationen (User, GameSession)
-│   ├── services/           # Geschäftslogik (WordService, GameEngine)
+│   ├── services/           # Geschäftslogik (WordService, GameEngine, VisualMemoryEngine)
 │   ├── data/               # Statische Daten (Wortpools)
 │   └── components/         # Wiederverwendbare UI-Komponenten
 └── routes/
     ├── api/                # API-Endpunkte
     │   ├── users/
-    │   └── game/verbal-memory/
+    │   ├── game/verbal-memory/
+    │   └── game/visual-memory/
     └── game/               # Spiel-Seiten
-        └── verbal-memory/
+        ├── verbal-memory/
+        └── visual-memory/
 ```
 
 ### Schichten-Erklärung:
@@ -168,6 +175,11 @@ async getLeaderboard(gameType: GameType): Promise<User[]> {
 - `POST /api/game/verbal-memory/answer` - Antwort senden
 - `GET /api/game/verbal-memory/stats` - Statistiken abrufen
 
+### Visual Memory Game
+- `POST /api/game/visual-memory/start` - Spiel starten
+- `POST /api/game/visual-memory/answer` - Antwort senden (mit previousTargets für Feedback)
+- `GET /api/game/visual-memory/stats` - Statistiken abrufen
+
 ## 🔧 Scripts
 
 ```bash
@@ -181,11 +193,13 @@ npm run test:ui      # Tests mit UI ausführen
 
 ## 🧪 Tests
 
-Das Projekt enthält umfangreiche Unit-Tests für die kritische Spiellogik:
+Das Projekt enthält Unit-Tests für die kritische Spiellogik:
 
-- **32 Tests insgesamt** (31 passing, 1 skipped)
-- **GameEngine Tests**: 12 Tests für Spielmechanik, Punktevergabe, Leben, Wortauswahl
-- **WordService Tests**: 20 Tests für Wortauswahl, Ausschlusslogik, Zufälligkeit
+- **Verbal Memory:**
+  - **GameEngine Tests**: Spielmechanik, Punktevergabe, Leben, Wortauswahl
+  - **WordService Tests**: Wortauswahl, Ausschlusslogik, Zufälligkeit
+- **Visual Memory:** Manuell getestet mit Playwright
+- **Gesamt:** 32 Tests (31 passing, 1 skipped)
 
 ```bash
 npm test           # Tests ausführen

@@ -18,6 +18,10 @@
   - [POST /game/verbal-memory/start](#post-gameverbal-memorystart)
   - [POST /game/verbal-memory/answer](#post-gameverbal-memoryanswer)
   - [GET /game/verbal-memory/stats](#get-gameverbal-memorystats)
+- [Visual Memory Game](#visual-memory-game)
+  - [POST /game/visual-memory/start](#post-gamevisual-memorystart)
+  - [POST /game/visual-memory/answer](#post-gamevisual-memoryanswer)
+  - [GET /game/visual-memory/stats](#get-gamevisual-memorystats)
 
 ---
 
@@ -580,6 +584,266 @@ curl "http://localhost:5173/api/game/verbal-memory/stats?userId=507f1f77bcf86cd7
 
 ---
 
+## Visual Memory Game
+
+### POST /game/visual-memory/start
+
+Start a new visual memory game session.
+
+**Endpoint:** `/api/game/visual-memory/start`  
+**Method:** `POST`  
+**Authentication:** None
+
+**Request:**
+```http
+POST /api/game/visual-memory/start HTTP/1.1
+Content-Type: application/json
+
+{
+  "userId": "507f1f77bcf86cd799439011",
+  "difficulty": "easy"
+}
+```
+
+**Request Body:**
+- `userId` (string, required): User's MongoDB ObjectId
+- `difficulty` (string, required): Either "easy" or "hard"
+
+**Response:** `200 OK`
+```json
+{
+  "sessionId": "507f1f77bcf86cd799439020",
+  "score": 0,
+  "lives": 3,
+  "round": 1,
+  "visualMemoryState": {
+    "gridSize": 3,
+    "targetCount": 2,
+    "targetPositions": [1, 4],
+    "userSelections": [],
+    "presentationTime": 2000,
+    "retentionDelay": 1000
+  }
+}
+```
+
+**Response Fields:**
+- `sessionId` (string): Unique game session identifier
+- `score` (number): Current score (always 0 at start)
+- `lives` (number): Remaining lives (always 3 at start)
+- `round` (number): Current round number
+- `visualMemoryState` (object): Game state containing:
+  - `gridSize` (number): 3 for easy, 4 for hard (3x3 or 4x4 grid)
+  - `targetCount` (number): Number of squares to remember (2 for easy, 3 for hard)
+  - `targetPositions` (number[]): Indices of blue squares (0-indexed)
+  - `userSelections` (number[]): Empty at start
+  - `presentationTime` (number): Duration squares are shown in ms
+  - `retentionDelay` (number): Delay before recall phase in ms
+
+**Errors:**
+
+**400 Bad Request** - Missing required fields
+```json
+{
+  "error": "Missing userId or difficulty"
+}
+```
+
+**400 Bad Request** - Invalid difficulty
+```json
+{
+  "error": "Invalid difficulty level"
+}
+```
+
+**Game Rules:**
+- **Easy Mode:** 3x3 grid, starts with 2 targets, max 5 targets, 2s presentation, 1s delay
+- **Hard Mode:** 4x4 grid, starts with 3 targets, max 7 targets, 1.5s presentation, 1.5s delay
+- Starts with 3 lives
+- Score increases by 1 for correct answers
+- Lives decrease by 1 for incorrect answers
+- Target count increases by 1 every 2 successful rounds
+- Order of selections doesn't matter (spatial memory, not sequential)
+
+**File:** `src/routes/api/game/visual-memory/start/+server.ts`
+
+---
+
+### POST /game/visual-memory/answer
+
+Submit user's selected squares for validation.
+
+**Endpoint:** `/api/game/visual-memory/answer`  
+**Method:** `POST`  
+**Authentication:** None
+
+**Request:**
+```http
+POST /api/game/visual-memory/answer HTTP/1.1
+Content-Type: application/json
+
+{
+  "sessionId": "507f1f77bcf86cd799439020",
+  "userSelections": [1, 4]
+}
+```
+
+**Request Body:**
+- `sessionId` (string, required): Game session ID from start endpoint
+- `userSelections` (number[], required): Array of selected square indices
+
+**Response (Correct Answer):** `200 OK`
+```json
+{
+  "gameOver": false,
+  "score": 1,
+  "lives": 3,
+  "round": 2,
+  "visualMemoryState": {
+    "gridSize": 3,
+    "targetCount": 2,
+    "targetPositions": [0, 5],
+    "userSelections": [],
+    "presentationTime": 2000,
+    "retentionDelay": 1000
+  },
+  "previousTargets": [1, 4],
+  "isCorrect": true
+}
+```
+
+**Response (Incorrect Answer):** `200 OK`
+```json
+{
+  "gameOver": false,
+  "score": 0,
+  "lives": 2,
+  "round": 1,
+  "visualMemoryState": {
+    "gridSize": 3,
+    "targetCount": 2,
+    "targetPositions": [2, 7],
+    "userSelections": [],
+    "presentationTime": 2000,
+    "retentionDelay": 1000
+  },
+  "previousTargets": [1, 4],
+  "isCorrect": false
+}
+```
+
+**Response (Game Over):** `200 OK`
+```json
+{
+  "gameOver": true,
+  "score": 5,
+  "lives": 0,
+  "round": 6,
+  "previousTargets": [1, 4],
+  "isCorrect": false,
+  "message": "Spiel vorbei! Du hast 5 Runden geschafft!"
+}
+```
+
+**Response Fields:**
+- `gameOver` (boolean): True if game ended (lives reached 0)
+- `score` (number): Current score
+- `lives` (number): Remaining lives
+- `round` (number): Current round number
+- `visualMemoryState` (object, optional): Next round's game state (not present if game over)
+- `previousTargets` (number[]): **CRITICAL** - The actual target positions from the round just played (used for feedback display)
+- `isCorrect` (boolean): Whether the answer was correct
+- `message` (string, optional): End game message
+
+**Important Notes:**
+- `previousTargets` is essential for displaying correct feedback to the user
+- `visualMemoryState.targetPositions` contains the NEW positions for the NEXT round
+- The UI must use `previousTargets` when showing feedback, not `targetPositions`
+
+**Errors:**
+
+**400 Bad Request** - Missing fields
+```json
+{
+  "error": "Missing sessionId or userSelections"
+}
+```
+
+**500 Internal Server Error** - Invalid session
+```json
+{
+  "error": "Failed to submit answer"
+}
+```
+
+**File:** `src/routes/api/game/visual-memory/answer/+server.ts`
+
+---
+
+### GET /game/visual-memory/stats
+
+Get player statistics for visual memory game.
+
+**Endpoint:** `/api/game/visual-memory/stats`  
+**Method:** `GET`  
+**Authentication:** None
+
+**Request:**
+```http
+GET /api/game/visual-memory/stats?userId=507f1f77bcf86cd799439011&difficulty=easy HTTP/1.1
+```
+
+**Query Parameters:**
+- `userId` (string, required): User's MongoDB ObjectId
+- `difficulty` (string, optional): Filter by "easy" or "hard"
+
+**Response (With Difficulty):** `200 OK`
+```json
+{
+  "totalGames": 10,
+  "highScore": 8,
+  "averageScore": 5,
+  "lastPlayed": "2025-01-03T15:30:00.000Z"
+}
+```
+
+**Response (Without Difficulty):** `200 OK`
+```json
+{
+  "easy": {
+    "totalGames": 10,
+    "highScore": 8,
+    "averageScore": 5,
+    "lastPlayed": "2025-01-03T15:30:00.000Z"
+  },
+  "hard": {
+    "totalGames": 5,
+    "highScore": 6,
+    "averageScore": 4,
+    "lastPlayed": "2025-01-03T14:20:00.000Z"
+  }
+}
+```
+
+**Response Fields:**
+- `totalGames` (number): Number of completed games
+- `highScore` (number): Best score achieved
+- `averageScore` (number): Average score (rounded)
+- `lastPlayed` (Date, optional): When last game ended
+
+**Errors:**
+
+**400 Bad Request** - Missing userId
+```json
+{
+  "error": "Missing userId"
+}
+```
+
+**File:** `src/routes/api/game/visual-memory/stats/+server.ts`
+
+---
+
 ## Future Endpoints
 
 ### Planned (Not Yet Implemented)
@@ -614,9 +878,13 @@ Each endpoint:
 ### Service Layer
 
 Game endpoints use:
-- `GameEngine` for game state management
-- `WordService` for word selection
-- `GameSessionRepository` for persistence
+- **Verbal Memory:**
+  - `GameEngine` for game state management
+  - `WordService` for word selection
+  - `GameSessionRepository` for persistence
+- **Visual Memory:**
+  - `VisualMemoryEngine` for game state management
+  - `GameSessionRepository` for persistence
 
 ### Type Safety
 

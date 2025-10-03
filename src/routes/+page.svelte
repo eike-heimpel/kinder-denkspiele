@@ -41,10 +41,13 @@
         selectedUser = user;
     }
 
-    function startGame(difficulty: "easy" | "hard") {
+    function startGame(
+        gameType: "verbal-memory" | "visual-memory",
+        difficulty: "easy" | "hard",
+    ) {
         if (!selectedUser) return;
         goto(
-            `/game/verbal-memory?userId=${selectedUser._id}&difficulty=${difficulty}`,
+            `/game/${gameType}?userId=${selectedUser._id}&difficulty=${difficulty}`,
         );
     }
 </script>
@@ -161,7 +164,7 @@
                         <Button
                             variant="success"
                             size="lg"
-                            onclick={() => startGame("easy")}
+                            onclick={() => startGame("verbal-memory", "easy")}
                         >
                             <div class="flex items-center gap-2">
                                 <span class="text-3xl">🟢</span>
@@ -171,7 +174,45 @@
                         <Button
                             variant="danger"
                             size="lg"
-                            onclick={() => startGame("hard")}
+                            onclick={() => startGame("verbal-memory", "hard")}
+                        >
+                            <div class="flex items-center gap-2">
+                                <span class="text-3xl">🔴</span>
+                                <span>Schwer</span>
+                            </div>
+                        </Button>
+                    </div>
+                </div>
+
+                <div
+                    class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-5 mb-4 border-4 border-blue-200 hover:border-blue-300 transition-all duration-300"
+                >
+                    <div class="text-center mb-4">
+                        <span class="text-4xl mb-2 inline-block">🎯</span>
+                        <h3 class="text-2xl font-black text-blue-700 mb-2">
+                            Visuelles Gedächtnis
+                        </h3>
+                        <p class="text-base text-gray-700 font-medium">
+                            Merke dir die Position der blauen Quadrate und finde
+                            sie wieder!
+                        </p>
+                    </div>
+
+                    <div class="flex gap-4 justify-center flex-wrap">
+                        <Button
+                            variant="success"
+                            size="lg"
+                            onclick={() => startGame("visual-memory", "easy")}
+                        >
+                            <div class="flex items-center gap-2">
+                                <span class="text-3xl">🟢</span>
+                                <span>Einfach</span>
+                            </div>
+                        </Button>
+                        <Button
+                            variant="danger"
+                            size="lg"
+                            onclick={() => startGame("visual-memory", "hard")}
                         >
                             <div class="flex items-center gap-2">
                                 <span class="text-3xl">🔴</span>
@@ -192,7 +233,8 @@
                     <Button
                         variant="primary"
                         size="md"
-                        onclick={() => goto(`/stats/${selectedUser._id}`)}
+                        onclick={() =>
+                            selectedUser && goto(`/stats/${selectedUser._id}`)}
                     >
                         Statistiken ansehen
                     </Button>

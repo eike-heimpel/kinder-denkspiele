@@ -14,7 +14,7 @@ This is the **entry point** for AI agents working on this codebase. Read this fi
 - **Target Users:** Children aged 5-8 years
 - **Language:** German
 - **Deployment:** Local server only (no authentication needed)
-- **Current State:** MVP with one game (Verbal Memory)
+- **Current State:** MVP with two games (Verbal Memory, Visual Memory)
 - **Architecture:** Layered, decoupled, extensible
 
 ---
@@ -537,18 +537,20 @@ git commit -m "Clear description of what and why"
 ## 🎯 Project Goals
 
 ### Current State (MVP)
-- ✅ One game (Verbal Memory)
+- ✅ Two games:
+  - **Verbal Memory** (145 German words)
+  - **Visual Memory** (3x3 or 4x4 grid, science-backed working memory training)
 - ✅ User management
-- ✅ Two difficulty levels
-- ✅ 145 German words
-- ✅ Score tracking
-- ✅ Historical stats page
-- ✅ No consecutive duplicate words
+- ✅ Two difficulty levels (ages 5-6 and 7-8)
+- ✅ Score tracking per game
+- ✅ Historical stats page (supports all games)
+- ✅ Tablet-optimized UI
 - ✅ Round counter
 - ✅ MongoDB persistence
-- ✅ Unit tests (32 tests, 31 passing)
+- ✅ Unit tests (32 tests for Verbal Memory, 31 passing)
   - GameEngine: 12 tests
   - WordService: 20 tests
+- ✅ Manual testing with Playwright for Visual Memory
 
 ### Future Expansion
 - [ ] More games (reaction time, number memory, etc.)

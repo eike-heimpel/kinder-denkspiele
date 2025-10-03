@@ -1,6 +1,6 @@
 export type DifficultyLevel = 'easy' | 'hard';
 
-export type GameType = 'verbal-memory';
+export type GameType = 'verbal-memory' | 'visual-memory';
 
 export interface User {
     _id?: string;
@@ -16,22 +16,28 @@ export interface GameSession {
     score: number;
     lives: number;
     round: number;
-    wordsShown: string[];
-    seenWords: Set<string>;
-    currentWord: string | null;
-    previousWord: string | null;
-    isCurrentWordNew: boolean;
+
+    // Verbal memory specific (optional, only for verbal-memory games)
+    wordsShown?: string[];
+    seenWords?: Set<string>;
+    currentWord?: string | null;
+    previousWord?: string | null;
+    isCurrentWordNew?: boolean;
+
+    // Visual memory specific (optional, only for visual-memory games)
+    visualMemoryState?: VisualMemoryGameState;
+
     isActive: boolean;
     startedAt: Date;
     endedAt?: Date;
 }
 
 export interface GameSessionDocument extends Omit<GameSession, 'seenWords'> {
-    seenWords: string[];
-    currentWord: string | null;
-    previousWord: string | null;
-    isCurrentWordNew: boolean;
-    round: number;
+    seenWords?: string[];
+    currentWord?: string | null;
+    previousWord?: string | null;
+    isCurrentWordNew?: boolean;
+    visualMemoryState?: VisualMemoryGameState;
 }
 
 export interface GameStats {
@@ -44,4 +50,21 @@ export interface GameStats {
 export interface WordPool {
     easy: string[];
     hard: string[];
+}
+
+export interface VisualMemoryGameState {
+    gridSize: number;
+    targetCount: number;
+    targetPositions: number[];
+    userSelections: number[];
+    presentationTime: number;
+    retentionDelay: number;
+}
+
+export interface VisualMemoryDifficultyConfig {
+    gridSize: number;
+    startingTargets: number;
+    maxTargets: number;
+    presentationTime: number;
+    retentionDelay: number;
 }

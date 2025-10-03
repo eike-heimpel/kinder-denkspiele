@@ -10,7 +10,7 @@ export class GameSessionRepository {
     async create(session: Omit<GameSession, '_id'>): Promise<GameSession> {
         const doc: Omit<GameSessionDocument, '_id'> = {
             ...session,
-            seenWords: Array.from(session.seenWords)
+            seenWords: session.seenWords ? Array.from(session.seenWords) : undefined
         };
 
         const result = await this.getCollection().insertOne(doc);
@@ -24,6 +24,10 @@ export class GameSessionRepository {
         const { ObjectId } = await import('mongodb');
         const updateDoc: any = { ...updates };
 
+        // Remove _id from updates to avoid MongoDB errors
+        delete updateDoc._id;
+
+        // Convert Set to Array for MongoDB
         if (updates.seenWords) {
             updateDoc.seenWords = Array.from(updates.seenWords);
         }
@@ -43,7 +47,7 @@ export class GameSessionRepository {
         return {
             ...doc,
             _id: doc._id?.toString(),
-            seenWords: new Set(doc.seenWords)
+            seenWords: doc.seenWords ? new Set(doc.seenWords) : undefined
         };
     }
 
@@ -59,7 +63,7 @@ export class GameSessionRepository {
         return {
             ...doc,
             _id: doc._id?.toString(),
-            seenWords: new Set(doc.seenWords)
+            seenWords: doc.seenWords ? new Set(doc.seenWords) : undefined
         };
     }
 

@@ -8,37 +8,50 @@
 
     let userId = $state("");
     let userName = $state("");
-    let easyStats = $state<GameStats | null>(null);
-    let hardStats = $state<GameStats | null>(null);
+    let verbalEasyStats = $state<GameStats | null>(null);
+    let verbalHardStats = $state<GameStats | null>(null);
+    let visualEasyStats = $state<GameStats | null>(null);
+    let visualHardStats = $state<GameStats | null>(null);
     let loading = $state(true);
 
     onMount(async () => {
-        userId = $page.params.userId;
+        userId = $page.params.userId || "";
+        if (!userId) {
+            goto("/");
+            return;
+        }
         await loadStats();
     });
 
     async function loadStats() {
         loading = true;
 
-        // Load user info
         const userResponse = await fetch(`/api/users/${userId}`);
         if (userResponse.ok) {
             const user = await userResponse.json();
             userName = user.name;
         }
 
-        // Load stats for both difficulties
-        const [easyResponse, hardResponse] = await Promise.all([
-            fetch(
-                `/api/game/verbal-memory/stats?userId=${userId}&difficulty=easy`,
-            ),
-            fetch(
-                `/api/game/verbal-memory/stats?userId=${userId}&difficulty=hard`,
-            ),
-        ]);
+        const [verbalEasy, verbalHard, visualEasy, visualHard] =
+            await Promise.all([
+                fetch(
+                    `/api/game/verbal-memory/stats?userId=${userId}&difficulty=easy`,
+                ),
+                fetch(
+                    `/api/game/verbal-memory/stats?userId=${userId}&difficulty=hard`,
+                ),
+                fetch(
+                    `/api/game/visual-memory/stats?userId=${userId}&difficulty=easy`,
+                ),
+                fetch(
+                    `/api/game/visual-memory/stats?userId=${userId}&difficulty=hard`,
+                ),
+            ]);
 
-        if (easyResponse.ok) easyStats = await easyResponse.json();
-        if (hardResponse.ok) hardStats = await hardResponse.json();
+        if (verbalEasy.ok) verbalEasyStats = await verbalEasy.json();
+        if (verbalHard.ok) verbalHardStats = await verbalHard.json();
+        if (visualEasy.ok) visualEasyStats = await visualEasy.json();
+        if (visualHard.ok) visualHardStats = await visualHard.json();
 
         loading = false;
     }
@@ -95,7 +108,7 @@
                                 Einfach
                             </div>
 
-                            {#if easyStats && easyStats.totalGames > 0}
+                            {#if verbalEasyStats && verbalEasyStats.totalGames > 0}
                                 <div class="space-y-2">
                                     <div class="flex justify-between items-end">
                                         <span class="text-sm text-gray-600"
@@ -103,7 +116,7 @@
                                         >
                                         <span
                                             class="text-3xl font-black text-green-700"
-                                            >{easyStats.highScore}</span
+                                            >{verbalEasyStats.highScore}</span
                                         >
                                     </div>
                                     <div class="flex justify-between">
@@ -112,7 +125,7 @@
                                         >
                                         <span
                                             class="text-lg font-bold text-gray-700"
-                                            >{easyStats.averageScore}</span
+                                            >{verbalEasyStats.averageScore}</span
                                         >
                                     </div>
                                     <div class="flex justify-between">
@@ -121,7 +134,7 @@
                                         >
                                         <span
                                             class="text-lg font-bold text-gray-700"
-                                            >{easyStats.totalGames}</span
+                                            >{verbalEasyStats.totalGames}</span
                                         >
                                     </div>
                                     <div class="flex justify-between">
@@ -131,7 +144,7 @@
                                         <span
                                             class="text-sm font-medium text-gray-600"
                                             >{formatDate(
-                                                easyStats.lastPlayed,
+                                                verbalEasyStats.lastPlayed,
                                             )}</span
                                         >
                                     </div>
@@ -153,7 +166,7 @@
                                 Schwer
                             </div>
 
-                            {#if hardStats && hardStats.totalGames > 0}
+                            {#if verbalHardStats && verbalHardStats.totalGames > 0}
                                 <div class="space-y-2">
                                     <div class="flex justify-between items-end">
                                         <span class="text-sm text-gray-600"
@@ -161,7 +174,7 @@
                                         >
                                         <span
                                             class="text-3xl font-black text-red-700"
-                                            >{hardStats.highScore}</span
+                                            >{verbalHardStats.highScore}</span
                                         >
                                     </div>
                                     <div class="flex justify-between">
@@ -170,7 +183,7 @@
                                         >
                                         <span
                                             class="text-lg font-bold text-gray-700"
-                                            >{hardStats.averageScore}</span
+                                            >{verbalHardStats.averageScore}</span
                                         >
                                     </div>
                                     <div class="flex justify-between">
@@ -179,7 +192,7 @@
                                         >
                                         <span
                                             class="text-lg font-bold text-gray-700"
-                                            >{hardStats.totalGames}</span
+                                            >{verbalHardStats.totalGames}</span
                                         >
                                     </div>
                                     <div class="flex justify-between">
@@ -189,7 +202,7 @@
                                         <span
                                             class="text-sm font-medium text-gray-600"
                                             >{formatDate(
-                                                hardStats.lastPlayed,
+                                                verbalHardStats.lastPlayed,
                                             )}</span
                                         >
                                     </div>
@@ -203,7 +216,130 @@
                     </div>
                 </Card>
 
-                <!-- Future games will go here -->
+                <!-- Visual Memory Stats -->
+                <Card>
+                    <h2 class="text-2xl font-black text-gray-800 mb-4">
+                        Visuelles Gedächtnis
+                    </h2>
+
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <!-- Easy Stats -->
+                        <div
+                            class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border-2 border-green-200"
+                        >
+                            <div
+                                class="text-sm font-bold text-green-700 uppercase tracking-wider mb-3"
+                            >
+                                Einfach
+                            </div>
+
+                            {#if visualEasyStats && visualEasyStats.totalGames > 0}
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-end">
+                                        <span class="text-sm text-gray-600"
+                                            >Höchste Punktzahl</span
+                                        >
+                                        <span
+                                            class="text-3xl font-black text-green-700"
+                                            >{visualEasyStats.highScore}</span
+                                        >
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-sm text-gray-600"
+                                            >Durchschnitt</span
+                                        >
+                                        <span
+                                            class="text-lg font-bold text-gray-700"
+                                            >{visualEasyStats.averageScore}</span
+                                        >
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-sm text-gray-600"
+                                            >Spiele gespielt</span
+                                        >
+                                        <span
+                                            class="text-lg font-bold text-gray-700"
+                                            >{visualEasyStats.totalGames}</span
+                                        >
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-sm text-gray-600"
+                                            >Zuletzt gespielt</span
+                                        >
+                                        <span
+                                            class="text-sm font-medium text-gray-600"
+                                            >{formatDate(
+                                                visualEasyStats.lastPlayed,
+                                            )}</span
+                                        >
+                                    </div>
+                                </div>
+                            {:else}
+                                <p class="text-gray-500 text-center py-4">
+                                    Noch keine Spiele
+                                </p>
+                            {/if}
+                        </div>
+
+                        <!-- Hard Stats -->
+                        <div
+                            class="bg-gradient-to-br from-red-50 to-rose-50 rounded-xl p-4 border-2 border-red-200"
+                        >
+                            <div
+                                class="text-sm font-bold text-red-700 uppercase tracking-wider mb-3"
+                            >
+                                Schwer
+                            </div>
+
+                            {#if visualHardStats && visualHardStats.totalGames > 0}
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-end">
+                                        <span class="text-sm text-gray-600"
+                                            >Höchste Punktzahl</span
+                                        >
+                                        <span
+                                            class="text-3xl font-black text-red-700"
+                                            >{visualHardStats.highScore}</span
+                                        >
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-sm text-gray-600"
+                                            >Durchschnitt</span
+                                        >
+                                        <span
+                                            class="text-lg font-bold text-gray-700"
+                                            >{visualHardStats.averageScore}</span
+                                        >
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-sm text-gray-600"
+                                            >Spiele gespielt</span
+                                        >
+                                        <span
+                                            class="text-lg font-bold text-gray-700"
+                                            >{visualHardStats.totalGames}</span
+                                        >
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-sm text-gray-600"
+                                            >Zuletzt gespielt</span
+                                        >
+                                        <span
+                                            class="text-sm font-medium text-gray-600"
+                                            >{formatDate(
+                                                visualHardStats.lastPlayed,
+                                            )}</span
+                                        >
+                                    </div>
+                                </div>
+                            {:else}
+                                <p class="text-gray-500 text-center py-4">
+                                    Noch keine Spiele
+                                </p>
+                            {/if}
+                        </div>
+                    </div>
+                </Card>
             </div>
 
             <div class="text-center mt-4">
@@ -233,4 +369,3 @@
         animation: gradient 15s ease infinite;
     }
 </style>
-
