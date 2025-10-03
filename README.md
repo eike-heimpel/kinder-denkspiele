@@ -2,6 +2,23 @@
 
 Ein kinderfreundliches deutsches Spiel basierend auf Human Benchmark, entwickelt mit SvelteKit und Svelte 5.
 
+---
+
+## 🤖 For AI Agents
+
+**START HERE:** [AI-GUIDE.md](./AI-GUIDE.md)
+
+Complete documentation for AI agents includes:
+- [AI-GUIDE.md](./AI-GUIDE.md) - Main entry point and navigation
+- [TECH-STACK.md](./TECH-STACK.md) - Technical specifications
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - System design
+- [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) - Common issues
+- [DECISIONS.md](./DECISIONS.md) - Why we made specific choices
+- [API-REFERENCE.md](./API-REFERENCE.md) - Complete API documentation
+- [THEMING.md](./THEMING.md) - UI customization guide
+
+---
+
 ## 🎮 Features
 
 - **Verbales Gedächtnis**: Teste dein Gedächtnis mit deutschen Wörtern
