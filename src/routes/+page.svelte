@@ -42,7 +42,7 @@
     }
 
     function startGame(
-        gameType: "verbal-memory" | "visual-memory",
+        gameType: "verbal-memory" | "visual-memory" | "reaction-time",
         difficulty: "easy" | "hard",
     ) {
         if (!selectedUser) return;
@@ -213,6 +213,44 @@
                             variant="danger"
                             size="lg"
                             onclick={() => startGame("visual-memory", "hard")}
+                        >
+                            <div class="flex items-center gap-2">
+                                <span class="text-3xl">🔴</span>
+                                <span>Schwer</span>
+                            </div>
+                        </Button>
+                    </div>
+                </div>
+
+                <div
+                    class="bg-gradient-to-br from-orange-50 to-red-50 rounded-3xl p-5 mb-4 border-4 border-orange-200 hover:border-orange-300 transition-all duration-300"
+                >
+                    <div class="text-center mb-4">
+                        <span class="text-4xl mb-2 inline-block">⚡</span>
+                        <h3 class="text-2xl font-black text-orange-700 mb-2">
+                            Reaktionszeit
+                        </h3>
+                        <p class="text-base text-gray-700 font-medium">
+                            Wie schnell kannst du reagieren? Teste deine
+                            Reaktionsgeschwindigkeit!
+                        </p>
+                    </div>
+
+                    <div class="flex gap-4 justify-center flex-wrap">
+                        <Button
+                            variant="success"
+                            size="lg"
+                            onclick={() => startGame("reaction-time", "easy")}
+                        >
+                            <div class="flex items-center gap-2">
+                                <span class="text-3xl">🟢</span>
+                                <span>Einfach</span>
+                            </div>
+                        </Button>
+                        <Button
+                            variant="danger"
+                            size="lg"
+                            onclick={() => startGame("reaction-time", "hard")}
                         >
                             <div class="flex items-center gap-2">
                                 <span class="text-3xl">🔴</span>

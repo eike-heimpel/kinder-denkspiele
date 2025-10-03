@@ -537,9 +537,10 @@ git commit -m "Clear description of what and why"
 ## 🎯 Project Goals
 
 ### Current State (MVP)
-- ✅ Two games:
+- ✅ Three games:
   - **Verbal Memory** (145 German words)
   - **Visual Memory** (3x3 or 4x4 grid, science-backed working memory training)
+  - **Reaction Time** (5 rounds, measures processing speed)
 - ✅ User management
 - ✅ Two difficulty levels (ages 5-6 and 7-8)
 - ✅ Score tracking per game

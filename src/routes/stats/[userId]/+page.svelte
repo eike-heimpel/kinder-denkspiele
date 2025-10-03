@@ -12,6 +12,8 @@
     let verbalHardStats = $state<GameStats | null>(null);
     let visualEasyStats = $state<GameStats | null>(null);
     let visualHardStats = $state<GameStats | null>(null);
+    let reactionEasyStats = $state<GameStats | null>(null);
+    let reactionHardStats = $state<GameStats | null>(null);
     let loading = $state(true);
 
     onMount(async () => {
@@ -32,26 +34,34 @@
             userName = user.name;
         }
 
-        const [verbalEasy, verbalHard, visualEasy, visualHard] =
+        const [verbalEasy, verbalHard, visualEasy, visualHard, reactionEasy, reactionHard] =
             await Promise.all([
-                fetch(
-                    `/api/game/verbal-memory/stats?userId=${userId}&difficulty=easy`,
-                ),
-                fetch(
-                    `/api/game/verbal-memory/stats?userId=${userId}&difficulty=hard`,
-                ),
+            fetch(
+                `/api/game/verbal-memory/stats?userId=${userId}&difficulty=easy`,
+            ),
+            fetch(
+                `/api/game/verbal-memory/stats?userId=${userId}&difficulty=hard`,
+            ),
                 fetch(
                     `/api/game/visual-memory/stats?userId=${userId}&difficulty=easy`,
                 ),
                 fetch(
                     `/api/game/visual-memory/stats?userId=${userId}&difficulty=hard`,
                 ),
-            ]);
+                fetch(
+                    `/api/game/reaction-time/stats?userId=${userId}&difficulty=easy`,
+                ),
+                fetch(
+                    `/api/game/reaction-time/stats?userId=${userId}&difficulty=hard`,
+            ),
+        ]);
 
         if (verbalEasy.ok) verbalEasyStats = await verbalEasy.json();
         if (verbalHard.ok) verbalHardStats = await verbalHard.json();
         if (visualEasy.ok) visualEasyStats = await visualEasy.json();
         if (visualHard.ok) visualHardStats = await visualHard.json();
+        if (reactionEasy.ok) reactionEasyStats = await reactionEasy.json();
+        if (reactionHard.ok) reactionHardStats = await reactionHard.json();
 
         loading = false;
     }
@@ -328,6 +338,131 @@
                                             class="text-sm font-medium text-gray-600"
                                             >{formatDate(
                                                 visualHardStats.lastPlayed,
+                                            )}</span
+                                        >
+                                    </div>
+                                </div>
+                            {:else}
+                                <p class="text-gray-500 text-center py-4">
+                                    Noch keine Spiele
+                                </p>
+                            {/if}
+                        </div>
+                    </div>
+                </Card>
+
+                <!-- Reaction Time Stats -->
+                <Card>
+                    <h2 class="text-2xl font-black text-gray-800 mb-4">
+                        Reaktionszeit
+                    </h2>
+
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <!-- Easy Stats -->
+                        <div
+                            class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border-2 border-green-200"
+                        >
+                            <div
+                                class="text-sm font-bold text-green-700 uppercase tracking-wider mb-3"
+                            >
+                                Einfach
+                            </div>
+
+                            {#if reactionEasyStats && reactionEasyStats.totalGames > 0}
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-end">
+                                        <span class="text-sm text-gray-600"
+                                            >Beste Zeit</span
+                                        >
+                                        <span
+                                            class="text-3xl font-black text-green-700"
+                                            >{reactionEasyStats.highScore}ms</span
+                                        >
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-sm text-gray-600"
+                                            >Durchschnitt</span
+                                        >
+                                        <span
+                                            class="text-lg font-bold text-gray-700"
+                                            >{reactionEasyStats.averageScore}ms</span
+                                        >
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-sm text-gray-600"
+                                            >Spiele gespielt</span
+                                        >
+                                        <span
+                                            class="text-lg font-bold text-gray-700"
+                                            >{reactionEasyStats.totalGames}</span
+                                        >
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-sm text-gray-600"
+                                            >Zuletzt gespielt</span
+                                        >
+                                        <span
+                                            class="text-sm font-medium text-gray-600"
+                                            >{formatDate(
+                                                reactionEasyStats.lastPlayed,
+                                            )}</span
+                                        >
+                                    </div>
+                                </div>
+                            {:else}
+                                <p class="text-gray-500 text-center py-4">
+                                    Noch keine Spiele
+                                </p>
+                            {/if}
+                        </div>
+
+                        <!-- Hard Stats -->
+                        <div
+                            class="bg-gradient-to-br from-red-50 to-rose-50 rounded-xl p-4 border-2 border-red-200"
+                        >
+                            <div
+                                class="text-sm font-bold text-red-700 uppercase tracking-wider mb-3"
+                            >
+                                Schwer
+                            </div>
+
+                            {#if reactionHardStats && reactionHardStats.totalGames > 0}
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-end">
+                                        <span class="text-sm text-gray-600"
+                                            >Beste Zeit</span
+                                        >
+                                        <span
+                                            class="text-3xl font-black text-red-700"
+                                            >{reactionHardStats.highScore}ms</span
+                                        >
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-sm text-gray-600"
+                                            >Durchschnitt</span
+                                        >
+                                        <span
+                                            class="text-lg font-bold text-gray-700"
+                                            >{reactionHardStats.averageScore}ms</span
+                                        >
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-sm text-gray-600"
+                                            >Spiele gespielt</span
+                                        >
+                                        <span
+                                            class="text-lg font-bold text-gray-700"
+                                            >{reactionHardStats.totalGames}</span
+                                        >
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-sm text-gray-600"
+                                            >Zuletzt gespielt</span
+                                        >
+                                        <span
+                                            class="text-sm font-medium text-gray-600"
+                                            >{formatDate(
+                                                reactionHardStats.lastPlayed,
                                             )}</span
                                         >
                                     </div>

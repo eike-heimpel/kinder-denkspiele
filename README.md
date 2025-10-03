@@ -24,6 +24,7 @@ Complete documentation for AI agents includes:
 ### Spiele
 - **Verbales Gedächtnis** 🗣️: Teste dein Gedächtnis mit deutschen Wörtern
 - **Visuelles Gedächtnis** 🎯: Merke dir die Position von farbigen Quadraten (3x3 oder 4x4 Grid)
+- **Reaktionszeit** ⚡: Teste deine Reaktionsgeschwindigkeit mit dem grünen/roten Bildschirm-Test
 
 ### Allgemein
 - **Zwei Schwierigkeitsgrade**: Einfach (für 5-6 Jahre) und Schwer (für 7-8 Jahre)

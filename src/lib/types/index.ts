@@ -1,6 +1,6 @@
 export type DifficultyLevel = 'easy' | 'hard';
 
-export type GameType = 'verbal-memory' | 'visual-memory';
+export type GameType = 'verbal-memory' | 'visual-memory' | 'reaction-time';
 
 export interface User {
     _id?: string;
@@ -26,7 +26,10 @@ export interface GameSession {
 
     // Visual memory specific (optional, only for visual-memory games)
     visualMemoryState?: VisualMemoryGameState;
-
+    
+    // Reaction time specific (optional, only for reaction-time games)
+    reactionTimeState?: ReactionTimeGameState;
+    
     isActive: boolean;
     startedAt: Date;
     endedAt?: Date;
@@ -38,6 +41,7 @@ export interface GameSessionDocument extends Omit<GameSession, 'seenWords'> {
     previousWord?: string | null;
     isCurrentWordNew?: boolean;
     visualMemoryState?: VisualMemoryGameState;
+    reactionTimeState?: ReactionTimeGameState;
 }
 
 export interface GameStats {
@@ -67,4 +71,19 @@ export interface VisualMemoryDifficultyConfig {
     maxTargets: number;
     presentationTime: number;
     retentionDelay: number;
+}
+
+export interface ReactionTimeGameState {
+    currentRound: number;
+    totalRounds: number;
+    reactionTimes: number[];
+    minDelay: number;
+    maxDelay: number;
+    falseStarts: number;
+}
+
+export interface ReactionTimeDifficultyConfig {
+    totalRounds: number;
+    minDelay: number;
+    maxDelay: number;
 }
