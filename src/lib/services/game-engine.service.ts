@@ -43,6 +43,8 @@ export class GameEngine {
             lives: 3,
             wordsShown: [],
             seenWords: new Set(),
+            currentWord: null,
+            isCurrentWordNew: false,
             isActive: true,
             startedAt: new Date()
         });
@@ -50,7 +52,7 @@ export class GameEngine {
         return this.nextWord();
     }
 
-    async loadGame(sessionId: string): Promise<GameState> {
+    async loadGame(sessionId: string): Promise<void> {
         this.session = await this.repository.findById(sessionId);
 
         if (!this.session) {
@@ -58,10 +60,12 @@ export class GameEngine {
         }
 
         this.wordService = new WordService(this.session.difficulty);
-        return this.nextWord();
+        // Restore the current word state from the session
+        this.currentWord = this.session.currentWord;
+        this.isCurrentWordNew = this.session.isCurrentWordNew;
     }
 
-    private nextWord(): GameState {
+    private async nextWord(): Promise<GameState> {
         if (!this.session || !this.session.isActive) {
             return this.createGameState(null, false, null, true, 'Game is not active');
         }
@@ -78,6 +82,15 @@ export class GameEngine {
             this.currentWord = this.wordService.getRandomSeenWord(this.session.seenWords);
             this.isCurrentWordNew = false;
         }
+
+        // Save the current word state to the session
+        this.session.currentWord = this.currentWord;
+        this.session.isCurrentWordNew = this.isCurrentWordNew;
+
+        await this.repository.update(this.session._id!, {
+            currentWord: this.currentWord,
+            isCurrentWordNew: this.isCurrentWordNew
+        });
 
         return this.createGameState(this.currentWord, this.isCurrentWordNew, null, false, null);
     }

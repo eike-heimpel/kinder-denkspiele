@@ -19,11 +19,21 @@ vi.mock('$lib/repositories/game-session.repository', () => ({
             const session = this.sessions.get(id);
             if (session) {
                 Object.assign(session, updates);
+                // Also update Set if seenWords array is provided
+                if (updates.seenWords && Array.isArray(updates.seenWords)) {
+                    session.seenWords = new Set(updates.seenWords);
+                }
             }
         }
 
         async findById(id: string) {
-            return this.sessions.get(id) || null;
+            const session = this.sessions.get(id);
+            if (!session) return null;
+            // Return a copy to avoid direct mutations
+            return {
+                ...session,
+                seenWords: new Set(session.seenWords)
+            };
         }
     }
 }));

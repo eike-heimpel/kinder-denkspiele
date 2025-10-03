@@ -17,6 +17,8 @@ export interface GameSession {
     lives: number;
     wordsShown: string[];
     seenWords: Set<string>;
+    currentWord: string | null;
+    isCurrentWordNew: boolean;
     isActive: boolean;
     startedAt: Date;
     endedAt?: Date;
@@ -24,6 +26,8 @@ export interface GameSession {
 
 export interface GameSessionDocument extends Omit<GameSession, 'seenWords'> {
     seenWords: string[];
+    currentWord: string | null;
+    isCurrentWordNew: boolean;
 }
 
 export interface GameStats {

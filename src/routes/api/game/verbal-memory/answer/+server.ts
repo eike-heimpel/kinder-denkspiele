@@ -17,8 +17,8 @@ export const POST: RequestHandler = async ({ request }) => {
     }
 
     const engine = new GameEngine();
-    await engine.loadGame(sessionId);
-    const gameState = await engine.submitAnswer(answer);
+    await engine.loadGame(sessionId); // Loads session and restores current word state
+    const gameState = await engine.submitAnswer(answer); // Validates against stored word
 
     return json({
         currentWord: gameState.currentWord,
