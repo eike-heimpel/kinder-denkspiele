@@ -423,21 +423,38 @@ try {
 
 ## Testing Decisions
 
-### No Automated Tests in MVP
+### Unit Tests for Critical Logic
 
-**Decision:** No unit tests or E2E tests yet
+**Decision:** Add unit tests for GameEngine and WordService
 
 **Why:**
-- **MVP:** Focus on features first
-- **Rapid Iteration:** Requirements changing
-- **Manual Testing:** Sufficient for MVP
-- **Future:** Add tests before production
+- **Critical Logic:** These services contain core game mechanics
+- **Easy to Test:** No database or HTTP dependencies needed
+- **Fast Feedback:** Tests run in milliseconds
+- **Bug Prevention:** Caught duplicate word bug with tests
+- **Confidence:** Can refactor knowing tests will catch regressions
 
-**What to Test First (Future):**
-1. GameEngine business logic
-2. WordService selection logic
-3. API endpoint contracts
-4. Critical user flows
+**What We Test:**
+1. ✅ GameEngine business logic (12 tests)
+   - Game state management
+   - Score/lives calculations
+   - Word tracking
+   - Game over conditions
+   - No consecutive duplicates
+2. ✅ WordService selection logic (20 tests)
+   - Word pool initialization
+   - Random selection with exclusions
+   - Seen word handling
+   - Edge cases (empty pools, all excluded)
+   - Randomness validation
+
+**What We Don't Test (Yet):**
+- ❌ API endpoints (would need database setup)
+- ❌ Repository layer (requires MongoDB)
+- ❌ E2E flows (would need Playwright)
+- ❌ Svelte components (would need component testing setup)
+
+**Future:** Add integration and E2E tests before production deployment
 
 ---
 

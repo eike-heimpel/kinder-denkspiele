@@ -398,12 +398,12 @@ npm run test:ui       # Visual UI
 ```
 
 **Test files:**
-- `src/lib/services/game-engine.test.ts` - GameEngine unit tests (11 tests)
+- `src/lib/services/game-engine.test.ts` - GameEngine unit tests (12 tests)
+- `src/lib/services/word.service.test.ts` - WordService unit tests (20 tests)
 
 **Coverage:**
-- Game logic (score, lives, word selection)
-- Edge cases (negative lives, game over)
-- Word tracking (seen vs. new)
+- **GameEngine:** Game logic, score, lives, word selection, edge cases, game over, no consecutive duplicates
+- **WordService:** Word pool initialization, random word selection, exclusion logic, seen word selection, randomness validation, difficulty-specific behavior
 
 ### Manual Testing Checklist
 
@@ -546,7 +546,9 @@ git commit -m "Clear description of what and why"
 - ✅ No consecutive duplicate words
 - ✅ Round counter
 - ✅ MongoDB persistence
-- ✅ Unit tests (12 tests)
+- ✅ Unit tests (32 tests, 31 passing)
+  - GameEngine: 12 tests
+  - WordService: 20 tests
 
 ### Future Expansion
 - [ ] More games (reaction time, number memory, etc.)

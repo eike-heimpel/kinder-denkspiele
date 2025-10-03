@@ -175,6 +175,21 @@ npm run dev          # Entwicklungsserver starten
 npm run build        # Produktions-Build erstellen
 npm run preview      # Produktions-Build testen
 npm run check        # TypeScript type checking
+npm test             # Unit tests ausführen
+npm run test:ui      # Tests mit UI ausführen
+```
+
+## 🧪 Tests
+
+Das Projekt enthält umfangreiche Unit-Tests für die kritische Spiellogik:
+
+- **32 Tests insgesamt** (31 passing, 1 skipped)
+- **GameEngine Tests**: 12 Tests für Spielmechanik, Punktevergabe, Leben, Wortauswahl
+- **WordService Tests**: 20 Tests für Wortauswahl, Ausschlusslogik, Zufälligkeit
+
+```bash
+npm test           # Tests ausführen
+npm test -- --watch # Watch Mode
 ```
 
 ## 📄 Lizenz
