@@ -291,8 +291,18 @@
                         <p
                             class="text-2xl font-bold text-center text-gray-700 mb-6 animate-fade-in"
                         >
-                            Behalte sie in Erinnerung... 🧠
+                            Warte kurz... 🧠
                         </p>
+                        <div class="w-full max-w-md mx-auto mb-6">
+                            <div
+                                class="h-3 bg-gray-200 rounded-full overflow-hidden"
+                            >
+                                <div
+                                    class="h-full bg-gradient-to-r from-purple-500 to-pink-500 animate-progress"
+                                    style="animation-duration: {retentionDelay}ms;"
+                                ></div>
+                            </div>
+                        </div>
                     {:else if phase === "recalling"}
                         <p
                             class="text-2xl font-bold text-center text-gray-700 mb-6 animate-fade-in"
@@ -416,5 +426,19 @@
 
     .animate-pulse {
         animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes progress {
+        from {
+            width: 0%;
+        }
+        to {
+            width: 100%;
+        }
+    }
+
+    .animate-progress {
+        animation: progress linear;
+        animation-fill-mode: forwards;
     }
 </style>

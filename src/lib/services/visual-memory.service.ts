@@ -15,14 +15,14 @@ export class VisualMemoryEngine {
             startingTargets: 2,
             maxTargets: 5,
             presentationTime: 2000,
-            retentionDelay: 1000
+            retentionDelay: 500
         },
         hard: {
             gridSize: 4,
             startingTargets: 3,
             maxTargets: 7,
             presentationTime: 1500,
-            retentionDelay: 1500
+            retentionDelay: 1000
         }
     };
 

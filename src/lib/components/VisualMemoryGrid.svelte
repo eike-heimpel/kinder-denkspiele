@@ -51,7 +51,7 @@
 </script>
 
 <div
-    class="grid gap-3 mx-auto"
+    class="grid gap-5 mx-auto"
     style="grid-template-columns: repeat({gridSize}, minmax(0, 1fr)); max-width: {gridSize *
         100}px;"
 >
