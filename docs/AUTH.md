@@ -29,14 +29,14 @@ This app uses a simple site-wide password gate to restrict access. All users sha
 Create a `.env` file in the project root:
 
 ```bash
-VITE_SITE_PASSWORD=your-secret-password-here
+GLOBA_SITE_PASSWORD=your-secret-password-here
 ```
 
 **For Vercel Deployment:**
 
 1. Go to your project settings in Vercel
 2. Navigate to "Environment Variables"
-3. Add: `VITE_SITE_PASSWORD` = `your-secret-password-here`
+3. Add: `GLOBA_SITE_PASSWORD` = `your-secret-password-here`
 4. Redeploy
 
 ### 2. Default Password

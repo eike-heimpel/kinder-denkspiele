@@ -1,6 +1,6 @@
 import { redirect, type Handle } from '@sveltejs/kit';
 
-const SITE_PASSWORD = import.meta.env.VITE_SITE_PASSWORD || 'kinderspiele2024';
+const SITE_PASSWORD = import.meta.env.GLOBA_SITE_PASSWORD || 'kinderspiele2024';
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const sessionCookie = event.cookies.get('authenticated');

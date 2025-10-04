@@ -31,18 +31,18 @@ This is the **entry point** for AI agents working on this codebase. Read this fi
 ## 📚 Documentation Map
 
 ### For Understanding the System
-1. **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Deep dive into layered architecture, data flow, design patterns
+1. **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - Deep dive into layered architecture, data flow, design patterns
 2. **[README.md](./README.md)** - Human-readable overview, setup instructions, features
-3. **[TECH-STACK.md](./TECH-STACK.md)** - Detailed tech stack info, version specifics, gotchas
+3. **[TECH-STACK.md](./docs/TECH-STACK.md)** - Detailed tech stack info, version specifics, gotchas
 
 ### For Making Changes
-4. **[THEMING.md](./THEMING.md)** - Customizing colors, animations, UI components
-5. **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** - Common issues and solutions
-6. **[DECISIONS.md](./DECISIONS.md)** - Why we made specific technical choices
+4. **[THEMING.md](./docs/THEMING.md)** - Customizing colors, animations, UI components
+5. **[TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md)** - Common issues and solutions
+6. **[DECISIONS.md](./docs/DECISIONS.md)** - Why we made specific technical choices
 
 ### For Development
-7. **[QUICKSTART.md](./QUICKSTART.md)** - Get up and running quickly
-8. **[API-REFERENCE.md](./API-REFERENCE.md)** - Complete API endpoint documentation
+7. **[QUICKSTART.md](./docs/QUICKSTART.md)** - Get up and running quickly
+8. **[API-REFERENCE.md](./docs/API-REFERENCE.md)** - Complete API endpoint documentation
 
 ---
 
@@ -53,14 +53,14 @@ This is the **entry point** for AI agents working on this codebase. Read this fi
 ### "How do I..."
 - **Add a new game** → [Common Tasks > Adding a New Game](#adding-a-new-game)
 - **Change theme colors** → [Changing Theme Colors](#changing-theme-colors)
-- **Fix Tailwind issues** → [TROUBLESHOOTING.md](./TROUBLESHOOTING.md#tailwind-not-working)
+- **Fix Tailwind issues** → [TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md#tailwind-not-working)
 - **Add/modify words** → [Modifying Word Pools](#modifying-word-pools)
-- **Test the API** → [API-REFERENCE.md](./API-REFERENCE.md#testing)
+- **Test the API** → [API-REFERENCE.md](./docs/API-REFERENCE.md#testing)
 - **Create a new component** → [src/lib/components/CLAUDE.md](./src/lib/components/CLAUDE.md)
 - **Add an API endpoint** → [src/routes/api/CLAUDE.md](./src/routes/api/CLAUDE.md)
 
 ### "Where is..."
-- **User data stored** → MongoDB via `UserRepository` ([ARCHITECTURE.md](./ARCHITECTURE.md#database-schema))
+- **User data stored** → MongoDB via `UserRepository` ([ARCHITECTURE.md](./docs/ARCHITECTURE.md#database-schema))
 - **Game logic** → `src/lib/services/` ([src/lib/services/CLAUDE.md](./src/lib/services/CLAUDE.md))
 - **API endpoints** → `src/routes/api/` ([src/routes/api/CLAUDE.md](./src/routes/api/CLAUDE.md))
 - **UI components** → `src/lib/components/` ([src/lib/components/CLAUDE.md](./src/lib/components/CLAUDE.md))
@@ -71,7 +71,7 @@ This is the **entry point** for AI agents working on this codebase. Read this fi
 ### "What is..."
 - **The Svelte version** → Svelte 5 with runes ([Svelte 5 Runes](#svelte-5-runes))
 - **The Tailwind version** → Tailwind CSS v4 ([Tailwind CSS v4](#tailwind-css-v4))
-- **The database** → MongoDB with repositories ([ARCHITECTURE.md](./ARCHITECTURE.md#database-schema))
+- **The database** → MongoDB with repositories ([ARCHITECTURE.md](./docs/ARCHITECTURE.md#database-schema))
 - **The architecture** → Layered, decoupled ([Layered Architecture](#layered-architecture))
 - **The testing approach** → Vitest unit tests + manual Playwright ([Testing](#testing))
 
@@ -118,7 +118,7 @@ Database Layer (MongoDB)
 - ❌ DON'T: Access MongoDB directly from a component
 - ✅ DO: Component → API → Service → Repository → Database
 
-**See:** [ARCHITECTURE.md](./ARCHITECTURE.md) for complete details
+**See:** [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for complete details
 
 ---
 
@@ -168,7 +168,7 @@ This project uses **Tailwind CSS v4**, which has different syntax from v3:
 - Vite plugin configured in `vite.config.ts`
 - No `tailwind.config.js` needed for basic usage
 
-**See:** [TECH-STACK.md](./TECH-STACK.md#tailwind-v4) for details
+**See:** [TECH-STACK.md](./docs/TECH-STACK.md#tailwind-v4) for details
 
 ---
 
@@ -250,7 +250,7 @@ src/
 **Problem:** Tailwind classes not applying  
 **Cause:** Wrong import syntax or location  
 **Solution:** Must use `@import "tailwindcss";` in `src/app.css`  
-**See:** [TROUBLESHOOTING.md](./TROUBLESHOOTING.md#tailwind-not-working)
+**See:** [TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md#tailwind-not-working)
 
 ### 2. MongoDB Environment Variable
 **Problem:** "MONGODB_URI is not set" error  
@@ -268,7 +268,7 @@ src/
 **Cause:** Need Node 24+ or Node 22.12+  
 **Solution:** Use `nvm install 24 && nvm use 24`
 
-**See:** [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for more issues
+**See:** [TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) for more issues
 
 ---
 
@@ -296,7 +296,7 @@ export class NewGameEngine { ... }
 
 5. **Update home page** to show new game option
 
-**See:** [ARCHITECTURE.md](./ARCHITECTURE.md#extension-points) for details
+**See:** [ARCHITECTURE.md](./docs/ARCHITECTURE.md#extension-points) for details
 
 ---
 
@@ -332,7 +332,7 @@ export const germanWordPools: WordPool = {
 </div>
 ```
 
-**See:** [THEMING.md](./THEMING.md) for complete guide
+**See:** [THEMING.md](./docs/THEMING.md) for complete guide
 
 ---
 
@@ -586,7 +586,7 @@ git commit -m "Clear description of what and why"
 - [MongoDB Node.js Driver](https://www.mongodb.com/docs/drivers/node/)
 
 ### When You Need Help
-1. Check [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) first
+1. Check [TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) first
 2. Search this codebase for similar examples
 3. Check external docs for tech-specific issues
 4. Look at git history for context: `git log --all --full-history -- path/to/file`
@@ -650,9 +650,9 @@ git commit -m "Clear description of what and why"
 **Next Steps:**
 (only read if needed for your task!)
 
-1. Read [ARCHITECTURE.md](./ARCHITECTURE.md) for system design
-2. Read [TECH-STACK.md](./TECH-STACK.md) for tech details
-3. Run through [QUICKSTART.md](./QUICKSTART.md) to test everything
-4. Check [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) if issues arise
+1. Read [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for system design
+2. Read [TECH-STACK.md](./docs/TECH-STACK.md) for tech details
+3. Run through [QUICKSTART.md](./docs/QUICKSTART.md) to test everything
+4. Check [TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) if issues arise
 
 **Happy Coding! 🤖**

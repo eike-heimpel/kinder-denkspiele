@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { dev } from '$app/environment';
 
-const SITE_PASSWORD = import.meta.env.VITE_SITE_PASSWORD || 'kinderspiele2024';
+const SITE_PASSWORD = import.meta.env.GLOBA_SITE_PASSWORD || 'kinderspiele2024';
 
 export const POST: RequestHandler = async ({ request, cookies }) => {
 	const { password } = await request.json();
