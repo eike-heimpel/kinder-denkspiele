@@ -28,7 +28,7 @@ export interface SubmitAnswerResult {
 	finalScore?: number;
 }
 
-const PROBLEM_TYPES: ProblemType[] = ['riddle', 'pattern', 'category', 'cause-effect'];
+const PROBLEM_TYPES: ProblemType[] = ['pattern', 'category', 'comparison', 'grouping'];
 
 export class LogicLabEngine {
 	private repository: GameSessionRepository;

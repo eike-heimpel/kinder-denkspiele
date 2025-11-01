@@ -26,9 +26,10 @@ This is the **entry point** for AI agents working on this codebase. Read this fi
 ### Quick Context
 - **Target Users:** Children aged 5-8 years
 - **Language:** German
-- **Deployment:** Local server only (no authentication needed)
-- **Current State:** MVP with two games (Verbal Memory, Visual Memory)
+- **Deployment:** Local server only (password authentication)
+- **Current State:** Production with 4 games (Verbal Memory, Visual Memory, Reaction Time, Logic Lab)
 - **Architecture:** Layered, decoupled, extensible
+- **LLM Integration:** Logic Lab uses OpenRouter + Gemini 2.5 Flash for dynamic content
 
 ---
 
@@ -49,6 +50,10 @@ This is the **entry point** for AI agents working on this codebase. Read this fi
 8. **[QUICKSTART.md](./docs/QUICKSTART.md)** - Get up and running quickly
 9. **[API-REFERENCE.md](./docs/API-REFERENCE.md)** - Complete API endpoint documentation
 
+### Game-Specific Documentation
+10. **[LOGIC-LAB.md](./docs/LOGIC-LAB.md)** - LLM-powered adaptive problem-solving game (complete guide)
+11. **[LOGIC-LAB-SPEC.md](./docs/LOGIC-LAB-SPEC.md)** - Logic Lab technical specification (15 sections)
+
 ---
 
 ## 🔍 Quick Reference for AI Queries
@@ -57,6 +62,9 @@ This is the **entry point** for AI agents working on this codebase. Read this fi
 
 ### "How do I..."
 - **Add a new game** → [Common Tasks > Adding a New Game](#adding-a-new-game)
+- **Modify Logic Lab prompts** → [LOGIC-LAB.md](./docs/LOGIC-LAB.md#changing-prompt-behavior) (YAML editing, no code!)
+- **Change Logic Lab difficulty** → [LOGIC-LAB.md](./docs/LOGIC-LAB.md#adaptive-difficulty)
+- **Add new problem types** → [LOGIC-LAB.md](./docs/LOGIC-LAB.md#adding-new-problem-types)
 - **Change theme colors** → [Changing Theme Colors](#changing-theme-colors)
 - **Fix Tailwind issues** → [TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md#tailwind-not-working)
 - **Add/modify words** → [Modifying Word Pools](#modifying-word-pools)
@@ -67,6 +75,7 @@ This is the **entry point** for AI agents working on this codebase. Read this fi
 ### "Where is..."
 - **User data stored** → MongoDB via `UserRepository` ([ARCHITECTURE.md](./docs/ARCHITECTURE.md#database-schema))
 - **Game logic** → `src/lib/services/` ([src/lib/services/CLAUDE.md](./src/lib/services/CLAUDE.md))
+- **LLM prompts** → `src/lib/prompts/` (YAML files, [LOGIC-LAB.md](./docs/LOGIC-LAB.md#prompt-template-system))
 - **API endpoints** → `src/routes/api/` ([src/routes/api/CLAUDE.md](./src/routes/api/CLAUDE.md))
 - **UI components** → `src/lib/components/` ([src/lib/components/CLAUDE.md](./src/lib/components/CLAUDE.md))
 - **Type definitions** → `src/lib/types/index.ts` ([src/lib/CLAUDE.md](./src/lib/CLAUDE.md))

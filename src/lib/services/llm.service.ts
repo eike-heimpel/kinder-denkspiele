@@ -5,7 +5,7 @@ export interface GenerateProblemParams {
 	initialGuidance?: string;
 	age: number;
 	difficulty: 'easy' | 'hard';
-	problemType: 'riddle' | 'pattern' | 'category' | 'cause-effect';
+	problemType: 'pattern' | 'category' | 'comparison' | 'grouping';
 	performanceHistory: Array<{
 		question: string;
 		type: string;
@@ -18,7 +18,7 @@ export interface GenerateProblemParams {
 
 export interface Problem {
 	id: string;
-	type: 'riddle' | 'pattern' | 'category' | 'cause-effect';
+	type: 'pattern' | 'category' | 'comparison' | 'grouping';
 	question: string;
 	options: string[];
 	correctIndex: number;
@@ -48,44 +48,44 @@ interface OpenRouterResponse {
 // Fallback problems if LLM fails
 const FALLBACK_PROBLEMS: Array<Omit<Problem, 'id' | 'timestamp'>> = [
 	{
-		type: 'riddle',
-		question: 'Welches Tier macht "Wuff"?',
-		options: ['Katze', 'Hund', 'Vogel', 'Maus'],
-		correctIndex: 1,
-		explanation: 'Der Hund macht "Wuff"!',
-		difficultyLevel: 1
-	},
-	{
 		type: 'category',
-		question: 'Welches ist KEIN Tier?',
+		question: 'Welches passt NICHT zu den anderen?',
 		options: ['Hund', 'Katze', 'Baum', 'Vogel'],
 		correctIndex: 2,
-		explanation: 'Der Baum ist eine Pflanze, kein Tier.',
+		explanation: 'Der Baum ist eine Pflanze, die anderen sind Tiere!',
 		difficultyLevel: 1
 	},
 	{
 		type: 'pattern',
-		question: 'Was kommt als nächstes? 1, 2, 3, ___',
-		options: ['4', '5', '2', '1'],
+		question: 'Welche Zahl kommt als nächstes? 2, 4, 6, ___',
+		options: ['8', '7', '5', '10'],
 		correctIndex: 0,
-		explanation: 'Die Zahlen zählen hoch: 1, 2, 3, 4!',
+		explanation: 'Die Zahlen zählen in 2er-Schritten: 2, 4, 6, 8!',
 		difficultyLevel: 2
 	},
 	{
-		type: 'cause-effect',
-		question: 'Was passiert, wenn es regnet?',
-		options: ['Es wird nass', 'Es wird heiß', 'Es wird dunkel', 'Es schneit'],
-		correctIndex: 0,
-		explanation: 'Wenn es regnet, wird alles nass!',
-		difficultyLevel: 2
+		type: 'comparison',
+		question: 'Welches Tier kann fliegen?',
+		options: ['Hund', 'Katze', 'Vogel', 'Fisch'],
+		correctIndex: 2,
+		explanation: 'Der Vogel hat Flügel und kann fliegen!',
+		difficultyLevel: 1
 	},
 	{
-		type: 'riddle',
-		question: 'Ich bin gelb und leuchte am Himmel am Tag. Was bin ich?',
-		options: ['Mond', 'Sonne', 'Stern', 'Lampe'],
+		type: 'grouping',
+		question: 'Was haben Apfel, Banane und Orange gemeinsam?',
+		options: ['Sie sind alle rot', 'Sie sind alle Obst', 'Sie sind alle grün', 'Sie sind alle Gemüse'],
 		correctIndex: 1,
-		explanation: 'Die Sonne ist gelb und leuchtet am Tag!',
+		explanation: 'Apfel, Banane und Orange sind alles Obst!',
 		difficultyLevel: 2
+	},
+	{
+		type: 'category',
+		question: 'Welche Farbe passt NICHT zu den anderen?',
+		options: ['Rot', 'Blau', 'Hund', 'Grün'],
+		correctIndex: 2,
+		explanation: 'Hund ist ein Tier, die anderen sind Farben!',
+		difficultyLevel: 1
 	}
 ];
 
@@ -128,14 +128,21 @@ export class LLMService {
 				consecutive_incorrect: params.consecutiveIncorrect
 			});
 
-			// Call OpenRouter API
+			// Call OpenRouter API to generate problem
 			const response = await this.callOpenRouter(rendered);
 
 			// Parse and validate response
 			const problem = this.parseResponse(response);
 
 			if (!this.validateProblem(problem)) {
-				console.error('Generated problem failed validation');
+				console.error('Generated problem failed basic validation');
+				return this.getFallbackProblem(2);
+			}
+
+			// Second validation: Check logical consistency with LLM
+			const isLogicallyValid = await this.validateProblemLogic(problem, params.age);
+			if (!isLogicallyValid) {
+				console.error('Generated problem failed logical validation, using fallback');
 				return this.getFallbackProblem(2);
 			}
 
@@ -227,6 +234,32 @@ export class LLMService {
 		}
 
 		return true;
+	}
+
+	private async validateProblemLogic(problem: Problem, age: number): Promise<boolean> {
+		try {
+			// Render validation prompt
+			const rendered = this.promptLoader.renderPrompt('validate-problem', {
+				question: problem.question,
+				options: problem.options,
+				correct_answer: problem.options[problem.correctIndex],
+				explanation: problem.explanation,
+				age
+			});
+
+			// Call LLM for validation
+			const response = await this.callOpenRouter(rendered);
+			const validation = JSON.parse(response);
+
+			if (!validation.valid) {
+				console.error('Problem validation failed:', validation.reason, validation.issues);
+			}
+
+			return validation.valid === true;
+		} catch (error) {
+			console.error('Validation step failed, assuming invalid:', error);
+			return false;
+		}
 	}
 
 	private getFallbackProblem(difficultyLevel: number): Problem {

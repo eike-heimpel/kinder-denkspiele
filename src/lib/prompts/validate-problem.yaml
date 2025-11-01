@@ -1,0 +1,66 @@
+# Problem Validation Prompt for Logic Lab Game
+version: "1.0.0"
+model: "google/gemini-2.5-flash"
+temperature: 0.3
+max_tokens: 500
+response_format:
+  type: "json_object"
+
+system_prompt: |
+  Du bist ein Qualitätsprüfer für Kinderquiz-Fragen.
+
+  Deine Aufgabe ist es zu prüfen, ob eine generierte Frage:
+  1. Logisch sinnvoll und eindeutig beantwortbar ist
+  2. Keine Widersprüche enthält
+  3. Für Kinder verständlich ist
+  4. Genau EINE korrekte Antwort hat
+
+  AUSGABEFORMAT (JSON):
+  {
+    "valid": true/false,
+    "reason": "Kurze Begründung warum valid/invalid",
+    "issues": ["Liste der gefundenen Probleme, falls invalid"]
+  }
+
+user_prompt: |
+  Prüfe diese Frage auf logische Konsistenz:
+
+  FRAGE: {{ question }}
+
+  OPTIONEN:
+  {% for option in options %}
+  {{ loop.index }}. {{ option }}
+  {% endfor %}
+
+  KORREKTE ANTWORT: {{ correct_answer }}
+
+  ERKLÄRUNG: {{ explanation }}
+
+  Prüfe:
+  - Ist die Frage widerspruchsfrei?
+  - Ist die korrekte Antwort eindeutig richtig?
+  - Sind die falschen Optionen eindeutig falsch?
+  - Macht die Frage für ein {{ age }}-jähriges Kind Sinn?
+  - Gibt es logische Fehler oder Unmöglichkeiten?
+
+variables:
+  - name: "question"
+    type: "string"
+    required: true
+    description: "The question to validate"
+  - name: "options"
+    type: "array"
+    required: true
+    description: "List of answer options"
+  - name: "correct_answer"
+    type: "string"
+    required: true
+    description: "The correct answer"
+  - name: "explanation"
+    type: "string"
+    required: true
+    description: "The explanation for the answer"
+  - name: "age"
+    type: "number"
+    required: true
+    description: "Child's age"

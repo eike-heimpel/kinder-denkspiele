@@ -92,7 +92,7 @@ export interface ReactionTimeDifficultyConfig {
     maxDelay: number;
 }
 
-export type ProblemType = 'riddle' | 'pattern' | 'category' | 'cause-effect';
+export type ProblemType = 'pattern' | 'category' | 'comparison' | 'grouping';
 
 export interface Problem {
     id: string;

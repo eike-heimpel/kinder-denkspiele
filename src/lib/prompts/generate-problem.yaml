@@ -30,22 +30,23 @@ system_prompt: |
   - Level 4 (schwer): Zusammengesetzte Wörter, komplexere Logik, 3+ Silben
   - Level 5 (sehr schwer): Abstrakte Konzepte, Mehrschritt-Logik, Transferwissen
 
-  PROBLEMTYPEN (sei kreativ!):
-  - riddle: Beschreibung eines Objekts/Tieres ("Ich habe 4 Beine und belle. Was bin ich?")
-  - pattern: Zahlen, Farben, Formen-Sequenzen ("Rot, Blau, Rot, Blau, ___?")
-  - category: "Welches passt nicht?" - 3 gehören zusammen, 1 nicht
-  - cause-effect: "Was passiert wenn...?" - Alltagslogik
+  PROBLEMTYPEN (Fokus auf Muster und Kategorien!):
+  - pattern: Sequenzen erkennen ("Welche Zahl kommt als nächstes? 2, 4, 6, ___")
+  - category: "Welches passt NICHT dazu?" - 3 Dinge einer Kategorie, 1 fremdes
+  - comparison: Eigenschaften vergleichen ("Welches Tier kann fliegen?")
+  - grouping: "Was haben diese gemeinsam?" - Gemeinsamkeit erkennen
 
-  KREATIVITÄT:
-  - Nutze vielfältige Themen: Jahreszeiten, Wetter, Essen, Fahrzeuge, Berufe, Emotionen
-  - Variiere Fragestellungen innerhalb des Typs
-  - Mache es interessant und überraschend!
-  - Nutze kindgerechten Humor
+  WICHTIGE REGELN FÜR FRAGEN:
+  - Stelle DIREKTE Fragen, keine Rätsel ("Welches Tier..." statt "Ich bin ein Tier...")
+  - Nutze klare, eindeutige Kategorien (Tiere, Farben, Formen, Zahlen, Essen, Fahrzeuge)
+  - Vermeide mehrdeutige oder tricky Fragen
+  - Fragen müssen logisch eindeutig beantwortbar sein
+  - Variiere die Themen: Jahreszeiten, Wetter, Essen, Fahrzeuge, Natur, Formen
 
   AUSGABEFORMAT (JSON):
   {
-    "type": "riddle|pattern|category|cause-effect",
-    "question": "Die Frage oder das Rätsel",
+    "type": "pattern|category|comparison|grouping",
+    "question": "Die Frage (DIREKT, keine Rätselform!)",
     "options": ["Option A", "Option B", "Option C", "Option D"],
     "correctIndex": 0-3,
     "explanation": "Kurze kindgerechte Erklärung (1-2 Sätze)",
@@ -60,7 +61,7 @@ system_prompt: |
   - difficulty-Wert im JSON angeben basierend auf tatsächlicher Schwierigkeit
 
 user_prompt: |
-  Erstelle ein neues kreatives {{ problem_type }}.
+  Erstelle eine neue {{ problem_type }}-Frage.
 
   {% if performance_history|length > 0 %}
   BISHERIGE PERFORMANCE:
@@ -101,7 +102,7 @@ variables:
   - name: "problem_type"
     type: "string"
     required: true
-    description: "Type of problem: riddle, pattern, category, cause-effect"
+    description: "Type of problem: pattern, category, comparison, grouping"
   - name: "performance_history"
     type: "array"
     required: false
