@@ -57,9 +57,12 @@ This is the **entry point** for AI agents working on this codebase. Read this fi
 8. **[QUICKSTART.md](./docs/QUICKSTART.md)** - Get up and running quickly
 9. **[API-REFERENCE.md](./docs/API-REFERENCE.md)** - Complete API endpoint documentation
 
-### Game-Specific Documentation
-10. **[LOGIC-LAB.md](./docs/LOGIC-LAB.md)** - LLM-powered adaptive problem-solving game (complete guide)
-11. **[LOGIC-LAB-SPEC.md](./docs/LOGIC-LAB-SPEC.md)** - Logic Lab technical specification (15 sections)
+### Games
+
+- **Verbal Memory:** 145 German words, age-based difficulty
+- **Visual Memory:** Grid-based spatial memory (3x3/4x4)
+- **Reaction Time:** 5-round speed test
+- **Logic Lab:** [docs/LOGIC-LAB.md](./docs/LOGIC-LAB.md) - Infinite LLM-powered adaptive puzzles (age 4-10)
 
 ---
 
