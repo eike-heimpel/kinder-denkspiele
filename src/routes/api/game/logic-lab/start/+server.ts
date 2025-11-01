@@ -4,21 +4,21 @@ import { LogicLabEngine } from '$lib/services/logic-lab.service';
 
 export const POST: RequestHandler = async ({ request }) => {
 	try {
-		const { userId, difficulty, initialGuidance } = await request.json();
+		const { userId, age, guidance } = await request.json();
 
-		if (!userId || !difficulty) {
-			return json({ error: 'userId and difficulty are required' }, { status: 400 });
+		if (!userId || !age) {
+			return json({ error: 'userId and age are required' }, { status: 400 });
 		}
 
-		if (difficulty !== 'easy' && difficulty !== 'hard') {
-			return json({ error: 'difficulty must be "easy" or "hard"' }, { status: 400 });
+		if (typeof age !== 'number' || age < 4 || age > 10) {
+			return json({ error: 'age must be between 4 and 10' }, { status: 400 });
 		}
 
 		const engine = new LogicLabEngine();
 		const session = await engine.startGame({
 			userId,
-			difficulty,
-			initialGuidance: initialGuidance?.trim() || undefined
+			age,
+			guidance: guidance?.trim() || undefined
 		});
 
 		const state = session.logicLabState!;

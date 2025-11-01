@@ -109,14 +109,15 @@ export interface Problem {
 }
 
 export interface LogicLabGameState {
-    initialGuidance: string;
+    age: number; // Child's age (replaces difficulty)
+    guidance: string; // Optional theme guidance
     modelName: string;
     currentProblem: Problem;
-    problemHistory: Problem[];
+    problemHistory: Problem[]; // ALL problems ever asked (infinite)
     correctAnswers: number;
     consecutiveCorrect: number;
     consecutiveIncorrect: number;
     currentDifficultyLevel: number;
-    totalProblems: number;
     hintsUsed: number;
+    lastPlayedAt: Date; // Track when user last played
 }

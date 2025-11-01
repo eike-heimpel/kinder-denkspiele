@@ -51,6 +51,22 @@ export class GameSessionRepository {
         };
     }
 
+    async findActiveLogicLabSession(userId: string): Promise<GameSession | null> {
+        const doc = await this.getCollection().findOne({
+            userId,
+            gameType: 'logic-lab',
+            isActive: true
+        });
+
+        if (!doc) return null;
+
+        return {
+            ...doc,
+            _id: doc._id?.toString(),
+            seenWords: doc.seenWords ? new Set(doc.seenWords) : undefined
+        };
+    }
+
     async findActiveByUserId(userId: string, gameType: GameType): Promise<GameSession | null> {
         const doc = await this.getCollection().findOne({
             userId,

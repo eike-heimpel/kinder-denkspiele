@@ -10,14 +10,13 @@
 	let sessionId = $state<string>('');
 
 	// Setup phase
-	let initialGuidance = $state<string>('');
+	let selectedAge = $state<number>(7);
+	let guidanceText = $state<string>('');
 
 	// Playing phase
 	let currentProblem = $state<{ question: string; options: string[] } | null>(null);
 	let score = $state<number>(0);
-	let lives = $state<number>(3);
 	let round = $state<number>(0);
-	let totalRounds = $state<number>(5);
 
 	// Feedback phase
 	let lastAnswerCorrect = $state<boolean>(false);
@@ -40,9 +39,6 @@
 
 	// URL params
 	const userId = $derived($page.url.searchParams.get('userId') || '');
-	const difficulty = $derived(
-		($page.url.searchParams.get('difficulty') as 'easy' | 'hard') || 'easy'
-	);
 
 	onMount(() => {
 		if (!userId) {
@@ -59,8 +55,8 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					userId,
-					difficulty,
-					initialGuidance: initialGuidance.trim() || undefined
+					age: selectedAge,
+					guidance: guidanceText.trim() || undefined
 				})
 			});
 
@@ -73,9 +69,7 @@
 			sessionId = data.sessionId;
 			currentProblem = data.problem;
 			score = data.score;
-			lives = data.lives;
 			round = data.round;
-			totalRounds = data.totalRounds;
 
 			// Update debug info
 			debugInfo = {
@@ -92,6 +86,30 @@
 			alert('Fehler beim Starten des Spiels. Bitte versuche es erneut.');
 		} finally {
 			loading = false;
+		}
+	}
+
+	async function resetProgress() {
+		if (!confirm('Fortschritt zurücksetzen? Alle bisherigen Fragen werden gelöscht.')) {
+			return;
+		}
+
+		try {
+			await fetch('/api/game/logic-lab/reset', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ userId })
+			});
+
+			// Restart game
+			gamePhase = 'setup';
+			sessionId = '';
+			score = 0;
+			round = 0;
+			currentProblem = null;
+		} catch (error) {
+			console.error('Error resetting:', error);
+			alert('Fehler beim Zurücksetzen.');
 		}
 	}
 
@@ -117,7 +135,6 @@
 			lastAnswerCorrect = data.correct;
 			explanation = data.explanation;
 			score = data.score;
-			lives = data.lives;
 			round = data.round;
 
 			// Update debug info for next problem
@@ -152,14 +169,10 @@
 		}
 	}
 
-	function playAgain() {
+	function continueGame() {
 		gamePhase = 'setup';
 		sessionId = '';
-		initialGuidance = '';
 		currentProblem = null;
-		score = 0;
-		lives = 3;
-		round = 0;
 		selectedAnswerIndex = -1;
 	}
 
@@ -175,32 +188,64 @@
 		{#if gamePhase === 'setup'}
 			<!-- Setup Screen -->
 			<div class="bg-white rounded-3xl shadow-2xl p-8">
+				<!-- Home Button -->
+				<button
+					onclick={goHome}
+					class="absolute top-4 right-4 px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 text-sm"
+				>
+					🏠 Zurück
+				</button>
+
 				<h1 class="text-4xl font-bold text-center mb-2 text-purple-600">🧠 Logik-Labor</h1>
 				<p class="text-center text-gray-600 mb-6">
-					Löse spannende Rätsel und zeige dein Können!
+					Unendlich viele Rätsel - dein Fortschritt wird gespeichert!
 				</p>
 
+				<!-- Age Selection -->
+				<div class="mb-6">
+					<label class="block text-lg font-semibold mb-2 text-gray-700"> Wie alt bist du? </label>
+					<select
+						bind:value={selectedAge}
+						class="w-full p-4 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none text-lg"
+					>
+						<option value={4}>4 Jahre</option>
+						<option value={5}>5 Jahre</option>
+						<option value={6}>6 Jahre</option>
+						<option value={7}>7 Jahre</option>
+						<option value={8}>8 Jahre</option>
+						<option value={9}>9 Jahre</option>
+						<option value={10}>10 Jahre</option>
+					</select>
+				</div>
+
+				<!-- Optional Guidance -->
 				<div class="mb-6">
 					<label class="block text-lg font-semibold mb-2 text-gray-700">
-						Hilf uns, die besten Rätsel für dich zu finden:
+						Themen-Wunsch (optional):
 					</label>
-					<textarea
-						bind:value={initialGuidance}
-						placeholder="z.B. 'Mein Kind ist 7 Jahre alt und liebt Tiere' oder 'Mathe ist noch schwierig'"
-						class="w-full p-4 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none text-lg resize-none"
-						rows="3"
-					></textarea>
+					<input
+						bind:value={guidanceText}
+						placeholder="z.B. 'Fokus auf Weltall' oder 'Mehr Mathe'"
+						class="w-full p-4 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none text-lg"
+					/>
 					<p class="text-sm text-gray-500 mt-2">
-						Optional: Diese Info hilft uns, passende Rätsel zu erstellen.
+						Optional: Gib einen Themenwunsch an (leer lassen für bunte Mischung)
 					</p>
 				</div>
 
 				<button
 					onclick={startGame}
 					disabled={loading}
-					class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-2xl font-bold py-4 px-8 rounded-xl hover:from-purple-600 hover:to-pink-600 transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+					class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-2xl font-bold py-4 px-8 rounded-xl hover:from-purple-600 hover:to-pink-600 transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none mb-4"
 				>
-					{loading ? 'Lädt...' : 'Spiel starten! 🚀'}
+					{loading ? 'Lädt...' : 'Weiter spielen! 🚀'}
+				</button>
+
+				<button
+					onclick={resetProgress}
+					class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-semibold py-2 px-4 rounded-xl transition-all"
+				>
+					🔄 Fortschritt zurücksetzen
 				</button>
 			</div>
 		{:else if gamePhase === 'playing'}
@@ -215,18 +260,18 @@
 					{showDebug ? '🔒' : '🔓'} Debug
 				</button>
 
+				<!-- Home Button -->
+				<button
+					onclick={goHome}
+					class="absolute top-2 right-12 text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded text-gray-600"
+				>
+					🏠
+				</button>
+
 				<!-- Header -->
 				<div class="flex justify-between items-center mb-6">
-					<div class="text-xl font-bold text-purple-600">
-						Runde {round}/{totalRounds}
-					</div>
-					<div class="flex gap-4 items-center">
-						<div class="text-xl font-bold text-green-600">Punkte: {score}</div>
-						<div class="text-xl font-bold text-red-600">
-							{'❤️'.repeat(lives)}
-							{'🖤'.repeat(3 - lives)}
-						</div>
-					</div>
+					<div class="text-xl font-bold text-purple-600">Frage {round}</div>
+					<div class="text-xl font-bold text-green-600">✅ Richtig: {score}</div>
 				</div>
 
 				<!-- Debug Panel (expandable) -->
@@ -302,43 +347,9 @@
 						<p class="text-xl text-gray-800">{explanation}</p>
 					</div>
 
-					<div class="flex justify-center items-center gap-4">
-						<div class="text-xl font-bold text-green-600">Punkte: {score}</div>
-						<div class="text-xl font-bold text-red-600">
-							{'❤️'.repeat(lives)}
-							{'🖤'.repeat(3 - lives)}
-						</div>
-					</div>
+					<div class="text-xl font-bold text-green-600 mb-4">✅ Richtig: {score}</div>
 
-					<p class="text-gray-500 mt-4">Nächstes Rätsel kommt gleich...</p>
-				</div>
-			</div>
-		{:else if gamePhase === 'gameOver'}
-			<!-- Game Over Screen -->
-			<div class="bg-white rounded-3xl shadow-2xl p-8">
-				<div class="text-center">
-					<div class="text-8xl mb-4">🎉</div>
-					<h2 class="text-4xl font-bold text-purple-600 mb-4">Spiel beendet!</h2>
-
-					<div class="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-6 mb-6">
-						<p class="text-3xl font-bold text-gray-800 mb-2">Deine Punktzahl:</p>
-						<p class="text-6xl font-bold text-purple-600">{score} / {totalRounds}</p>
-					</div>
-
-					<div class="grid grid-cols-2 gap-4">
-						<button
-							onclick={playAgain}
-							class="bg-gradient-to-r from-green-500 to-green-600 text-white text-xl font-bold py-4 px-6 rounded-xl hover:from-green-600 hover:to-green-700 transform hover:scale-105 transition-all"
-						>
-							🔄 Nochmal spielen
-						</button>
-						<button
-							onclick={goHome}
-							class="bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xl font-bold py-4 px-6 rounded-xl hover:from-blue-600 hover:to-blue-700 transform hover:scale-105 transition-all"
-						>
-							🏠 Zurück
-						</button>
-					</div>
+					<p class="text-gray-500">Nächstes Rätsel kommt gleich...</p>
 				</div>
 			</div>
 		{/if}

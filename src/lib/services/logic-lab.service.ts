@@ -10,8 +10,8 @@ import { LLMService, type GenerateProblemParams } from './llm.service';
 
 export interface StartGameParams {
 	userId: string;
-	difficulty: DifficultyLevel;
-	initialGuidance?: string;
+	age: number;
+	guidance?: string;
 }
 
 export interface SubmitAnswerResult {
@@ -40,25 +40,48 @@ export class LogicLabEngine {
 	}
 
 	async startGame(params: StartGameParams): Promise<GameSession> {
-		const initialDifficultyLevel = this.mapDifficultyToLevel(params.difficulty);
+		// Try to load existing Logic Lab session for this user
+		const existingSession = await this.repository.findActiveLogicLabSession(params.userId);
 
-		// Generate first problem
+		if (existingSession && existingSession.logicLabState) {
+			// Resume existing game
+			const state = existingSession.logicLabState;
+
+			// Update age/guidance if changed
+			state.age = params.age;
+			state.guidance = params.guidance || '';
+			state.lastPlayedAt = new Date();
+
+			// Generate next problem
+			const nextProblem = await this.generateNextProblem(existingSession);
+			state.currentProblem = nextProblem;
+			state.problemHistory.push(nextProblem);
+
+			existingSession.round += 1;
+
+			await this.repository.update(existingSession._id!, existingSession);
+			return existingSession;
+		}
+
+		// Create new Logic Lab state
+		const initialDifficultyLevel = this.mapAgeToLevel(params.age);
+
 		const firstProblem = await this.generateFirstProblem({
-			initialGuidance: params.initialGuidance,
-			difficulty: params.difficulty,
+			age: params.age,
+			guidance: params.guidance,
 			difficultyLevel: initialDifficultyLevel
 		});
 
-		// Create game session
 		const gameSession: GameSession = {
 			userId: params.userId,
 			gameType: 'logic-lab',
-			difficulty: params.difficulty,
+			difficulty: 'easy', // Deprecated, but keep for compatibility
 			score: 0,
-			lives: 3,
+			lives: 999, // Infinite lives
 			round: 1,
 			logicLabState: {
-				initialGuidance: params.initialGuidance || '',
+				age: params.age,
+				guidance: params.guidance || '',
 				modelName: 'google/gemini-2.5-flash',
 				currentProblem: firstProblem,
 				problemHistory: [firstProblem],
@@ -66,8 +89,8 @@ export class LogicLabEngine {
 				consecutiveCorrect: 0,
 				consecutiveIncorrect: 0,
 				currentDifficultyLevel: initialDifficultyLevel,
-				totalProblems: 15,
-				hintsUsed: 0
+				hintsUsed: 0,
+				lastPlayedAt: new Date()
 			},
 			isActive: true,
 			startedAt: new Date()
@@ -96,47 +119,34 @@ export class LogicLabEngine {
 		// Update score and lives
 		this.updateScore(session, isCorrect);
 
-		// Check if game is over
-		const gameOver = this.isGameOver(session);
+		// Move to next round (infinite mode - no game over!)
+		session.round += 1;
 
-		let nextProblem: Problem | null = null;
+		// Calculate next difficulty
+		const nextDifficulty = this.calculateNextDifficulty(session);
+		session.logicLabState.currentDifficultyLevel = nextDifficulty;
 
-		if (!gameOver) {
-			// Move to next round
-			session.round += 1;
-
-			// Calculate next difficulty
-			const nextDifficulty = this.calculateNextDifficulty(session);
-			session.logicLabState.currentDifficultyLevel = nextDifficulty;
-
-			// Generate next problem
-			nextProblem = await this.generateNextProblem(session);
-			session.logicLabState.currentProblem = nextProblem;
-			session.logicLabState.problemHistory.push(nextProblem);
-		} else {
-			session.isActive = false;
-			session.endedAt = new Date();
-		}
+		// Generate next problem
+		const nextProblem = await this.generateNextProblem(session);
+		session.logicLabState.currentProblem = nextProblem;
+		session.logicLabState.problemHistory.push(nextProblem);
 
 		// Save session
 		await this.repository.update(sessionId, session);
 
 		return {
 			correct: isCorrect,
-			explanation: session.logicLabState.problemHistory[session.logicLabState.problemHistory.length - 1 - (gameOver ? 0 : 1)].explanation,
-			nextProblem: nextProblem
-				? {
-						question: nextProblem.question,
-						options: nextProblem.options,
-						type: nextProblem.type,
-						difficulty: nextProblem.difficultyLevel
-					}
-				: undefined,
+			explanation: session.logicLabState.problemHistory[session.logicLabState.problemHistory.length - 2].explanation,
+			nextProblem: {
+				question: nextProblem.question,
+				options: nextProblem.options,
+				type: nextProblem.type,
+				difficulty: nextProblem.difficultyLevel
+			},
 			score: session.score,
 			lives: session.lives,
 			round: session.round,
-			gameOver,
-			finalScore: gameOver ? session.score : undefined,
+			gameOver: false, // Never game over!
 			// Debug info for parents
 			difficultyLevel: session.logicLabState.currentDifficultyLevel,
 			consecutiveCorrect: session.logicLabState.consecutiveCorrect,
@@ -168,20 +178,28 @@ export class LogicLabEngine {
 		};
 	}
 
+	async resetProgress(userId: string): Promise<void> {
+		// Find and delete the user's Logic Lab session
+		const existingSession = await this.repository.findActiveLogicLabSession(userId);
+		if (existingSession && existingSession._id) {
+			await this.repository.delete(existingSession._id);
+		}
+	}
+
 	// Private helper methods
 
 	private async generateFirstProblem(params: {
-		initialGuidance?: string;
-		difficulty: DifficultyLevel;
+		age: number;
+		guidance?: string;
 		difficultyLevel: number;
 	}): Promise<Problem> {
 		const problemType = this.selectProblemType([]);
-		const age = params.difficulty === 'easy' ? 6 : 8;
+		const age = params.age;
 
 		const llmParams: GenerateProblemParams = {
-			initialGuidance: params.initialGuidance,
+			initialGuidance: params.guidance || '',
 			age,
-			difficulty: params.difficulty,
+			difficulty: 'easy', // Not used anymore
 			difficultyLevel: params.difficultyLevel,
 			problemType,
 			performanceHistory: [],
@@ -194,7 +212,7 @@ export class LogicLabEngine {
 
 	private async generateNextProblem(session: GameSession): Promise<Problem> {
 		const state = session.logicLabState!;
-		const age = session.difficulty === 'easy' ? 6 : 8;
+		const age = state.age;
 
 		// Select problem type (avoid last type)
 		const previousTypes = state.problemHistory.map((p) => p.type);
@@ -212,10 +230,10 @@ export class LogicLabEngine {
 			}));
 
 		const llmParams: GenerateProblemParams = {
-			initialGuidance: state.initialGuidance,
+			initialGuidance: state.guidance,
 			age,
-			difficulty: session.difficulty,
-			difficultyLevel: state.currentDifficultyLevel, // Pass the calculated difficulty level!
+			difficulty: 'easy', // Not used anymore
+			difficultyLevel: state.currentDifficultyLevel,
 			problemType,
 			performanceHistory,
 			consecutiveCorrect: state.consecutiveCorrect,
@@ -273,15 +291,10 @@ export class LogicLabEngine {
 		}
 	}
 
-	private isGameOver(session: GameSession): boolean {
-		const state = session.logicLabState!;
-		return session.lives <= 0 || session.round >= state.totalProblems;
-	}
-
-	private mapDifficultyToLevel(difficulty: DifficultyLevel): number {
-		// Ages 5-6: Start at level 3 (not 2!)
-		// Ages 7-8: Start at level 4 (not 3!)
-		// Kids are smarter than we think!
-		return difficulty === 'easy' ? 3 : 4;
+	private mapAgeToLevel(age: number): number {
+		// Start at level 3 for younger kids, level 4 for older
+		// Age 4-6: Level 3
+		// Age 7+: Level 4
+		return age >= 7 ? 4 : 3;
 	}
 }
