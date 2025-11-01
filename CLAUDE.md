@@ -24,12 +24,19 @@ keywords: ["sveltekit", "svelte-5", "tailwind-v4", "mongodb", "german", "games",
 This is the **entry point** for AI agents working on this codebase. Read this first to understand the project structure, then navigate to specific docs as needed.
 
 ### Quick Context
-- **Target Users:** Children aged 5-8 years
+- **Target Users:** Children aged 4-10 years
 - **Language:** German
 - **Deployment:** Local server only (password authentication)
-- **Current State:** Production with 4 games (Verbal Memory, Visual Memory, Reaction Time, Logic Lab)
+- **Current State:** Production with 4 games
+  - Verbal Memory (145 German words)
+  - Visual Memory (grid-based)
+  - Reaction Time (speed test)
+  - Logic Lab (infinite LLM-powered adaptive puzzles)
 - **Architecture:** Layered, decoupled, extensible
-- **LLM Integration:** Logic Lab uses OpenRouter + Gemini 2.5 Flash for dynamic content
+- **LLM Integration:** Logic Lab uses OpenRouter + Gemini 2.5 Flash
+  - Age-relative difficulty (4-10 years)
+  - Infinite mode with per-user persistent state
+  - Adaptive difficulty scaling
 
 ---
 

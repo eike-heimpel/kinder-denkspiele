@@ -1,53 +1,51 @@
-# Logic Lab Game - Developer Guide
+# Logic Lab - Infinite Adaptive Problem Solving
 
 **Game Type:** `logic-lab`
 **Last Updated:** 2025-11-01
-**Status:** Production Ready
-**Model:** Google Gemini 2.5 Flash via OpenRouter
+**Model:** Google Gemini 2.5 Flash (OpenRouter)
 
----
+## Overview
 
-## 🎯 Overview
-
-Logic Lab is an **LLM-powered adaptive problem-solving game** that generates unique problems dynamically based on the child's performance. Unlike the other games which use fixed word pools or pre-determined patterns, Logic Lab creates fresh content for every question.
+LLM-powered infinite problem-solving game with age-relative adaptive difficulty.
 
 ### Key Features
 
-- **Dynamic Generation:** Every problem is created by an LLM in real-time
-- **Performance-Based Adaptation:** LLM adjusts difficulty by analyzing answer history
-- **Initial Guidance:** Adults can provide context (age, interests, challenges)
-- **4 Problem Types:** Riddles, patterns, categorization, cause-effect
-- **15 Questions:** Long enough for meaningful adaptation
-- **High Creativity:** Temperature 1.2 for diverse, interesting problems
+- **Infinite Mode:** No question limit, continuous play
+- **Age-Relative Difficulty:** Scales based on child's age (4-10 years)
+- **Persistent State:** One session per user, resumes where left off
+- **Adaptive Scaling:** Difficulty adjusts up/down based on performance
+- **4 Problem Types:** Pattern, category, comparison, grouping
+- **No Lives:** Wrong answers just decrease difficulty
+- **Full History:** All questions stored for maximum variety
 
 ---
 
-## 🏗️ Architecture
-
-### Layer Overview
+## Architecture
 
 ```
-UI Layer (Svelte 5)
-  └─ /routes/game/logic-lab/+page.svelte
-         ↓
-API Layer (SvelteKit Routes)
-  ├─ /routes/api/game/logic-lab/start/+server.ts
-  ├─ /routes/api/game/logic-lab/answer/+server.ts
-  └─ /routes/api/game/logic-lab/stats/+server.ts
-         ↓
-Service Layer
-  ├─ LogicLabEngine (game logic, scoring, state)
-  ├─ LLMService (OpenRouter API integration)
-  └─ PromptLoader (YAML template rendering)
-         ↓
-Prompt Templates
-  └─ /lib/prompts/generate-problem.yaml
-         ↓
-External API
-  └─ OpenRouter → Google Gemini 2.5 Flash
-```
+UI: src/routes/game/logic-lab/+page.svelte
+  ├─ Age dropdown (4-10 years)
+  ├─ Optional guidance input
+  └─ Debug panel (parent mode)
 
----
+API: src/routes/api/game/logic-lab/
+  ├─ start/+server.ts    (resume or create session)
+  ├─ answer/+server.ts   (submit answer, get next)
+  └─ reset/+server.ts    (delete user progress)
+
+Service: src/lib/services/logic-lab.service.ts
+  ├─ startGame()         (find existing or create new)
+  ├─ submitAnswer()      (evaluate, adapt difficulty)
+  └─ resetProgress()     (delete session)
+
+LLM: src/lib/services/llm.service.ts
+  ├─ generateProblem()   (create question via OpenRouter)
+  └─ validateProblemLogic() (2-step validation)
+
+Prompts: src/lib/prompts/
+  ├─ generate-problem.yaml   (age-relative difficulty)
+  └─ validate-problem.yaml   (logical consistency check)
+```
 
 ## 📝 Prompt Template System
 
