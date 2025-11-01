@@ -30,6 +30,7 @@ class LLMService:
         model: str,
         sampling_params: Dict[str, Any] | None = None,
         json_mode: bool = False,
+        json_schema: Dict[str, Any] | None = None,
     ) -> str:
         """Generate text using the OpenRouter API.
 
@@ -38,6 +39,7 @@ class LLMService:
             model: Model identifier (e.g., 'google/gemini-2.0-flash-exp:free')
             sampling_params: Optional sampling parameters (temperature, top_p, etc.)
             json_mode: If True, request JSON output format
+            json_schema: Optional custom JSON schema (if not provided, uses default story schema)
 
         Returns:
             Generated text response
@@ -54,29 +56,37 @@ class LLMService:
         if sampling_params:
             payload.update(sampling_params)
 
-        # Request JSON response format with schema (without strict mode for Gemini compatibility)
+        # Request JSON response format with schema
         if json_mode:
-            payload["response_format"] = {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "story_response",
-                    "schema": {
-                        "type": "object",
-                        "properties": {
-                            "story_text": {
-                                "type": "string",
-                                "description": "The story text in German"
+            if json_schema:
+                # Use custom schema if provided
+                payload["response_format"] = {
+                    "type": "json_schema",
+                    "json_schema": json_schema
+                }
+            else:
+                # Default story schema
+                payload["response_format"] = {
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "story_response",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "story_text": {
+                                    "type": "string",
+                                    "description": "The story text in German"
+                                },
+                                "image_prompt": {
+                                    "type": "string",
+                                    "description": "Image description in German"
+                                }
                             },
-                            "image_prompt": {
-                                "type": "string",
-                                "description": "Image description in German"
-                            }
-                        },
-                        "required": ["story_text", "image_prompt"],
-                        "additionalProperties": False
+                            "required": ["story_text", "image_prompt"],
+                            "additionalProperties": False
+                        }
                     }
                 }
-            }
 
         async with httpx.AsyncClient(timeout=60.0) as client:
             try:
@@ -128,13 +138,17 @@ class LLMService:
         prompt: str,
         model: str = "google/gemini-2.0-flash-exp:free",
         aspect_ratio: str = "1:1",
+        previous_image_url: str | None = None,
+        style_description: str | None = None,
     ) -> str:
-        """Generate an image using OpenRouter API.
+        """Generate an image using OpenRouter API with optional style consistency.
 
         Args:
             prompt: The image generation prompt (in English)
             model: Model identifier for image generation
             aspect_ratio: Aspect ratio (1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9)
+            previous_image_url: Optional URL of previous image to maintain style consistency
+            style_description: Optional text description of the style to maintain
 
         Returns:
             Image URL (base64 data URL or hosted URL)
@@ -142,9 +156,34 @@ class LLMService:
         Raises:
             httpx.HTTPError: If the API request fails
         """
+        # Build the content array for multimodal input
+        content = []
+
+        # Add style instructions if provided
+        if style_description:
+            enhanced_prompt = f"Continue in the same art style: {style_description}\n\n{prompt}"
+        else:
+            enhanced_prompt = prompt
+
+        # Add text prompt
+        content.append({
+            "type": "text",
+            "text": enhanced_prompt
+        })
+
+        # Add previous image if provided (for style consistency)
+        if previous_image_url:
+            content.append({
+                "type": "image_url",
+                "image_url": {
+                    "url": previous_image_url
+                }
+            })
+            logger.info(f"Including previous image for style consistency")
+
         payload = {
             "model": model,
-            "messages": [{"role": "user", "content": prompt}],
+            "messages": [{"role": "user", "content": content}],
             "modalities": ["image", "text"],
             "image_config": {"aspect_ratio": aspect_ratio},
         }

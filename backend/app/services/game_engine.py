@@ -108,14 +108,43 @@ class GameEngine:
                 choices = await self._generate_choices(story_text)
 
             with timer.step("Generate Image (Image LLM)"):
-                image_url = await self._generate_image(image_prompt)
+                # First image - no previous image to reference
+                image_url = await self._generate_image(
+                    german_image_prompt=image_prompt,
+                    previous_image_url=None,
+                    first_image_description=None
+                )
+
+            with timer.step("Generate Image Description for Future Consistency"):
+                # Ask the narrator to describe the image style for future consistency
+                description_prompt = f"""Beschreibe kurz den Bildstil und die Charaktere in diesem Bild für ein Märchenbuch:
+
+                Bildprompt: {image_prompt}
+
+                Antworte in 1-2 Sätzen auf Deutsch (z.B. "Bunter Cartoon-Stil mit einer kleinen Prinzessin in einem lila Kleid")."""
+
+                model = self.config.get_model("narrator")
+                sampling_params = {"temperature": 0.3, "max_tokens": 100}
+
+                first_image_description = await self.llm.generate_text(
+                    prompt=description_prompt,
+                    model=model,
+                    sampling_params=sampling_params,
+                )
+
+                logger.info(f"First image description: {first_image_description[:100]}")
 
             with timer.step("Save to Database"):
                 await self.collection.update_one(
                     {"_id": ObjectId(session_id)},
                     {
                         "$push": {"history": story_text},
-                        "$set": {"lastUpdated": datetime.utcnow()},
+                        "$set": {
+                            "lastUpdated": datetime.utcnow(),
+                            "first_image_url": image_url,
+                            "first_image_description": first_image_description,
+                            "previous_image_url": image_url,
+                        },
                     },
                 )
 
@@ -207,8 +236,15 @@ class GameEngine:
             # 5. Generate Choices (Council of Choices - 3 parallel calls)
             choices = await self._generate_choices(history_text + "\n\n" + story_text)
 
-            # 6. Generate Image
-            image_url = await self._generate_image(image_prompt)
+            # 6. Generate Image (with style consistency)
+            previous_image_url = session.get("previous_image_url")
+            first_image_description = session.get("first_image_description")
+
+            image_url = await self._generate_image(
+                german_image_prompt=image_prompt,
+                previous_image_url=previous_image_url,
+                first_image_description=first_image_description
+            )
 
             # 7. Save State
             history.append(story_text)
@@ -221,6 +257,7 @@ class GameEngine:
                         "history": history,
                         "round": new_round,
                         "lastUpdated": datetime.utcnow(),
+                        "previous_image_url": image_url,  # Track for next turn
                     }
                 },
             )
@@ -274,81 +311,102 @@ class GameEngine:
             return True
 
     async def _generate_choices(self, history: str) -> List[str]:
-        """Generate three choices using the Council of Choices.
+        """Generate 4 choices: 3 coherent choices + 1 wild card.
 
-        This makes 3 parallel API calls to different models with different prompts.
+        Step 1: Generate 3 coherent choices together (single LLM call)
+        Step 2: Generate 1 creative wild card choice with context (separate call)
+
+        This approach maintains coherence while ensuring diversity.
 
         Args:
             history: The full story history so far
 
         Returns:
-            List of 3 choice strings
+            List of 4 choice strings
         """
-        agent_names = ["brave", "silly", "careful"]
-        agent_models = []
+        # Step 1: Generate 3 main choices (unified call)
+        logger.info("Generating 3 coherent choices...")
 
-        try:
-            # Prepare prompts for all three choice agents
-            brave_prompt = self.config.get_prompt("choice_prompts.brave", history=history)
-            silly_prompt = self.config.get_prompt("choice_prompts.silly", history=history)
-            careful_prompt = self.config.get_prompt("choice_prompts.careful", history=history)
+        unified_prompt = self.config.get_prompt("choice_prompts.unified_choices", history=history)
+        unified_model = self.config.get_model("choice_agent_unified")
+        unified_params = self.config.get_sampling_params("choice_agent_unified")
 
-            # Get models
-            brave_model = self.config.get_model("choice_agent_brave")
-            silly_model = self.config.get_model("choice_agent_silly")
-            careful_model = self.config.get_model("choice_agent_careful")
-            agent_models = [brave_model, silly_model, careful_model]
+        # Define schema for choice generation
+        choices_schema = {
+            "name": "choices_response",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "choice_1": {"type": "string", "description": "First choice in German"},
+                    "choice_2": {"type": "string", "description": "Second choice in German"},
+                    "choice_3": {"type": "string", "description": "Third choice in German"}
+                },
+                "required": ["choice_1", "choice_2", "choice_3"],
+                "additionalProperties": False
+            }
+        }
 
-            # Get sampling params
-            brave_params = self.config.get_sampling_params("choice_agent_brave")
-            silly_params = self.config.get_sampling_params("choice_agent_silly")
-            careful_params = self.config.get_sampling_params("choice_agent_careful")
+        unified_response = await self.llm.generate_text(
+            prompt=unified_prompt,
+            model=unified_model,
+            sampling_params=unified_params,
+            json_mode=True,
+            json_schema=choices_schema,
+        )
 
-            # Generate all three choices in parallel
-            choices = []
+        # Parse the JSON response (no fallback - fail if it fails)
+        choices_data = json.loads(unified_response)
+        main_choices = [
+            choices_data["choice_1"].strip(),
+            choices_data["choice_2"].strip(),
+            choices_data["choice_3"].strip(),
+        ]
 
-            # Generate each choice sequentially (httpx gather not available, use asyncio)
-            import asyncio
-            brave_task = self.llm.generate_text(brave_prompt, brave_model, brave_params)
-            silly_task = self.llm.generate_text(silly_prompt, silly_model, silly_params)
-            careful_task = self.llm.generate_text(careful_prompt, careful_model, careful_params)
+        logger.info(f"✅ Generated 3 main choices: {[c[:30] + '...' for c in main_choices]}")
 
-            results = await asyncio.gather(brave_task, silly_task, careful_task, return_exceptions=True)
+        # Step 2: Generate wild card choice with context
+        logger.info("Generating wild card choice...")
 
-            # Process results
-            for i, result in enumerate(results):
-                if isinstance(result, Exception):
-                    agent_name = agent_names[i]
-                    model_name = agent_models[i] if i < len(agent_models) else "unknown"
-                    logger.error(f"❌ Choice agent '{agent_name}' ({model_name}) failed: {type(result).__name__}: {str(result)}")
-                    # Use fallback choice
-                    fallback_choices = ["Ich gehe mutig weiter", "Ich lache fröhlich", "Ich warte vorsichtig ab"]
-                    choices.append(fallback_choices[i])
-                else:
-                    # Clean up the response
-                    choice_text = result.strip().strip('"').strip("'")
-                    agent_name = agent_names[i]
-                    logger.info(f"✅ Choice agent '{agent_name}': {choice_text[:50]}...")
-                    choices.append(choice_text)
+        wildcard_prompt = self.config.get_prompt(
+            "choice_prompts.wildcard_choice",
+            history=history,
+            choice_1=main_choices[0],
+            choice_2=main_choices[1],
+            choice_3=main_choices[2],
+        )
 
-            return choices[:3]  # Ensure exactly 3 choices
+        wildcard_model = self.config.get_model("choice_agent_wildcard")
+        wildcard_params = self.config.get_sampling_params("choice_agent_wildcard")
 
-        except Exception as e:
-            logger.error(f"❌ Critical error generating choices: {type(e).__name__}: {str(e)}")
-            # Return fallback choices
-            return [
-                "Ich gehe mutig vorwärts",
-                "Ich mache etwas Lustiges",
-                "Ich schaue mich vorsichtig um",
-            ]
+        wildcard_response = await self.llm.generate_text(
+            prompt=wildcard_prompt,
+            model=wildcard_model,
+            sampling_params=wildcard_params,
+        )
 
-    async def _generate_image(self, german_image_prompt: str) -> str:
-        """Generate an image from a German prompt.
+        wildcard_choice = wildcard_response.strip().strip('"').strip("'")
+        logger.info(f"✅ Generated wild card choice: {wildcard_choice[:50]}...")
+
+        # Combine all 4 choices
+        all_choices = main_choices + [wildcard_choice]
+        return all_choices
+
+    async def _generate_image(
+        self,
+        german_image_prompt: str,
+        previous_image_url: str | None = None,
+        first_image_description: str | None = None
+    ) -> str:
+        """Generate an image from a German prompt with style consistency.
 
         First translates the prompt to English, then generates the image.
+        If previous_image_url is provided, includes it for style consistency.
+        If first_image_description is provided, adds style instructions.
 
         Args:
             german_image_prompt: Image description in German
+            previous_image_url: Optional URL of previous image for consistency
+            first_image_description: Optional description of the first image's style
 
         Returns:
             Image URL (data URL or hosted URL)
@@ -371,12 +429,14 @@ class GameEngine:
 
             logger.info(f"Translated image prompt: {english_prompt[:100]}")
 
-            # Generate image
+            # Generate image with style consistency
             image_model = self.config.get_model("image_generator")
             image_url = await self.llm.generate_image(
                 prompt=english_prompt,
                 model=image_model,
                 aspect_ratio="4:3",  # Good for storybook illustrations
+                previous_image_url=previous_image_url,
+                style_description=first_image_description,
             )
 
             return image_url

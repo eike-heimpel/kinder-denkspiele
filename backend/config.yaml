@@ -6,6 +6,10 @@ models:
   validator: "google/gemini-2.5-flash"
   image_generator: "google/gemini-2.5-flash-image"
   image_translator: "google/gemini-2.5-flash"
+  # New unified choice generation
+  choice_agent_unified: "google/gemini-2.5-flash"  # Main 3 choices
+  choice_agent_wildcard: "google/gemini-2.5-flash"  # Creative 4th choice
+  # Legacy choice agents (kept for backward compatibility)
   choice_agent_brave: "qwen/qwen3-next-80b-a3b-instruct"
   choice_agent_silly: "google/gemini-2.5-flash"
   choice_agent_careful: "google/gemini-2.5-flash"
@@ -15,42 +19,59 @@ prompts:
     Du bist ein freundlicher Geschichtenerzähler für ein 7-jähriges Kind.
 
     Erstelle den Anfang einer magischen Geschichte mit:
-    - Charakter: {{ character_name }}, {{ character_description }}
+    - Hauptcharakter (das Kind selbst): {{ character_name }}, {{ character_description }}
     - Thema: {{ story_theme }}
+
+    WICHTIG - Perspektive:
+    - Erzähle in der DU-Form (zweite Person)
+    - Das Kind IST der Hauptcharakter {{ character_name }}
+    - Beispiel: "Du bist {{ character_name }}. Du stehst vor einem großen Schloss..."
+    - NICHT: "Es war einmal ein(e) {{ character_name }}..."
+    - Sprich das Kind direkt an: "Du siehst...", "Du hörst...", "Du fühlst..."
 
     Die Geschichte sollte:
     - In deutscher Sprache sein
+    - Verwende einfache Wörter und kurze Sätze, passend für ein 7-jähriges Kind (Zweitklässler)
+    - Vermeide zusammengesetzte Wörter mit mehr als 3 Silben
+    - Halte Sätze unter 15 Wörtern
     - Märchenhaft und fantasievoll sein
     - Für 7-jährige geeignet sein (keine gruseligen oder gewaltätigen Elemente)
     - Spannend beginnen mit einer interessanten Situation
-    - 3-4 Sätze lang sein
+    - 6-10 Sätze lang sein (etwa eine Seite Text)
+    - Verwende Absätze für bessere Lesbarkeit
+    - Ende mit einer klaren Situation, die zu Entscheidungen führt
+    - Stelle sicher, dass das Kind sich als {{ character_name }} fühlt
 
     Antworte mit einem JSON-Objekt in diesem Format:
     {
-      "story_text": "Die Geschichte in deutscher Sprache",
-      "image_prompt": "Eine kurze Beschreibung für ein Bild in deutscher Sprache (max 20 Wörter)"
+      "story_text": "Die Geschichte in deutscher Sprache (in DU-Form!)",
+      "image_prompt": "Eine kurze Beschreibung für ein Bild in deutscher Sprache mit {{ character_name }} (max 20 Wörter)"
     }
 
   narrator: |
-    Du bist ein kreativer Geschichtenerzähler für Kinder. Deine Aufgabe ist es, die Geschichte fortzusetzen.
-
     Bisherige Geschichte:
     {{ history }}
 
-    WICHTIG: Baue das folgende unerwartete Element auf natürliche Weise in die Geschichte ein:
-    "{{ wildcard }}"
+    Dies ist eine lange Abenteuergeschichte. Erzähle langsam und ruhig. Nicht jeder Moment muss wichtig sein.
 
-    Setze die Geschichte fort mit:
-    - 3-4 Sätzen in deutscher Sprache
-    - Märchenhafter, fantasievoller Sprache
-    - Altersgerecht für 7-jährige (keine gruseligen oder gewaltätigen Elemente)
-    - Einbeziehung des unerwarteten Elements
-    - Kreativität und Abwechslung (vermeide Wiederholungen)
+    Baue dieses Element natürlich ein: "{{ wildcard }}"
 
-    Antworte mit einem JSON-Objekt in diesem Format:
+    Erzähle in DU-Form. Das Kind IST der Hauptcharakter.
+
+    6-10 Sätze. Einfache Wörter (Zweitklässler). Kurze Sätze (unter 15 Wörter).
+
+    Lass die Geschichte atmen:
+    - Beschreibe, was du siehst, hörst, fühlst
+    - Kleine Details und ruhige Momente
+    - Nicht sofort zur nächsten Krise
+    - Lass den Charakter die Welt erleben
+
+    Ende mit einer klaren Entscheidung.
+
+    JSON-Format:
     {
-      "story_text": "Die Fortsetzung der Geschichte in deutscher Sprache",
-      "image_prompt": "Eine kurze Beschreibung für ein Bild in deutscher Sprache (max 20 Wörter)"
+      "story_text": "Die Geschichte in DU-Form",
+      "image_prompt": "Bildbeschreibung (max 20 Wörter)"
     }
 
   validator: |
@@ -65,15 +86,57 @@ prompts:
     Translate the following German scene description to a rich, artistic English prompt for an image generation AI.
 
     Add details like:
-    - "digital art, vibrant colors, whimsical fairy tale style"
-    - "for kids, friendly, magical atmosphere"
-    - "storybook illustration, colorful, imaginative"
+    - "digital art, soft muted colors, gentle fairy tale style"
+    - "for kids, friendly, calm atmosphere"
+    - "storybook illustration, subtle tones, realistic but magical"
+    - "soft lighting, natural colors, not overly bright"
+    - "toned-down palette, warm earthy tones"
+
+    AVOID:
+    - "vibrant", "bright", "neon", "saturated"
+    - "whimsical", "cartoonish", "exaggerated"
+    - Use softer, more realistic aesthetics
 
     German description: {{ german_image_prompt }}
 
     Respond with only the English prompt (no explanations, max 75 words).
 
   choice_prompts:
+    # New unified approach: Generate 3 coherent choices + 1 wild card
+    unified_choices: |
+      Geschichte:
+      {{ history }}
+
+      Generiere 3 verschiedene Antworten auf die Situation. Jede Antwort muss direkt auf das reagieren, was gerade passiert ist.
+
+      Die 3 Wahlmöglichkeiten:
+      - Reagieren präzise auf die aktuelle Situation
+      - Sind unterschiedliche Wege, mit der Situation umzugehen
+      - In "Ich..."-Form (einfache Wörter, max 12 Wörter)
+
+      JSON-Format:
+      {
+        "choice_1": "Ich...",
+        "choice_2": "Ich...",
+        "choice_3": "Ich..."
+      }
+
+    wildcard_choice: |
+      Geschichte:
+      {{ history }}
+
+      Vorhandene Wahlmöglichkeiten:
+      1. {{ choice_1 }}
+      2. {{ choice_2 }}
+      3. {{ choice_3 }}
+
+      Generiere eine 4. Wahlmöglichkeit. Sie reagiert auf die Situation, aber überraschend oder kreativ anders als die ersten 3.
+
+      In "Ich..."-Form. Einfache Wörter. Max 12 Wörter.
+
+      Antworte nur mit der 4. Wahl.
+
+    # Legacy personality-based prompts (kept for backward compatibility)
     brave: |
       Basierend auf dieser Geschichte, schlage eine mutige und kühne Aktion vor, die das Kind wählen könnte.
 
@@ -84,6 +147,7 @@ prompts:
       - In deutscher Sprache sein
       - Als direkte Aktion formuliert sein (z.B. "Ich klettere auf den Baum")
       - Für 7-jährige geeignet sein
+      - Einfache Wörter verwenden (Zweitklässler-Niveau)
       - Maximal 10 Wörter lang sein
 
       Antworte nur mit dem Text der Aktion, nichts anderes.
@@ -98,6 +162,7 @@ prompts:
       - In deutscher Sprache sein
       - Als direkte Aktion formuliert sein (z.B. "Ich mache einen Purzelbaum")
       - Für 7-jährige geeignet sein
+      - Einfache Wörter verwenden (Zweitklässler-Niveau)
       - Maximal 10 Wörter lang sein
 
       Antworte nur mit dem Text der Aktion, nichts anderes.
@@ -112,9 +177,78 @@ prompts:
       - In deutscher Sprache sein
       - Als direkte Aktion formuliert sein (z.B. "Ich schaue mich genau um")
       - Für 7-jährige geeignet sein
+      - Einfache Wörter verwenden (Zweitklässer-Niveau)
       - Maximal 10 Wörter lang sein
 
       Antworte nur mit dem Text der Aktion, nichts anderes.
+
+    # New diverse choice types
+    action: |
+      Basierend auf dieser Geschichte, schlage eine physische Handlung vor, die das Kind wählen könnte.
+
+      Geschichte: {{ history }}
+
+      Die Handlung sollte:
+      - Eine konkrete körperliche Aktion sein (gehen, klettern, öffnen, nehmen, etc.)
+      - In deutscher Sprache sein
+      - Als direkte Handlung formuliert sein (z.B. "Ich öffne die Tür", "Ich gehe zum Baum")
+      - Für 7-jährige geeignet sein
+      - Einfache Wörter verwenden (Zweitklässler-Niveau)
+      - Maximal 10 Wörter lang sein
+      - Zur aktuellen Situation passen
+
+      Antworte nur mit dem Text der Handlung, nichts anderes.
+
+    dialogue: |
+      Basierend auf dieser Geschichte, schlage eine Frage oder Aussage vor, die das Kind sagen könnte.
+
+      Geschichte: {{ history }}
+
+      Die Aussage sollte:
+      - Etwas sein, das das Kind sagen oder fragen würde
+      - In deutscher Sprache sein
+      - Mit "Ich sage:" oder "Ich frage:" beginnen
+      - Für 7-jährige geeignet sein
+      - Einfache Wörter verwenden (Zweitklässler-Niveau)
+      - Maximal 12 Wörter lang sein
+      - Zur aktuellen Situation passen
+      - Beispiele: "Ich frage: 'Wer bist du?'", "Ich sage: 'Hallo, ich bin Luna!'"
+
+      Antworte nur mit dem Text der Aussage, nichts anderes.
+
+    riddle: |
+      Basierend auf dieser Geschichte, erstelle ein einfaches Rätsel, das das Kind lösen muss.
+
+      Geschichte: {{ history }}
+
+      Das Rätsel sollte:
+      - Ein altersgerechtes Rätsel für 7-jährige sein
+      - In deutscher Sprache sein
+      - Eine klare, einfache Frage stellen
+      - Mit "Ich denke nach:" beginnen, gefolgt von der Antwort
+      - Einfache Wörter verwenden (Zweitklässler-Niveau)
+      - Maximal 12 Wörter lang sein
+      - Zur Geschichte passen
+      - Beispiele: "Ich denke nach: Der Schlüssel ist hinter dem Baum", "Ich denke nach: Das Passwort ist 'Freundschaft'"
+
+      Antworte nur mit dem Text der Rätsellösung, nichts anderes.
+
+    moral: |
+      Basierend auf dieser Geschichte, schlage eine emotionale oder moralische Handlung vor.
+
+      Geschichte: {{ history }}
+
+      Die Handlung sollte:
+      - Eine freundliche, hilfsbereite oder gefühlvolle Aktion sein
+      - Themen wie Freundschaft, Mut, Hilfe, Mitgefühl zeigen
+      - In deutscher Sprache sein
+      - Als direkte Handlung formuliert sein (z.B. "Ich helfe dem Tier", "Ich teile mein Essen")
+      - Für 7-jährige geeignet sein
+      - Einfache Wörter verwenden (Zweitklässler-Niveau)
+      - Maximal 10 Wörter lang sein
+      - Zur aktuellen Situation passen
+
+      Antworte nur mit dem Text der Handlung, nichts anderes.
 
 # List of random elements to inject into the story for variety
 wildcards:
@@ -160,6 +294,22 @@ sampling_params:
     reasoning:
       max_tokens: 100  # Gemini: minimal reasoning for validation
 
+  # New unified choice generation
+  choice_agent_unified:
+    temperature: 0.9  # Creative but coherent
+    top_p: 0.95
+    max_tokens: 800  # Enough for 3 choices + JSON structure
+    reasoning:
+      max_tokens: 150  # Qwen: good reasoning to ensure distinct choices
+
+  choice_agent_wildcard:
+    temperature: 1.2  # High creativity for wild card
+    top_p: 0.95
+    max_tokens: 500
+    reasoning:
+      max_tokens: 100  # Gemini: moderate reasoning for creative choice
+
+  # Legacy choice agents (kept for backward compatibility)
   choice_agent_brave:
     temperature: 1.1
     top_p: 0.9

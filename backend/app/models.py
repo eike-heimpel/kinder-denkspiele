@@ -35,7 +35,7 @@ class AdventureStepResponse(BaseModel):
 
     story_text: str = Field(..., description="The new paragraph of the story in German")
     image_url: str = Field(..., description="URL to the generated image")
-    choices: List[str] = Field(..., min_length=3, max_length=3, description="Three choices in German")
+    choices: List[str] = Field(..., min_length=3, max_length=4, description="3-4 choices in German (3 main + 1 wild card)")
     timing: Optional[Dict[str, Any]] = Field(None, description="Timing breakdown for debugging")
     warnings: List[str] = Field(default_factory=list, description="Non-fatal warnings")
 
@@ -71,6 +71,11 @@ class GameSession(BaseModel):
     round: int = 0
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_updated: datetime = Field(default_factory=datetime.utcnow)
+
+    # Image consistency tracking
+    first_image_url: Optional[str] = Field(None, description="URL of the first generated image")
+    first_image_description: Optional[str] = Field(None, description="Description of first image for style consistency")
+    previous_image_url: Optional[str] = Field(None, description="URL of the most recent image")
 
     class Config:
         populate_by_name = True
