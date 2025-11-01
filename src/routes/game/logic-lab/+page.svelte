@@ -37,6 +37,7 @@
 		consecutiveIncorrect?: number;
 		problemType?: string;
 		problemDifficulty?: number;
+		inputTokens?: number;
 	}>({});
 
 	// URL params
@@ -85,7 +86,8 @@
 				consecutiveCorrect: data.consecutiveCorrect,
 				consecutiveIncorrect: data.consecutiveIncorrect,
 				problemType: data.problem?.type,
-				problemDifficulty: data.problem?.difficulty
+				problemDifficulty: data.problem?.difficulty,
+				inputTokens: data.problem?.inputTokens
 			};
 
 			gamePhase = 'playing';
@@ -103,18 +105,35 @@
 		}
 
 		try {
-			await fetch('/api/game/logic-lab/reset', {
+			const response = await fetch('/api/game/logic-lab/reset', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ userId })
 			});
 
-			// Restart game
+			if (!response.ok) {
+				throw new Error('Reset failed');
+			}
+
+			// Reset ALL game state
 			gamePhase = 'setup';
 			sessionId = '';
 			score = 0;
 			round = 0;
 			currentProblem = null;
+			lastAnswerCorrect = false;
+			explanation = '';
+			selectedAnswerIndex = -1;
+			submitting = false;
+			debugInfo = {
+				difficultyLevel: 0,
+				consecutiveCorrect: 0,
+				consecutiveIncorrect: 0,
+				problemType: '',
+				problemDifficulty: 0
+			};
+
+			alert('Fortschritt erfolgreich zurückgesetzt!');
 		} catch (error) {
 			console.error('Error resetting:', error);
 			alert('Fehler beim Zurücksetzen.');
@@ -152,7 +171,8 @@
 					consecutiveCorrect: data.consecutiveCorrect,
 					consecutiveIncorrect: data.consecutiveIncorrect,
 					problemType: data.nextProblem.type,
-					problemDifficulty: data.nextProblem.difficulty
+					problemDifficulty: data.nextProblem.difficulty,
+					inputTokens: data.nextProblem.inputTokens
 				};
 			}
 
@@ -323,6 +343,10 @@
 							<div class="col-span-2">
 								<span class="font-semibold">Fragetyp:</span>
 								{debugInfo.problemType ?? '?'}
+							</div>
+							<div class="col-span-2">
+								<span class="font-semibold">Input Tokens:</span>
+								{debugInfo.inputTokens?.toLocaleString() ?? '?'}
 							</div>
 						</div>
 						<div class="mt-2 text-xs text-gray-500">

@@ -4,6 +4,7 @@
         size?: "sm" | "md" | "lg" | "xl";
         onclick?: () => void;
         disabled?: boolean;
+        class?: string;
         children: any;
     }
 
@@ -12,6 +13,7 @@
         size = "md",
         onclick,
         disabled = false,
+        class: className = "",
         children,
     }: Props = $props();
 
@@ -37,7 +39,7 @@
 <button
     class="rounded-2xl font-black uppercase tracking-wide transition-all duration-300 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 {variants[
         variant
-    ]} {sizes[size]}"
+    ]} {sizes[size]} {className}"
     {onclick}
     {disabled}
 >

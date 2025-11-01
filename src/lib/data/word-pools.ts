@@ -49,5 +49,40 @@ export const germanWordPools: WordPool = {
         'Schere', 'Schlüssel', 'Rucksack', 'Regenschirm', 'Brille',
         'Fahrrad', 'Flugzeug', 'Schiff', 'Zug', 'Rakete', 'Luftballon',
         'Geschenk', 'Spielzeug', 'Puppe', 'Teddy'
+    ],
+
+    'extra-hard': [
+        // Very complex animals and nature
+        'Stachelschwein', 'Kolibri', 'Tausendfüßler', 'Seepferdchen', 'Schmetterlingsraupe',
+        'Glühwürmchen', 'Silberreiher', 'Regenwurm', 'Schneckenhaus', 'Honigbiene',
+
+        // Complex compound words
+        'Sonnenblume', 'Schneeballschlacht', 'Geburtstagsfeier', 'Schokoladenkuchen',
+        'Fußballspiel', 'Weihnachtsbaum', 'Regenwolke', 'Sonnenschein',
+        'Adventskranz', 'Kinderzimmer', 'Spielplatzrutsche', 'Sandkasten',
+
+        // Scientific and educational terms (kid-appropriate)
+        'Dinosaurier', 'Teleskop', 'Mikroskop', 'Vulkan', 'Kristall',
+        'Magnet', 'Roboter', 'Astronaut', 'Weltraum', 'Universum',
+
+        // Abstract concepts and activities
+        'Experiment', 'Entdeckung', 'Abenteuer', 'Fantasie', 'Kreativität',
+        'Freundschaft', 'Geburtstag', 'Überraschung', 'Erlebnis', 'Erinnerung',
+
+        // Complex natural phenomena
+        'Erdbeben', 'Lawine', 'Tornado', 'Nordlicht', 'Sternschnuppe',
+        'Vollmond', 'Halbmond', 'Sonnenaufgang', 'Sonnenuntergang', 'Morgenröte',
+
+        // Complex objects and tools
+        'Kompass', 'Fernglas', 'Schubkarre', 'Leiter', 'Werkzeugkasten',
+        'Taschenlampe', 'Kompass', 'Sandburg', 'Drachen', 'Seifenblase',
+
+        // Advanced food and cooking
+        'Pfannkuchen', 'Apfelkuchen', 'Blaubeere', 'Brombeere', 'Kokosnuss',
+        'Rosine', 'Mandel', 'Haselnuss', 'Zimt', 'Vanille',
+
+        // Complex places and environments
+        'Gebirge', 'Dschungel', 'Wüste', 'Höhle', 'Gletscher',
+        'Wasserfall', 'Vulkan', 'Schlucht', 'Hügel', 'Tal'
     ]
 };

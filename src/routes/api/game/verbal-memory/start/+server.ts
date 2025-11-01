@@ -13,8 +13,8 @@ export const POST: RequestHandler = async ({ request }) => {
         return json({ error: 'userId and difficulty are required' }, { status: 400 });
     }
 
-    if (difficulty !== 'easy' && difficulty !== 'hard') {
-        return json({ error: 'difficulty must be "easy" or "hard"' }, { status: 400 });
+    if (difficulty !== 'easy' && difficulty !== 'hard' && difficulty !== 'extra-hard') {
+        return json({ error: 'difficulty must be "easy", "hard", or "extra-hard"' }, { status: 400 });
     }
 
     const engine = new GameEngine();

@@ -1,4 +1,4 @@
-export type DifficultyLevel = 'easy' | 'hard';
+export type DifficultyLevel = 'easy' | 'hard' | 'extra-hard';
 
 export type GameType = 'verbal-memory' | 'visual-memory' | 'reaction-time' | 'logic-lab';
 
@@ -59,6 +59,7 @@ export interface GameStats {
 export interface WordPool {
     easy: string[];
     hard: string[];
+    'extra-hard': string[];
 }
 
 export interface VisualMemoryGameState {
@@ -103,6 +104,8 @@ export interface Problem {
     correctIndex: number;
     explanation: string;
     difficultyLevel: number;
+    theme?: string; // Main theme of the question (e.g., 'Tiere', 'Zahlen', 'Farben')
+    inputTokens?: number; // Number of tokens sent to LLM for this problem
     timestamp: Date;
     userAnswerIndex?: number;
     isCorrect?: boolean;

@@ -28,6 +28,7 @@
 </script>
 
 {#if !isLoginPage}
+	<!-- Fixed navigation bar -->
 	<div class="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-black/20 to-transparent backdrop-blur-sm px-2 py-2 flex items-center justify-between">
 		{#if gameInfo}
 			<div class="text-white font-bold text-lg drop-shadow-lg flex items-center gap-2">
@@ -57,6 +58,12 @@
 			</button>
 		</div>
 	</div>
-{/if}
 
-{@render children()}
+	<!-- Content wrapper with top padding to account for fixed navbar -->
+	<div class="pt-14">
+		{@render children()}
+	</div>
+{:else}
+	<!-- No navbar on login page, render children directly -->
+	{@render children()}
+{/if}

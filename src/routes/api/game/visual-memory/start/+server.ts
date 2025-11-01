@@ -10,7 +10,7 @@ export const POST: RequestHandler = async ({ request }) => {
             return json({ error: 'Missing userId or difficulty' }, { status: 400 });
         }
 
-        if (difficulty !== 'easy' && difficulty !== 'hard') {
+        if (difficulty !== 'easy' && difficulty !== 'hard' && difficulty !== 'extra-hard') {
             return json({ error: 'Invalid difficulty level' }, { status: 400 });
         }
 

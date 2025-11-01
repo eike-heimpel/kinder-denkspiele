@@ -1,7 +1,7 @@
 # Problem Generation Prompt for Logic Lab Game
 version: "1.0.0"
 model: "google/gemini-2.5-flash"
-temperature: 1.2
+temperature: 0.9
 max_tokens: 1000
 response_format:
   type: "json_object"
@@ -76,7 +76,8 @@ system_prompt: |
     "options": ["Option A", "Option B", "Option C", "Option D"],
     "correctIndex": 0-3,
     "explanation": "Kurze kindgerechte Erklärung (1-2 Sätze)",
-    "difficulty": 1-5
+    "difficulty": 1-5,
+    "theme": "Das Hauptthema der Frage (z.B. 'Tiere', 'Zahlen', 'Farben', 'Formen', 'Essen', 'Fahrzeuge', 'Wetter', 'Natur', 'Berufe', 'Sport')"
   }
 
   WICHTIG:
@@ -90,18 +91,50 @@ user_prompt: |
   Erstelle eine neue {{ problem_type }}-Frage auf LEVEL {{ difficulty_level }} (1=sehr leicht, 5=sehr schwer).
 
   {% if performance_history|length > 0 %}
-  ⚠️ KRITISCH - BEREITS GESTELLTE FRAGEN (DARF NICHT WIEDERHOLT WERDEN!):
+  🚨 ABSOLUT KRITISCH - WIEDERHOLUNGEN SIND STRENG VERBOTEN! 🚨
+
+  Das Kind hat bereits {{ performance_history|length }} Fragen beantwortet. ALLE bisherigen Fragen:
   {% for item in performance_history %}
-  - "{{ item.question }}" ({{ item.type }}, Level {{ item.difficulty }})
+  {{ loop.index }}. "{{ item.question }}" ({{ item.type }}, Level {{ item.difficulty }}{% if item.theme %}, Thema: {{ item.theme }}{% endif %})
   {% endfor %}
 
-  WICHTIG - KEINE WIEDERHOLUNGEN:
-  - Stelle NIEMALS eine ähnliche oder gleiche Frage wie oben
-  - Nutze KOMPLETT ANDERE Themen und Konzepte
-  - Wenn oben eine Frage über Tiere war → jetzt KEINE Tiere!
-  - Wenn oben eine Zahlenreihe war → jetzt KEINE Zahlenreihe!
-  - Variiere radikal: Wechsle zwischen Tieren, Zahlen, Formen, Farben, Essen, Fahrzeugen, Wetter, Natur
-  - Sei kreativ und überraschend - jede Frage muss sich frisch und neu anfühlen!
+  {% if performance_history|length > 0 %}
+  🎯 VERWENDETE THEMEN (NIEMALS WIEDERHOLEN!):
+  {% set recent_themes = [] %}
+  {% for item in performance_history[-5:] %}
+    {% if item.theme and item.theme not in recent_themes %}
+      {% set _ = recent_themes.append(item.theme) %}
+    {% endif %}
+  {% endfor %}
+  {% if recent_themes|length > 0 %}
+  - Letzte Themen: {{ recent_themes|join(", ") }}
+  - ⚠️ VERMEIDE diese Themen ABSOLUT!
+  {% endif %}
+  {% endif %}
+
+  ⛔ STRIKTE ANTI-WIEDERHOLUNGS-REGELN (ABSOLUT EINHALTEN!):
+
+  1. KEINE ähnlichen oder gleichen Fragen wie oben - NIEMALS!
+  2. KEINE Wiederholung von Themen/Konzepten aus den letzten {{ [performance_history|length, 5]|min }} Fragen
+  3. KEINE gleichen Zahlenmuster (z.B. wenn "2,4,6,8" schon war, dann nicht "5,10,15,20")
+  4. KEINE gleichen Tier-/Objekt-Kategorien (wenn "Hund, Katze" schon vorkam, dann ANDERE Tiere)
+  5. Variiere RADIKAL zwischen diesen Themen:
+     - Tiere (Säugetiere, Vögel, Insekten, Wassertiere)
+     - Zahlen & Muster (Addition, Multiplikation, Folgen)
+     - Farben & Formen (Geometrie, Muster)
+     - Essen & Trinken (Obst, Gemüse, Gerichte)
+     - Fahrzeuge (Land, Wasser, Luft)
+     - Natur (Pflanzen, Wetter, Jahreszeiten)
+     - Berufe & Tätigkeiten
+     - Sport & Bewegung
+     - Alltag & Haushalt
+     - Musik & Instrumente
+
+  6. Wähle ein Thema, das in den letzten {{ [performance_history|length, 5]|min }} Fragen NICHT vorkam
+  7. Sei extrem kreativ - überrasche das Kind mit unerwarteten Themen!
+  8. Jede Frage MUSS sich komplett NEU und FRISCH anfühlen
+
+  💡 WENN DU UNSICHER BIST: Wähle ein KOMPLETT ANDERES Thema als alle bisherigen!
   {% endif %}
 
   ZIEL-SCHWIERIGKEIT: Level {{ difficulty_level }} für {{ age }}-Jährige

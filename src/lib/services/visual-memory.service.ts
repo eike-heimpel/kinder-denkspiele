@@ -23,6 +23,13 @@ export class VisualMemoryEngine {
             maxTargets: 7,
             presentationTime: 1500,
             retentionDelay: 1000
+        },
+        'extra-hard': {
+            gridSize: 5,
+            startingTargets: 4,
+            maxTargets: 10,
+            presentationTime: 2000,
+            retentionDelay: 1500
         }
     };
 

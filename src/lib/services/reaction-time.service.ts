@@ -19,6 +19,11 @@ export class ReactionTimeEngine {
             totalRounds: 5,
             minDelay: 1000,
             maxDelay: 3000
+        },
+        'extra-hard': {
+            totalRounds: 5,
+            minDelay: 500,
+            maxDelay: 2000
         }
     };
 

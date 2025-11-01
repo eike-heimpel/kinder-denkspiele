@@ -1,5 +1,6 @@
 import { OPENROUTER_API_KEY } from '$env/static/private';
 import { PromptLoader, type RenderedPrompt } from './prompt-loader.service';
+import { encoding_for_model } from 'tiktoken';
 
 export interface GenerateProblemParams {
 	initialGuidance?: string;
@@ -12,6 +13,7 @@ export interface GenerateProblemParams {
 		type: string;
 		difficulty: number;
 		correct: boolean;
+		theme?: string;
 	}>;
 	consecutiveCorrect: number;
 	consecutiveIncorrect: number;
@@ -25,6 +27,8 @@ export interface Problem {
 	correctIndex: number;
 	explanation: string;
 	difficultyLevel: number;
+	theme?: string;
+	inputTokens?: number; // Number of tokens sent to LLM
 	timestamp: Date;
 	userAnswerIndex?: number;
 	isCorrect?: boolean;
@@ -130,11 +134,17 @@ export class LLMService {
 				consecutive_incorrect: params.consecutiveIncorrect
 			});
 
+			// Count input tokens
+			const inputTokens = this.countTokens(rendered.system_prompt, rendered.user_prompt);
+
 			// Call OpenRouter API to generate problem
 			const response = await this.callOpenRouter(rendered);
 
 			// Parse and validate response
 			const problem = this.parseResponse(response);
+
+			// Add token count to problem
+			problem.inputTokens = inputTokens;
 
 			if (!this.validateProblem(problem)) {
 				console.error('Generated problem failed basic validation');
@@ -190,6 +200,26 @@ export class LLMService {
 		return data.choices[0].message.content;
 	}
 
+	private countTokens(systemPrompt: string, userPrompt: string): number {
+		try {
+			// Use gpt-4 encoding as approximation for Gemini 2.5 Flash
+			const enc = encoding_for_model('gpt-4');
+
+			// Count tokens in both prompts
+			const combinedText = systemPrompt + userPrompt;
+			const tokens = enc.encode(combinedText);
+			const tokenCount = tokens.length;
+
+			// Free the encoder
+			enc.free();
+
+			return tokenCount;
+		} catch (error) {
+			console.error('Error counting tokens:', error);
+			return 0; // Return 0 if counting fails
+		}
+	}
+
 	private parseResponse(content: string): Problem {
 		const parsed = JSON.parse(content);
 
@@ -201,6 +231,7 @@ export class LLMService {
 			correctIndex: parsed.correctIndex,
 			explanation: parsed.explanation,
 			difficultyLevel: parsed.difficulty || 2,
+			theme: parsed.theme,
 			timestamp: new Date()
 		};
 	}

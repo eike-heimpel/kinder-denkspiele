@@ -13,11 +13,56 @@
     let showNewUserForm = $state(false);
 
     const avatarOptions = [
-        "😀", "😃", "😄", "😁", "😊", "🙂", "😇", "🥰", "😍", "🤩",
-        "😎", "🤓", "🧐", "🤔", "🤗", "🤠", "👦", "👧", "🧒", "👶",
-        "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯",
-        "🦁", "🐮", "🐷", "🐸", "🐵", "🐔", "🐧", "🦄", "🐙", "🦋",
-        "🌟", "⭐", "🌈", "🔥", "💎", "👑", "🎈", "🎨", "⚽", "🎮"
+        "😀",
+        "😃",
+        "😄",
+        "😁",
+        "😊",
+        "🙂",
+        "😇",
+        "🥰",
+        "😍",
+        "🤩",
+        "😎",
+        "🤓",
+        "🧐",
+        "🤔",
+        "🤗",
+        "🤠",
+        "👦",
+        "👧",
+        "🧒",
+        "👶",
+        "🐶",
+        "🐱",
+        "🐭",
+        "🐹",
+        "🐰",
+        "🦊",
+        "🐻",
+        "🐼",
+        "🐨",
+        "🐯",
+        "🦁",
+        "🐮",
+        "🐷",
+        "🐸",
+        "🐵",
+        "🐔",
+        "🐧",
+        "🦄",
+        "🐙",
+        "🦋",
+        "🌟",
+        "⭐",
+        "🌈",
+        "🔥",
+        "💎",
+        "👑",
+        "🎈",
+        "🎨",
+        "⚽",
+        "🎮",
     ];
 
     onMount(async () => {
@@ -38,7 +83,7 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 name: newUserName.trim(),
-                avatar: newUserAvatar
+                avatar: newUserAvatar,
             }),
         });
 
@@ -55,8 +100,12 @@
     }
 
     function startGame(
-        gameType: "verbal-memory" | "visual-memory" | "reaction-time" | "logic-lab",
-        difficulty: "easy" | "hard",
+        gameType:
+            | "verbal-memory"
+            | "visual-memory"
+            | "reaction-time"
+            | "logic-lab",
+        difficulty: "easy" | "hard" | "extra-hard",
     ) {
         if (!selectedUser) return;
         goto(
@@ -74,11 +123,8 @@
 <div
     class="min-h-screen bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 p-4 animate-gradient"
 >
-    <div class="max-w-4xl mx-auto pt-4">
+    <div class="max-w-4xl mx-auto pt-20">
         <div class="text-center mb-4 animate-fade-in">
-            <div class="inline-block mb-1">
-                <span class="text-5xl animate-bounce-slow">🧠</span>
-            </div>
             <h1
                 class="text-3xl font-black text-white mb-1 drop-shadow-2xl tracking-tight"
             >
@@ -109,7 +155,9 @@
                                 class="group relative bg-gradient-to-br from-blue-400 via-blue-500 to-purple-500 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 text-white text-2xl font-black py-6 px-6 rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-xl hover:shadow-2xl border-4 border-white/30"
                                 onclick={() => selectUser(user)}
                             >
-                                <div class="flex items-center justify-center gap-3">
+                                <div
+                                    class="flex items-center justify-center gap-3"
+                                >
                                     <span class="text-5xl">{user.avatar}</span>
                                     <span>{user.name}</span>
                                 </div>
@@ -129,14 +177,21 @@
                 {:else}
                     <div class="bg-gray-50 p-4 rounded-xl">
                         <div class="mb-3 text-center">
-                            <p class="text-sm font-bold text-gray-700 mb-2">Wähle dein Avatar:</p>
+                            <p class="text-sm font-bold text-gray-700 mb-2">
+                                Wähle dein Avatar:
+                            </p>
                             <div class="text-6xl mb-2">{newUserAvatar}</div>
-                            <div class="grid grid-cols-10 gap-2 max-h-48 overflow-y-auto p-2 bg-white rounded-lg border-2 border-gray-200">
+                            <div
+                                class="grid grid-cols-10 gap-2 max-h-48 overflow-y-auto p-2 bg-white rounded-lg border-2 border-gray-200"
+                            >
                                 {#each avatarOptions as avatar}
                                     <button
                                         type="button"
-                                        class="text-3xl hover:scale-125 transition-transform duration-200 cursor-pointer p-1 rounded {newUserAvatar === avatar ? 'bg-blue-200 scale-110' : ''}"
-                                        onclick={() => newUserAvatar = avatar}
+                                        class="text-3xl hover:scale-125 transition-transform duration-200 cursor-pointer p-1 rounded {newUserAvatar ===
+                                        avatar
+                                            ? 'bg-blue-200 scale-110'
+                                            : ''}"
+                                        onclick={() => (newUserAvatar = avatar)}
                                     >
                                         {avatar}
                                     </button>
@@ -214,6 +269,16 @@
                                 <span>Schwer</span>
                             </div>
                         </Button>
+                        <Button
+                            variant="primary"
+                            size="lg"
+                            onclick={() => startGame("verbal-memory", "extra-hard")}
+                        >
+                            <div class="flex items-center gap-2">
+                                <span class="text-3xl">🟣</span>
+                                <span>Extra Schwer</span>
+                            </div>
+                        </Button>
                     </div>
                 </div>
 
@@ -252,6 +317,16 @@
                                 <span>Schwer</span>
                             </div>
                         </Button>
+                        <Button
+                            variant="primary"
+                            size="lg"
+                            onclick={() => startGame("visual-memory", "extra-hard")}
+                        >
+                            <div class="flex items-center gap-2">
+                                <span class="text-3xl">🟣</span>
+                                <span>Extra Schwer</span>
+                            </div>
+                        </Button>
                     </div>
                 </div>
 
@@ -288,6 +363,16 @@
                             <div class="flex items-center gap-2">
                                 <span class="text-3xl">🔴</span>
                                 <span>Schwer</span>
+                            </div>
+                        </Button>
+                        <Button
+                            variant="primary"
+                            size="lg"
+                            onclick={() => startGame("reaction-time", "extra-hard")}
+                        >
+                            <div class="flex items-center gap-2">
+                                <span class="text-3xl">🟣</span>
+                                <span>Extra Schwer</span>
                             </div>
                         </Button>
                     </div>
@@ -350,6 +435,16 @@
                 </div>
             </Card>
         {/if}
+
+        <!-- Admin Link (discreet) -->
+        <div class="text-center mt-8 pb-4">
+            <button
+                onclick={() => goto("/admin/login")}
+                class="text-white/60 hover:text-white/90 text-sm font-medium transition-colors underline"
+            >
+                Admin
+            </button>
+        </div>
     </div>
 </div>
 

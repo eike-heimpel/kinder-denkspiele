@@ -29,12 +29,12 @@ export const POST: RequestHandler = async ({ request }) => {
 				question: state.currentProblem.question,
 				options: state.currentProblem.options,
 				type: state.currentProblem.type,
-				difficulty: state.currentProblem.difficultyLevel
+				difficulty: state.currentProblem.difficultyLevel,
+				inputTokens: state.currentProblem.inputTokens
 			},
 			score: session.score,
 			lives: session.lives,
 			round: session.round,
-			totalRounds: state.totalProblems,
 			// Debug info for parents
 			difficultyLevel: state.currentDifficultyLevel,
 			consecutiveCorrect: state.consecutiveCorrect,

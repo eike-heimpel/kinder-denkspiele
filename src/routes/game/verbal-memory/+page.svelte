@@ -8,7 +8,7 @@
     import type { User } from "$lib/types";
 
     let userId = $state("");
-    let difficulty = $state<"easy" | "hard">("easy");
+    let difficulty = $state<"easy" | "hard" | "extra-hard">("easy");
     let user = $state<User | undefined>(undefined);
     let sessionId = $state<string | null>(null);
     let currentWord = $state<string | null>(null);
@@ -35,7 +35,7 @@
     onMount(async () => {
         const params = new URLSearchParams(window.location.search);
         userId = params.get("userId") || "";
-        difficulty = (params.get("difficulty") as "easy" | "hard") || "easy";
+        difficulty = (params.get("difficulty") as "easy" | "hard" | "extra-hard") || "easy";
 
         if (!userId) {
             goto("/");
@@ -218,7 +218,9 @@
                     <p class="text-xl text-gray-600 font-semibold mb-6">
                         Schwierigkeit: {difficulty === "easy"
                             ? "🟢 Einfach"
-                            : "🔴 Schwer"}
+                            : difficulty === "hard"
+                              ? "🔴 Schwer"
+                              : "🟣 Extra Schwer"}
                     </p>
                     <div class="flex gap-4 justify-center flex-wrap">
                         <Button variant="success" size="lg" onclick={startGame}>
