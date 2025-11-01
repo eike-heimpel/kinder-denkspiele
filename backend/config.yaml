@@ -1,0 +1,188 @@
+# Märchenweber Configuration
+# All prompts must be in German for the story, English for meta-tasks
+
+models:
+  narrator: "google/gemini-2.5-pro"
+  validator: "google/gemini-2.5-flash"
+  image_generator: "google/gemini-2.5-flash-image"
+  image_translator: "google/gemini-2.5-flash"
+  choice_agent_brave: "qwen/qwen3-next-80b-a3b-instruct"
+  choice_agent_silly: "google/gemini-2.5-flash"
+  choice_agent_careful: "google/gemini-2.5-flash"
+
+prompts:
+  character_creation: |
+    Du bist ein freundlicher Geschichtenerzähler für ein 7-jähriges Kind.
+
+    Erstelle den Anfang einer magischen Geschichte mit:
+    - Charakter: {{ character_name }}, {{ character_description }}
+    - Thema: {{ story_theme }}
+
+    Die Geschichte sollte:
+    - In deutscher Sprache sein
+    - Märchenhaft und fantasievoll sein
+    - Für 7-jährige geeignet sein (keine gruseligen oder gewaltätigen Elemente)
+    - Spannend beginnen mit einer interessanten Situation
+    - 3-4 Sätze lang sein
+
+    Antworte mit einem JSON-Objekt in diesem Format:
+    {
+      "story_text": "Die Geschichte in deutscher Sprache",
+      "image_prompt": "Eine kurze Beschreibung für ein Bild in deutscher Sprache (max 20 Wörter)"
+    }
+
+  narrator: |
+    Du bist ein kreativer Geschichtenerzähler für Kinder. Deine Aufgabe ist es, die Geschichte fortzusetzen.
+
+    Bisherige Geschichte:
+    {{ history }}
+
+    WICHTIG: Baue das folgende unerwartete Element auf natürliche Weise in die Geschichte ein:
+    "{{ wildcard }}"
+
+    Setze die Geschichte fort mit:
+    - 3-4 Sätzen in deutscher Sprache
+    - Märchenhafter, fantasievoller Sprache
+    - Altersgerecht für 7-jährige (keine gruseligen oder gewaltätigen Elemente)
+    - Einbeziehung des unerwarteten Elements
+    - Kreativität und Abwechslung (vermeide Wiederholungen)
+
+    Antworte mit einem JSON-Objekt in diesem Format:
+    {
+      "story_text": "Die Fortsetzung der Geschichte in deutscher Sprache",
+      "image_prompt": "Eine kurze Beschreibung für ein Bild in deutscher Sprache (max 20 Wörter)"
+    }
+
+  validator: |
+    Ist der folgende deutsche Text für ein 7-jähriges Kind in einem märchenhaften Kontext angemessen?
+    Ist er frei von gruseligen, gewaltätigen oder unangemessenen Themen?
+
+    Text: {{ german_text }}
+
+    Antworte mit einem einzigen Wort: SAFE oder UNSAFE.
+
+  image_prompt_translator: |
+    Translate the following German scene description to a rich, artistic English prompt for an image generation AI.
+
+    Add details like:
+    - "digital art, vibrant colors, whimsical fairy tale style"
+    - "for kids, friendly, magical atmosphere"
+    - "storybook illustration, colorful, imaginative"
+
+    German description: {{ german_image_prompt }}
+
+    Respond with only the English prompt (no explanations, max 75 words).
+
+  choice_prompts:
+    brave: |
+      Basierend auf dieser Geschichte, schlage eine mutige und kühne Aktion vor, die das Kind wählen könnte.
+
+      Geschichte: {{ history }}
+
+      Die Aktion sollte:
+      - Mutig und abenteuerlich sein
+      - In deutscher Sprache sein
+      - Als direkte Aktion formuliert sein (z.B. "Ich klettere auf den Baum")
+      - Für 7-jährige geeignet sein
+      - Maximal 10 Wörter lang sein
+
+      Antworte nur mit dem Text der Aktion, nichts anderes.
+
+    silly: |
+      Basierend auf dieser Geschichte, schlage eine alberne oder lustige Aktion vor, die das Kind wählen könnte.
+
+      Geschichte: {{ history }}
+
+      Die Aktion sollte:
+      - Albern, lustig oder unerwartet sein
+      - In deutscher Sprache sein
+      - Als direkte Aktion formuliert sein (z.B. "Ich mache einen Purzelbaum")
+      - Für 7-jährige geeignet sein
+      - Maximal 10 Wörter lang sein
+
+      Antworte nur mit dem Text der Aktion, nichts anderes.
+
+    careful: |
+      Basierend auf dieser Geschichte, schlage eine vorsichtige und nachdenkliche Aktion vor, die das Kind wählen könnte.
+
+      Geschichte: {{ history }}
+
+      Die Aktion sollte:
+      - Vorsichtig, bedacht oder klug sein
+      - In deutscher Sprache sein
+      - Als direkte Aktion formuliert sein (z.B. "Ich schaue mich genau um")
+      - Für 7-jährige geeignet sein
+      - Maximal 10 Wörter lang sein
+
+      Antworte nur mit dem Text der Aktion, nichts anderes.
+
+# List of random elements to inject into the story for variety
+wildcards:
+  - "Ein Tier in der Nähe beginnt plötzlich zu sprechen."
+  - "Die Farbe des Himmels ändert sich abrupt zu einem sanften Lila."
+  - "Ein mysteriöses, leises Kichern ist in der Ferne zu hören."
+  - "Ein Gegenstand in der Nähe beginnt sanft zu leuchten."
+  - "Ein seltsam aussehender Schlüssel fällt vom Himmel."
+  - "Eine kleine, freundliche Kreatur erscheint plötzlich."
+  - "Die Sonne verwandelt sich in einen riesigen, lächelnden Mond."
+  - "Bunte Schmetterlinge umkreisen den Charakter in einem Tanz."
+  - "Ein alter Baum öffnet seine Augen und zwinkert."
+  - "Magische Glitzerpartikel schweben durch die Luft."
+  - "Ein sanfter Wind trägt das Flüstern eines alten Liedes heran."
+  - "Plötzlich erscheint eine leuchtende Tür aus dem Nichts."
+  - "Die Blumen um den Charakter herum beginnen zu singen."
+  - "Ein kleiner Regenbogen bildet sich direkt vor den Füßen."
+  - "Ein mysteriöser Nebel umhüllt alles in sanften Farben."
+  - "Ein freundlicher Geist schwebt vorbei und winkt."
+  - "Die Sterne am Himmel beginnen zu tanzen."
+  - "Ein magisches Buch schwebt durch die Luft und öffnet sich."
+  - "Plötzlich wachsen bunte Pilze aus dem Boden."
+  - "Ein goldener Pfad erscheint, der zu einem unbekannten Ort führt."
+  - "Die Wolken formen sich zu lustigen Tiergestalten."
+  - "Ein sanftes Summen erfüllt die Luft mit Magie."
+  - "Eine kleine Fee fliegt vorbei und hinterlässt Sternenstaub."
+  - "Die Bäume beginnen sich sanft zu bewegen, als würden sie tanzen."
+  - "Ein warmer, goldener Lichtstrahl bricht durch die Wolken."
+
+# Sampling parameters to combat repetition
+sampling_params:
+  narrator:
+    temperature: 0.95
+    presence_penalty: 0.4
+    top_p: 0.95
+    max_tokens: 4000
+    reasoning:
+      max_tokens: 100  # Gemini uses max_tokens for reasoning
+
+  validator:
+    temperature: 0.3
+    max_tokens: 100
+    reasoning:
+      max_tokens: 100  # Gemini: minimal reasoning for validation
+
+  choice_agent_brave:
+    temperature: 1.1
+    top_p: 0.9
+    max_tokens: 500  # Increased for reasoning + choice text
+    reasoning:
+      max_tokens: 100  # Qwen: moderate reasoning for brave choices
+
+  choice_agent_silly:
+    temperature: 1.2
+    top_p: 0.95
+    max_tokens: 500  # Increased for reasoning + choice text
+    reasoning:
+      max_tokens: 100  # Gemini: light reasoning for silly choices
+
+  choice_agent_careful:
+    temperature: 0.8
+    top_p: 0.9
+    max_tokens: 500  # Increased for reasoning + choice text
+    reasoning:
+      max_tokens: 100  # Gemini: light reasoning for silly choices
+
+  image_translator:
+    temperature: 0.7
+    max_tokens: 150
+    reasoning:
+      max_tokens: 0  # Gemini: minimal reasoning for translation

@@ -1,6 +1,6 @@
 export type DifficultyLevel = 'easy' | 'hard' | 'extra-hard';
 
-export type GameType = 'verbal-memory' | 'visual-memory' | 'reaction-time' | 'logic-lab';
+export type GameType = 'verbal-memory' | 'visual-memory' | 'reaction-time' | 'logic-lab' | 'maerchenweber';
 
 export interface User {
     _id?: string;
@@ -34,6 +34,9 @@ export interface GameSession {
     // Logic Lab specific (optional, only for logic-lab games)
     logicLabState?: LogicLabGameState;
 
+    // Märchenweber specific (optional, only for maerchenweber games)
+    maerchenweberState?: MaerchenweberGameState;
+
     isActive: boolean;
     startedAt: Date;
     endedAt?: Date;
@@ -47,6 +50,7 @@ export interface GameSessionDocument extends Omit<GameSession, 'seenWords'> {
     visualMemoryState?: VisualMemoryGameState;
     reactionTimeState?: ReactionTimeGameState;
     logicLabState?: LogicLabGameState;
+    maerchenweberState?: MaerchenweberGameState;
 }
 
 export interface GameStats {
@@ -124,4 +128,22 @@ export interface LogicLabGameState {
     currentDifficultyLevel: number;
     hintsUsed: number;
     lastPlayedAt: Date; // Track when user last played
+}
+
+export interface MaerchenweberStorySegment {
+    story: string;
+    userChoice: string;
+    timestamp: Date;
+}
+
+export interface MaerchenweberGameState {
+    characterName: string;
+    characterDescription: string;
+    storyTheme: string;
+    currentStory: string;
+    currentImageUrl: string;
+    currentChoices: string[];
+    storyHistory: MaerchenweberStorySegment[];
+    totalTurns: number;
+    lastPlayedAt: Date;
 }

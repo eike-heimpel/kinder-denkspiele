@@ -104,7 +104,8 @@
             | "verbal-memory"
             | "visual-memory"
             | "reaction-time"
-            | "logic-lab",
+            | "logic-lab"
+            | "maerchenweber",
         difficulty: "easy" | "hard" | "extra-hard",
     ) {
         if (!selectedUser) return;
@@ -411,6 +412,33 @@
                             <div class="flex items-center gap-2">
                                 <span class="text-3xl">🔴</span>
                                 <span>Schwer</span>
+                            </div>
+                        </Button>
+                    </div>
+                </div>
+
+                <div
+                    class="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-3xl p-5 mb-4 border-4 border-amber-200 hover:border-amber-300 transition-all duration-300"
+                >
+                    <div class="text-center mb-4">
+                        <span class="text-4xl mb-2 inline-block">📖</span>
+                        <h3 class="text-2xl font-black text-amber-700 mb-2">
+                            Märchenweber
+                        </h3>
+                        <p class="text-base text-gray-700 font-medium">
+                            Erschaffe deine eigenen magischen Geschichten! KI hilft dir beim Erzählen.
+                        </p>
+                    </div>
+
+                    <div class="flex gap-4 justify-center flex-wrap">
+                        <Button
+                            variant="warning"
+                            size="lg"
+                            onclick={() => startGame("maerchenweber", "easy")}
+                        >
+                            <div class="flex items-center gap-2">
+                                <span class="text-3xl">✨</span>
+                                <span>Geschichte beginnen</span>
                             </div>
                         </Button>
                     </div>
