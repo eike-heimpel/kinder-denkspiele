@@ -1,16 +1,20 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 ---
 title: "AI Agent Guide - Kinder Denkspiele"
 purpose: "Entry point for AI agents working on this codebase"
 audience: "AI agents (Claude, GPT, Cursor)"
-last_updated: "2025-10-03"
-version: "2.0"
+last_updated: "2025-11-01"
+version: "2.1"
 keywords: ["sveltekit", "svelte-5", "tailwind-v4", "mongodb", "german", "games", "kids", "layered-architecture"]
 ---
 
 # 🤖 AI Agent Guide - Kinder Denkspiele
 
-**Last Updated:** 2025-10-03 (ONLY UPDATE AFTER LOOKING UP TODAYS DATE, DONT RECALL IT FROM MEMORY)  
-**Primary Purpose:** Kid-friendly German language cognitive training games  
+**Last Updated:** 2025-11-01
+**Primary Purpose:** Kid-friendly German language cognitive training games
 **Tech Stack:** SvelteKit 2.x + Svelte 5 + Tailwind CSS v4 + MongoDB + Docker
 
 ---
@@ -39,10 +43,11 @@ This is the **entry point** for AI agents working on this codebase. Read this fi
 4. **[THEMING.md](./docs/THEMING.md)** - Customizing colors, animations, UI components
 5. **[TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md)** - Common issues and solutions
 6. **[DECISIONS.md](./docs/DECISIONS.md)** - Why we made specific technical choices
+7. **[AUTH.md](./docs/AUTH.md)** - Password authentication implementation
 
 ### For Development
-7. **[QUICKSTART.md](./docs/QUICKSTART.md)** - Get up and running quickly
-8. **[API-REFERENCE.md](./docs/API-REFERENCE.md)** - Complete API endpoint documentation
+8. **[QUICKSTART.md](./docs/QUICKSTART.md)** - Get up and running quickly
+9. **[API-REFERENCE.md](./docs/API-REFERENCE.md)** - Complete API endpoint documentation
 
 ---
 
@@ -177,49 +182,24 @@ This project uses **Tailwind CSS v4**, which has different syntax from v3:
 ```
 src/
 ├── lib/
-│   ├── types/              # All TypeScript type definitions
-│   │   └── index.ts        # Central type exports
-│   │
-│   ├── db/                 # Database connection management
-│   │   └── client.ts       # MongoDB singleton client
-│   │
-│   ├── repositories/       # Data access layer (CRUD operations)
-│   │   ├── user.repository.ts
-│   │   └── game-session.repository.ts
-│   │
-│   ├── services/           # Business logic layer
-│   │   ├── word.service.ts        # Word selection logic
-│   │   └── game-engine.service.ts # Game state management
-│   │
-│   ├── data/               # Static data
-│   │   └── word-pools.ts   # German word lists (145 words)
-│   │
-│   └── components/         # Reusable UI components
-│       ├── Button.svelte
-│       ├── Card.svelte
-│       └── GameStats.svelte
+│   ├── types/              # All TypeScript type definitions (index.ts is central)
+│   ├── db/                 # MongoDB connection (singleton client)
+│   ├── repositories/       # Data access layer (User, GameSession)
+│   ├── services/           # Business logic (GameEngine, WordService, etc.)
+│   ├── data/               # Static data (word-pools.ts has 145 German words)
+│   ├── components/         # Reusable UI (Button, Card, GameStats)
+│   └── auth/               # Password authentication (gitignored password.ts)
 │
 └── routes/                 # SvelteKit routes
     ├── +layout.svelte      # Global layout (imports CSS)
-    ├── +page.svelte        # Home page (user selection)
-    │
-    ├── api/                # API endpoints
-    │   ├── users/
-    │   │   ├── +server.ts
-    │   │   └── [id]/+server.ts
-    │   └── game/
-    │       └── verbal-memory/
-    │           ├── start/+server.ts
-    │           ├── answer/+server.ts
-    │           └── stats/+server.ts
-    │
-    ├── game/               # Game pages
-    │   └── verbal-memory/
-    │       └── +page.svelte
-    │
-    └── stats/              # Stats pages
-        └── [userId]/+page.svelte
+    ├── +page.svelte        # Home page
+    ├── login/              # Login page for auth
+    ├── api/                # API endpoints (/users, /game/*/start, /game/*/answer, etc.)
+    ├── game/               # Game pages (verbal-memory, visual-memory, reaction-time)
+    └── stats/[userId]/     # Historical stats page
 ```
+
+**Each major directory has its own CLAUDE.md** - see [Module-Specific Documentation](#-module-specific-documentation) below.
 
 ---
 
@@ -252,11 +232,13 @@ src/
 **Solution:** Must use `@import "tailwindcss";` in `src/app.css`  
 **See:** [TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md#tailwind-not-working)
 
-### 2. MongoDB Environment Variable
-**Problem:** "MONGODB_URI is not set" error  
-**Cause:** Missing environment variable type declaration  
-**Solution:** Type declared in `src/env.d.ts`  
-**File:** Create `.env` with `MONGODB_URI=mongodb://localhost:27017/humanbenchmark`
+### 2. Environment Variables
+**Required:** `.env` file in project root with:
+```bash
+MONGODB_URI=mongodb://localhost:27017/humanbenchmark
+```
+**Type declaration:** `src/env.d.ts` declares the type for `MONGODB_URI`
+**Error:** If you see "MONGODB_URI is not set", check that `.env` exists and has this variable
 
 ### 3. Svelte 5 Slot Syntax
 **Problem:** `<slot />` not working  
@@ -336,172 +318,50 @@ export const germanWordPools: WordPool = {
 
 ---
 
-## 🔍 Finding Things
+## 📊 Data Flow (High-Level)
 
-### Search Patterns
-
-**Find all API endpoints:**
-```bash
-find src/routes/api -name "+server.ts"
+**Starting a game:**
+```
+UI (+page.svelte) → API (/api/game/*/start) → GameEngine.startGame()
+→ GameSessionRepository.create() → MongoDB → WordService.getRandomWord()
+→ Return { sessionId, currentWord, score, lives } → UI renders
 ```
 
-**Find all game pages:**
-```bash
-find src/routes/game -name "+page.svelte"
+**Submitting an answer:**
+```
+UI (submitAnswer) → API (/api/game/*/answer) → GameEngine.loadGame()
+→ GameSessionRepository.findById() → GameEngine.submitAnswer()
+→ GameSessionRepository.update() → GameEngine.nextWord() or endGame()
+→ Return updated state → UI updates
 ```
 
-**Find all components:**
-```bash
-ls src/lib/components/*.svelte
-```
-
-**Find where a function is used:**
-```bash
-grep -r "functionName" src/
-```
-
-**Find all Svelte 5 state:**
-```bash
-grep -r "\$state" src/
-```
-
----
-
-## 📊 Data Flow Examples
-
-### Starting a New Game
-
-```
-1. User clicks "Start Game" button
-   └─ File: src/routes/+page.svelte
-   
-2. Navigate to game page with URL params
-   └─ File: src/routes/game/verbal-memory/+page.svelte
-   └─ Function: startGame()
-   
-3. onMount() calls API to start game
-   └─ Endpoint: POST /api/game/verbal-memory/start
-   └─ File: src/routes/api/game/verbal-memory/start/+server.ts
-   
-4. API creates GameEngine instance
-   └─ File: src/lib/services/game-engine.service.ts
-   └─ Function: GameEngine.startGame()
-   
-5. GameEngine creates game session
-   └─ Calls: GameSessionRepository.create()
-   └─ File: src/lib/repositories/game-session.repository.ts
-   
-6. Repository saves to MongoDB
-   └─ Collection: game_sessions
-   └─ Returns: sessionId
-   
-7. GameEngine gets first word
-   └─ Calls: WordService.getRandomWord()
-   └─ File: src/lib/services/word.service.ts
-   
-8. API returns game state to UI
-   └─ Response: { sessionId, currentWord, score, lives }
-   
-9. UI renders word and buttons
-   └─ Component: Card with word display and action buttons
-```
-
----
-
-### Submitting an Answer
-
-```
-1. User clicks "NEU" or "GESEHEN" button
-   └─ File: src/routes/game/verbal-memory/+page.svelte
-   └─ Function: submitAnswer('new' | 'seen')
-   
-2. POST request to answer endpoint
-   └─ Endpoint: POST /api/game/verbal-memory/answer
-   └─ Body: { sessionId, answer }
-   
-3. API loads game session
-   └─ Calls: GameEngine.loadGame(sessionId)
-   └─ Fetches: GameSessionRepository.findById()
-   
-4. GameEngine validates answer
-   └─ Compares: user answer vs. actual state
-   └─ Updates: score or lives
-   
-5. Repository updates MongoDB
-   └─ Calls: GameSessionRepository.update()
-   └─ Updates: score, lives, wordsShown
-   
-6. Check if game over
-   └─ If lives <= 0: GameEngine.endGame()
-   └─ Else: GameEngine.nextWord()
-   
-7. Return updated state
-   └─ Response: { currentWord, score, lives, gameOver }
-   
-8. UI updates display
-   └─ New word appears with animation
-   └─ Stats component shows updated values
-```
+**See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for detailed data flow diagrams.**
 
 ---
 
 ## 🧪 Testing
 
-### Automated Tests
+### Automated Tests (Vitest)
 
 **Run tests:**
 ```bash
-npm test              # Run tests once
-npm test -- --watch   # Watch mode
-npm run test:ui       # Visual UI
+npm test                              # Run all tests (watch mode)
+npm test -- --run                     # Run once (no watch)
+npm test word.service.test.ts         # Run specific test file
+npm test -- --watch                   # Explicit watch mode
+npm run test:ui                       # Visual test UI (browser)
 ```
 
 **Test files:**
-- `src/lib/services/game-engine.test.ts` - GameEngine unit tests (12 tests)
-- `src/lib/services/word.service.test.ts` - WordService unit tests (20 tests)
+- `src/lib/services/game-engine.test.ts` - Verbal Memory GameEngine (12 tests)
+- `src/lib/services/word.service.test.ts` - Word selection logic (20 tests)
+- `src/lib/services/reaction-time.test.ts` - Reaction Time engine (19 tests)
+- **Total:** 51 tests (50 passing, 1 skipped)
 
 **Coverage:**
 - **GameEngine:** Game logic, score, lives, word selection, edge cases, game over, no consecutive duplicates
 - **WordService:** Word pool initialization, random word selection, exclusion logic, seen word selection, randomness validation, difficulty-specific behavior
-
-### Manual Testing Checklist
-
-**User Flow:**
-- [ ] Can create new user
-- [ ] Can select existing user
-- [ ] Can start easy game
-- [ ] Can start hard game
-- [ ] Can answer correctly
-- [ ] Can answer incorrectly
-- [ ] Lives decrease on wrong answer
-- [ ] Score increases on correct answer
-- [ ] Game ends when lives reach 0
-- [ ] Can replay after game over
-- [ ] Can return to home page
-
-**UI Testing:**
-- [ ] Gradients visible on all pages
-- [ ] Animations smooth
-- [ ] Buttons responsive to hover/click
-- [ ] Text readable
-- [ ] Emojis display correctly
-- [ ] Mobile responsive (if applicable)
-
-**API Testing:**
-```bash
-# Create user
-curl -X POST http://localhost:5173/api/users \
-  -H "Content-Type: application/json" \
-  -d '{"name":"TestUser"}'
-
-# Get all users
-curl http://localhost:5173/api/users
-
-# Start game
-curl -X POST http://localhost:5173/api/game/verbal-memory/start \
-  -H "Content-Type: application/json" \
-  -d '{"userId":"USER_ID","difficulty":"easy"}'
-```
+- **ReactionTimeEngine:** Round logic, timing validation, game state management
 
 ---
 
@@ -577,22 +437,6 @@ git commit -m "Clear description of what and why"
 
 ---
 
-## 🔗 External Resources
-
-### Documentation
-- [Svelte 5 Docs](https://svelte.dev/docs/svelte/overview)
-- [SvelteKit Docs](https://svelte.dev/docs/kit/introduction)
-- [Tailwind CSS v4 Docs](https://tailwindcss.com/docs)
-- [MongoDB Node.js Driver](https://www.mongodb.com/docs/drivers/node/)
-
-### When You Need Help
-1. Check [TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) first
-2. Search this codebase for similar examples
-3. Check external docs for tech-specific issues
-4. Look at git history for context: `git log --all --full-history -- path/to/file`
-
----
-
 ## 🎯 Project Goals
 
 ### Current State (MVP)
@@ -630,20 +474,26 @@ git commit -m "Clear description of what and why"
 |------|---------|
 | Start dev server | `npm run dev` |
 | Type check | `npm run check` |
+| Type check (watch) | `npm run check:watch` |
 | Start MongoDB | `docker-compose up -d` |
 | Stop MongoDB | `docker-compose down` |
 | View MongoDB data | `docker exec -it humanbenchmark-mongo mongosh humanbenchmark` |
 | Install deps | `npm install` |
 | Build for production | `npm run build` |
+| Preview build | `npm run preview` |
+| Run tests | `npm test` |
+| Run tests (once) | `npm test -- --run` |
+| Test UI | `npm run test:ui` |
 
 ---
 
-## ⚡ Performance Notes
+## 🔐 Authentication
 
-- MongoDB uses connection pooling (singleton pattern)
-- Svelte 5 has fine-grained reactivity (minimal re-renders)
-- Tailwind CSS is JIT compiled (only used classes)
-- No client-side routing overhead (SvelteKit handles it)
+This project uses simple password authentication for site-wide access control.
+
+**Password location:** `src/lib/auth/password.ts` (gitignored)
+**Implementation:** See [AUTH.md](./docs/AUTH.md) for complete details
+**Endpoints:** Login page at `/login`, auth check in `src/hooks.server.ts`
 
 ---
 
@@ -654,5 +504,3 @@ git commit -m "Clear description of what and why"
 2. Read [TECH-STACK.md](./docs/TECH-STACK.md) for tech details
 3. Run through [QUICKSTART.md](./docs/QUICKSTART.md) to test everything
 4. Check [TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) if issues arise
-
-**Happy Coding! 🤖**

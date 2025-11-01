@@ -1,6 +1,6 @@
 export type DifficultyLevel = 'easy' | 'hard';
 
-export type GameType = 'verbal-memory' | 'visual-memory' | 'reaction-time';
+export type GameType = 'verbal-memory' | 'visual-memory' | 'reaction-time' | 'logic-lab';
 
 export interface User {
     _id?: string;
@@ -29,7 +29,10 @@ export interface GameSession {
     
     // Reaction time specific (optional, only for reaction-time games)
     reactionTimeState?: ReactionTimeGameState;
-    
+
+    // Logic Lab specific (optional, only for logic-lab games)
+    logicLabState?: LogicLabGameState;
+
     isActive: boolean;
     startedAt: Date;
     endedAt?: Date;
@@ -42,6 +45,7 @@ export interface GameSessionDocument extends Omit<GameSession, 'seenWords'> {
     isCurrentWordNew?: boolean;
     visualMemoryState?: VisualMemoryGameState;
     reactionTimeState?: ReactionTimeGameState;
+    logicLabState?: LogicLabGameState;
 }
 
 export interface GameStats {
@@ -86,4 +90,33 @@ export interface ReactionTimeDifficultyConfig {
     totalRounds: number;
     minDelay: number;
     maxDelay: number;
+}
+
+export type ProblemType = 'riddle' | 'pattern' | 'category' | 'cause-effect';
+
+export interface Problem {
+    id: string;
+    type: ProblemType;
+    question: string;
+    options: string[];
+    correctIndex: number;
+    explanation: string;
+    difficultyLevel: number;
+    timestamp: Date;
+    userAnswerIndex?: number;
+    isCorrect?: boolean;
+    responseTime?: number;
+}
+
+export interface LogicLabGameState {
+    initialGuidance: string;
+    modelName: string;
+    currentProblem: Problem;
+    problemHistory: Problem[];
+    correctAnswers: number;
+    consecutiveCorrect: number;
+    consecutiveIncorrect: number;
+    currentDifficultyLevel: number;
+    totalProblems: number;
+    hintsUsed: number;
 }
