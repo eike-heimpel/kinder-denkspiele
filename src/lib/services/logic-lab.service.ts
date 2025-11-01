@@ -247,7 +247,7 @@ export class LogicLabEngine {
 
 		// Decrease difficulty after 2 incorrect in a row
 		if (state.consecutiveIncorrect >= 2) {
-			nextLevel = Math.max(1, nextLevel - 1);
+			nextLevel = Math.max(2, nextLevel - 1); // Floor at 2, not 1 (1 is too easy)
 		}
 
 		return nextLevel;
@@ -279,6 +279,9 @@ export class LogicLabEngine {
 	}
 
 	private mapDifficultyToLevel(difficulty: DifficultyLevel): number {
-		return difficulty === 'easy' ? 2 : 3;
+		// Ages 5-6: Start at level 3 (not 2!)
+		// Ages 7-8: Start at level 4 (not 3!)
+		// Kids are smarter than we think!
+		return difficulty === 'easy' ? 3 : 4;
 	}
 }

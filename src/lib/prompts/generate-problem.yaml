@@ -23,12 +23,38 @@ system_prompt: |
   4. KEINE persönlichen Fragen ans Kind
   5. KEINE Aufforderungen zu persönlichen Informationen
 
-  SCHWIERIGKEITSGRADE (1-5):
-  - Level 1 (sehr leicht): Offensichtliche Antworten, bekannte Tiere/Objekte, 1 Silbe
-  - Level 2 (leicht): Einfache Logik, 1-2 Silben, alltägliche Konzepte
-  - Level 3 (mittel): Mustererkennung, 2-3 Silben, etwas Nachdenken nötig
-  - Level 4 (schwer): Zusammengesetzte Wörter, komplexere Logik, 3+ Silben
-  - Level 5 (sehr schwer): Abstrakte Konzepte, Mehrschritt-Logik, Transferwissen
+  SCHWIERIGKEITSGRADE (1-5) - RELATIV ZUM ALTER ({{ age }} Jahre):
+
+  Level 1 (viel zu leicht - 2 Jahre jünger als {{ age }}):
+  - Fragen, die ein {{ age - 2 }}-Jähriges Kind spielend löst
+  - Offensichtlichste Kategorien
+  - Nutze nur bei absolutem Notfall
+
+  Level 2 (zu leicht - 1 Jahr jünger als {{ age }}):
+  - Fragen für ein {{ age - 1 }}-jähriges Kind
+  - Das {{ age }}-jährige Kind findet es einfach
+  - Beispiel Komplexität: "Welches Tier macht Miau?" oder "Welche Farbe passt nicht? Rot, Blau, Tisch, Grün"
+
+  Level 3 (genau richtig - für {{ age }}-Jährige):
+  - Fragen auf dem Niveau eines {{ age }}-Jährigen
+  - Erfordert Nachdenken, aber ist lösbar
+  - Zahlenreihen: "2, 4, 6, ___" oder "10, 20, 30, ___"
+  - Kategorien: "Was haben Apfel, Birne, Banane gemeinsam?"
+  - Einfache Muster erkennen
+
+  Level 4 (herausfordernd - 1 Jahr älter als {{ age }}):
+  - Fragen für ein {{ age + 1 }}-jähriges Kind
+  - Deutlich anspruchsvoller, aber noch lösbar
+  - Komplexere Muster: "5, 10, 20, 40, ___" (Verdopplung)
+  - Wissenstransfer: "Welches passt nicht? Wal, Delfin, Hai, Thunfisch"
+  - Mehrschritt-Denken
+
+  Level 5 (sehr schwer - 2 Jahre älter als {{ age }}):
+  - Fragen für ein {{ age + 2 }}-jähriges Kind
+  - Sehr herausfordernd, evtl. muss das Kind raten
+  - Abstrakte Muster: "1, 4, 9, 16, ___" (Quadratzahlen)
+  - Komplexe Gemeinsamkeiten: "Was haben Fledermaus, Pinguin, Strauß gemeinsam?"
+  - Kann auch mal zu schwer sein - das ist ok!
 
   PROBLEMTYPEN (Fokus auf Muster und Kategorien!):
   - pattern: Sequenzen erkennen ("Welche Zahl kommt als nächstes? 2, 4, 6, ___")
@@ -81,18 +107,25 @@ user_prompt: |
   - Wenn vorher Zahlen → jetzt Tiere oder Essen
   - Sei kreativ und überraschend!
 
-  SCHWIERIGKEIT Level {{ difficulty_level }}:
+  ZIEL-SCHWIERIGKEIT: Level {{ difficulty_level }} für {{ age }}-Jährige
+
   {% if difficulty_level == 1 %}
-  - Sehr einfach, offensichtliche Antworten, bekannte Konzepte (z.B. "Hund, Katze, Auto, Vogel - was passt nicht?")
+  ACHTUNG: Sehr einfach! Frage sollte ein {{ age - 2 }}-Jähriges Kind problemlos lösen können.
   {% elif difficulty_level == 2 %}
-  - Leicht, einfache Logik (z.B. "1, 2, 3, ___ ?")
+  Einfach: Passend für {{ age - 1 }}-Jährige. Das {{ age }}-jährige Kind wird es leicht finden.
   {% elif difficulty_level == 3 %}
-  - Mittel, etwas Nachdenken nötig (z.B. "2, 4, 6, ___ ?")
+  Genau richtig: Altersentsprechend für {{ age }}-Jährige. Erfordert Nachdenken, ist aber lösbar.
   {% elif difficulty_level == 4 %}
-  - Schwer, komplexere Muster (z.B. "1, 4, 9, 16, ___ ?")
+  Anspruchsvoll: Passend für {{ age + 1 }}-Jährige. Deutlich herausfordernd, aber noch schaffbar.
   {% elif difficulty_level == 5 %}
-  - Sehr schwer, abstrakte Konzepte (z.B. "Welche Gemeinsamkeit haben Wal, Delfin, Hai?")
+  Sehr schwer: Passend für {{ age + 2 }}-Jährige. Sehr herausfordernd, eventuell muss geraten werden.
   {% endif %}
+
+  WICHTIG:
+  - Denke an ein konkretes {{ age }}-jähriges Kind
+  - Passe die Komplexität GENAU an Level {{ difficulty_level }} an
+  - Nutze die Beispiele oben als Orientierung
+  - Die Frage sollte sich "richtig schwer" für das Ziel-Alter anfühlen
 
 # Variables that can be passed to the prompt
 variables:
