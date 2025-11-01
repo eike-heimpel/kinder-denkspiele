@@ -27,12 +27,18 @@ export const POST: RequestHandler = async ({ request }) => {
 			sessionId: session._id?.toString(),
 			problem: {
 				question: state.currentProblem.question,
-				options: state.currentProblem.options
+				options: state.currentProblem.options,
+				type: state.currentProblem.type,
+				difficulty: state.currentProblem.difficultyLevel
 			},
 			score: session.score,
 			lives: session.lives,
 			round: session.round,
-			totalRounds: state.totalProblems
+			totalRounds: state.totalProblems,
+			// Debug info for parents
+			difficultyLevel: state.currentDifficultyLevel,
+			consecutiveCorrect: state.consecutiveCorrect,
+			consecutiveIncorrect: state.consecutiveIncorrect
 		});
 	} catch (error) {
 		console.error('Error starting Logic Lab game:', error);

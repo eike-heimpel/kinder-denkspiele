@@ -61,29 +61,38 @@ system_prompt: |
   - difficulty-Wert im JSON angeben basierend auf tatsächlicher Schwierigkeit
 
 user_prompt: |
-  Erstelle eine neue {{ problem_type }}-Frage.
+  Erstelle eine neue {{ problem_type }}-Frage auf LEVEL {{ difficulty_level }} (1=sehr leicht, 5=sehr schwer).
 
   {% if performance_history|length > 0 %}
-  BISHERIGE PERFORMANCE:
+  BISHERIGE FRAGEN (vermeide diese Themen!):
   {% for item in performance_history %}
-  - Frage: "{{ item.question }}" ({{ item.type }}, Level {{ item.difficulty }}) → {{ "✓ Richtig" if item.correct else "✗ Falsch" }}
+  - "{{ item.question }}" ({{ item.type }}, Level {{ item.difficulty }})
   {% endfor %}
-
-  ADAPTIVE SCHWIERIGKEIT:
-  {% if consecutive_correct >= 2 %}
-  Das Kind löst gerade mehrere Aufgaben richtig! Erhöhe die Schwierigkeit um 1 Level.
-  {% elif consecutive_incorrect >= 2 %}
-  Das Kind hat Schwierigkeiten. Senke die Schwierigkeit um 1 Level und mache es etwas einfacher.
-  {% else %}
-  Behalte ähnliche Schwierigkeit wie die letzten Fragen.
-  {% endif %}
   {% endif %}
 
-  WICHTIG:
-  - Erstelle eine KOMPLETT NEUE Frage, die sich von allen bisherigen unterscheidet
-  - Nutze ein anderes Thema als vorher
-  - Sei kreativ und abwechslungsreich!
-  - Wähle die Schwierigkeit selbst basierend auf der Performance-Historie
+  ZIEL-SCHWIERIGKEIT: Level {{ difficulty_level }}
+  - Erstelle die Frage EXAKT auf diesem Schwierigkeitsgrad
+  - Setze "difficulty": {{ difficulty_level }} im JSON
+
+  WICHTIG - VIELFALT:
+  - Nutze ein KOMPLETT ANDERES Thema als die bisherigen Fragen
+  - Wechsle zwischen: Tiere, Formen, Farben, Zahlen, Essen, Fahrzeuge, Wetter, Natur
+  - Wenn vorher Tiere → jetzt Zahlen oder Farben
+  - Wenn vorher Zahlen → jetzt Tiere oder Essen
+  - Sei kreativ und überraschend!
+
+  SCHWIERIGKEIT Level {{ difficulty_level }}:
+  {% if difficulty_level == 1 %}
+  - Sehr einfach, offensichtliche Antworten, bekannte Konzepte (z.B. "Hund, Katze, Auto, Vogel - was passt nicht?")
+  {% elif difficulty_level == 2 %}
+  - Leicht, einfache Logik (z.B. "1, 2, 3, ___ ?")
+  {% elif difficulty_level == 3 %}
+  - Mittel, etwas Nachdenken nötig (z.B. "2, 4, 6, ___ ?")
+  {% elif difficulty_level == 4 %}
+  - Schwer, komplexere Muster (z.B. "1, 4, 9, 16, ___ ?")
+  {% elif difficulty_level == 5 %}
+  - Sehr schwer, abstrakte Konzepte (z.B. "Welche Gemeinsamkeit haben Wal, Delfin, Hai?")
+  {% endif %}
 
 # Variables that can be passed to the prompt
 variables:
@@ -99,6 +108,10 @@ variables:
     type: "string"
     required: true
     description: "Difficulty level: 'easy' or 'hard'"
+  - name: "difficulty_level"
+    type: "number"
+    required: true
+    description: "Target difficulty level (1-5)"
   - name: "problem_type"
     type: "string"
     required: true

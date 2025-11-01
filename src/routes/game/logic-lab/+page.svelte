@@ -28,6 +28,16 @@
 	let loading = $state<boolean>(false);
 	let submitting = $state<boolean>(false);
 
+	// Debug panel (for parents)
+	let showDebug = $state<boolean>(false);
+	let debugInfo = $state<{
+		difficultyLevel?: number;
+		consecutiveCorrect?: number;
+		consecutiveIncorrect?: number;
+		problemType?: string;
+		problemDifficulty?: number;
+	}>({});
+
 	// URL params
 	const userId = $derived($page.url.searchParams.get('userId') || '');
 	const difficulty = $derived(
@@ -66,6 +76,16 @@
 			lives = data.lives;
 			round = data.round;
 			totalRounds = data.totalRounds;
+
+			// Update debug info
+			debugInfo = {
+				difficultyLevel: data.difficultyLevel,
+				consecutiveCorrect: data.consecutiveCorrect,
+				consecutiveIncorrect: data.consecutiveIncorrect,
+				problemType: data.problem?.type,
+				problemDifficulty: data.problem?.difficulty
+			};
+
 			gamePhase = 'playing';
 		} catch (error) {
 			console.error('Error starting game:', error);
@@ -99,6 +119,17 @@
 			score = data.score;
 			lives = data.lives;
 			round = data.round;
+
+			// Update debug info for next problem
+			if (data.nextProblem) {
+				debugInfo = {
+					difficultyLevel: data.difficultyLevel,
+					consecutiveCorrect: data.consecutiveCorrect,
+					consecutiveIncorrect: data.consecutiveIncorrect,
+					problemType: data.nextProblem.type,
+					problemDifficulty: data.nextProblem.difficulty
+				};
+			}
 
 			// Show feedback
 			gamePhase = 'feedback';
@@ -174,7 +205,16 @@
 			</div>
 		{:else if gamePhase === 'playing'}
 			<!-- Game Screen -->
-			<div class="bg-white rounded-3xl shadow-2xl p-8">
+			<div class="bg-white rounded-3xl shadow-2xl p-8 relative">
+				<!-- Debug Toggle (small, top-right) -->
+				<button
+					onclick={() => (showDebug = !showDebug)}
+					class="absolute top-2 right-2 text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded text-gray-600"
+					title="Debug-Info für Eltern"
+				>
+					{showDebug ? '🔒' : '🔓'} Debug
+				</button>
+
 				<!-- Header -->
 				<div class="flex justify-between items-center mb-6">
 					<div class="text-xl font-bold text-purple-600">
@@ -188,6 +228,38 @@
 						</div>
 					</div>
 				</div>
+
+				<!-- Debug Panel (expandable) -->
+				{#if showDebug}
+					<div class="mb-4 p-4 bg-gray-100 rounded-lg border-2 border-gray-300 text-sm">
+						<div class="font-bold text-gray-700 mb-2">📊 Debug-Info für Eltern:</div>
+						<div class="grid grid-cols-2 gap-2 text-gray-600">
+							<div>
+								<span class="font-semibold">Schwierigkeitslevel:</span>
+								{debugInfo.difficultyLevel ?? '?'}/5
+							</div>
+							<div>
+								<span class="font-semibold">Frage-Schwierigkeit:</span>
+								{debugInfo.problemDifficulty ?? '?'}/5
+							</div>
+							<div>
+								<span class="font-semibold">Richtig hintereinander:</span>
+								{debugInfo.consecutiveCorrect ?? 0}
+							</div>
+							<div>
+								<span class="font-semibold">Falsch hintereinander:</span>
+								{debugInfo.consecutiveIncorrect ?? 0}
+							</div>
+							<div class="col-span-2">
+								<span class="font-semibold">Fragetyp:</span>
+								{debugInfo.problemType ?? '?'}
+							</div>
+						</div>
+						<div class="mt-2 text-xs text-gray-500">
+							💡 Level steigt nach 2 richtigen Antworten, sinkt nach 2 falschen.
+						</div>
+					</div>
+				{/if}
 
 				<!-- Problem Question -->
 				{#if currentProblem}

@@ -5,6 +5,7 @@ export interface GenerateProblemParams {
 	initialGuidance?: string;
 	age: number;
 	difficulty: 'easy' | 'hard';
+	difficultyLevel: number; // 1-5 target difficulty
 	problemType: 'pattern' | 'category' | 'comparison' | 'grouping';
 	performanceHistory: Array<{
 		question: string;
@@ -122,6 +123,7 @@ export class LLMService {
 				initial_guidance: params.initialGuidance,
 				age: params.age,
 				difficulty: params.difficulty,
+				difficulty_level: params.difficultyLevel,
 				problem_type: params.problemType,
 				performance_history: params.performanceHistory,
 				consecutive_correct: params.consecutiveCorrect,

@@ -127,14 +127,20 @@ export class LogicLabEngine {
 			nextProblem: nextProblem
 				? {
 						question: nextProblem.question,
-						options: nextProblem.options
+						options: nextProblem.options,
+						type: nextProblem.type,
+						difficulty: nextProblem.difficultyLevel
 					}
 				: undefined,
 			score: session.score,
 			lives: session.lives,
 			round: session.round,
 			gameOver,
-			finalScore: gameOver ? session.score : undefined
+			finalScore: gameOver ? session.score : undefined,
+			// Debug info for parents
+			difficultyLevel: session.logicLabState.currentDifficultyLevel,
+			consecutiveCorrect: session.logicLabState.consecutiveCorrect,
+			consecutiveIncorrect: session.logicLabState.consecutiveIncorrect
 		};
 	}
 
@@ -176,6 +182,7 @@ export class LogicLabEngine {
 			initialGuidance: params.initialGuidance,
 			age,
 			difficulty: params.difficulty,
+			difficultyLevel: params.difficultyLevel,
 			problemType,
 			performanceHistory: [],
 			consecutiveCorrect: 0,
@@ -208,6 +215,7 @@ export class LogicLabEngine {
 			initialGuidance: state.initialGuidance,
 			age,
 			difficulty: session.difficulty,
+			difficultyLevel: state.currentDifficultyLevel, // Pass the calculated difficulty level!
 			problemType,
 			performanceHistory,
 			consecutiveCorrect: state.consecutiveCorrect,
