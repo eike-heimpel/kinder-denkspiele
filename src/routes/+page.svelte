@@ -7,9 +7,18 @@
 
     let users = $state<User[]>([]);
     let newUserName = $state("");
+    let newUserAvatar = $state("😀");
     let loading = $state(true);
     let selectedUser = $state<User | null>(null);
     let showNewUserForm = $state(false);
+
+    const avatarOptions = [
+        "😀", "😃", "😄", "😁", "😊", "🙂", "😇", "🥰", "😍", "🤩",
+        "😎", "🤓", "🧐", "🤔", "🤗", "🤠", "👦", "👧", "🧒", "👶",
+        "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯",
+        "🦁", "🐮", "🐷", "🐸", "🐵", "🐔", "🐧", "🦄", "🐙", "🦋",
+        "🌟", "⭐", "🌈", "🔥", "💎", "👑", "🎈", "🎨", "⚽", "🎮"
+    ];
 
     onMount(async () => {
         await loadUsers();
@@ -27,12 +36,16 @@
         const response = await fetch("/api/users", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: newUserName.trim() }),
+            body: JSON.stringify({
+                name: newUserName.trim(),
+                avatar: newUserAvatar
+            }),
         });
 
         if (response.ok) {
             await loadUsers();
             newUserName = "";
+            newUserAvatar = "😀";
             showNewUserForm = false;
         }
     }
@@ -61,7 +74,7 @@
 <div
     class="min-h-screen bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 p-4 animate-gradient"
 >
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-4xl mx-auto pt-4">
         <div class="text-center mb-4 animate-fade-in">
             <div class="inline-block mb-1">
                 <span class="text-5xl animate-bounce-slow">🧠</span>
@@ -96,11 +109,10 @@
                                 class="group relative bg-gradient-to-br from-blue-400 via-blue-500 to-purple-500 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 text-white text-2xl font-black py-6 px-6 rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-xl hover:shadow-2xl border-4 border-white/30"
                                 onclick={() => selectUser(user)}
                             >
-                                <span
-                                    class="absolute top-2 right-2 text-3xl opacity-50 group-hover:opacity-100 transition-opacity"
-                                    >🎮</span
-                                >
-                                {user.name}
+                                <div class="flex items-center justify-center gap-3">
+                                    <span class="text-5xl">{user.avatar}</span>
+                                    <span>{user.name}</span>
+                                </div>
                             </button>
                         {/each}
                     </div>
@@ -116,6 +128,21 @@
                     </Button>
                 {:else}
                     <div class="bg-gray-50 p-4 rounded-xl">
+                        <div class="mb-3 text-center">
+                            <p class="text-sm font-bold text-gray-700 mb-2">Wähle dein Avatar:</p>
+                            <div class="text-6xl mb-2">{newUserAvatar}</div>
+                            <div class="grid grid-cols-10 gap-2 max-h-48 overflow-y-auto p-2 bg-white rounded-lg border-2 border-gray-200">
+                                {#each avatarOptions as avatar}
+                                    <button
+                                        type="button"
+                                        class="text-3xl hover:scale-125 transition-transform duration-200 cursor-pointer p-1 rounded {newUserAvatar === avatar ? 'bg-blue-200 scale-110' : ''}"
+                                        onclick={() => newUserAvatar = avatar}
+                                    >
+                                        {avatar}
+                                    </button>
+                                {/each}
+                            </div>
+                        </div>
                         <input
                             type="text"
                             bind:value={newUserName}
@@ -129,7 +156,11 @@
                             </Button>
                             <Button
                                 variant="secondary"
-                                onclick={() => (showNewUserForm = false)}
+                                onclick={() => {
+                                    showNewUserForm = false;
+                                    newUserName = "";
+                                    newUserAvatar = "😀";
+                                }}
                             >
                                 Abbrechen
                             </Button>

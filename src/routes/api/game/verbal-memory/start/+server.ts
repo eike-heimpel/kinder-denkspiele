@@ -25,6 +25,12 @@ export const POST: RequestHandler = async ({ request }) => {
         currentWord: gameState.currentWord,
         score: gameState.session?.score,
         lives: gameState.session?.lives,
-        round: gameState.session?.round
+        round: gameState.session?.round,
+        // Debug info
+        debug: {
+            wordsShown: gameState.session?.wordsShown || [],
+            seenWords: Array.from(gameState.session?.seenWords || []),
+            isCurrentWordNew: gameState.isCurrentWordNew
+        }
     });
 };

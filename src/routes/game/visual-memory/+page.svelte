@@ -5,6 +5,7 @@
     import Card from "$lib/components/Card.svelte";
     import GameStats from "$lib/components/GameStats.svelte";
     import VisualMemoryGrid from "$lib/components/VisualMemoryGrid.svelte";
+    import type { User } from "$lib/types";
 
     type GamePhase =
         | "loading"
@@ -17,6 +18,7 @@
 
     let userId = $state("");
     let difficulty = $state<"easy" | "hard">("easy");
+    let user = $state<User | undefined>(undefined);
     let sessionId = $state<string | null>(null);
 
     let phase = $state<GamePhase>("loading");
@@ -35,7 +37,7 @@
     let message = $state<string | null>(null);
     let isCorrect = $state<boolean | null>(null);
 
-    onMount(() => {
+    onMount(async () => {
         const params = new URLSearchParams(window.location.search);
         userId = params.get("userId") || "";
         difficulty = (params.get("difficulty") as "easy" | "hard") || "easy";
@@ -43,6 +45,15 @@
         if (!userId) {
             goto("/");
             return;
+        }
+
+        try {
+            const userResponse = await fetch(`/api/users/${userId}`);
+            if (userResponse.ok) {
+                user = await userResponse.json();
+            }
+        } catch (error) {
+            console.error("Failed to load user:", error);
         }
 
         startGame();
@@ -205,7 +216,7 @@
 >
     <div class="max-w-4xl mx-auto pt-14">
         <Card class="mb-2 py-3">
-            <GameStats {score} {lives} {round} />
+            <GameStats {score} {lives} {round} {user} />
         </Card>
 
         {#if phase === "loading"}

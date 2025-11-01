@@ -3,6 +3,7 @@
     import { goto } from "$app/navigation";
     import Button from "$lib/components/Button.svelte";
     import Card from "$lib/components/Card.svelte";
+    import type { User } from "$lib/types";
 
     type GamePhase =
         | "loading"
@@ -14,6 +15,7 @@
 
     let userId = $state("");
     let difficulty = $state<"easy" | "hard">("easy");
+    let user = $state<User | undefined>(undefined);
     let sessionId = $state<string | null>(null);
 
     let phase = $state<GamePhase>("loading");
@@ -30,7 +32,7 @@
     let maxDelay = $state(4000);
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
-    onMount(() => {
+    onMount(async () => {
         const params = new URLSearchParams(window.location.search);
         userId = params.get("userId") || "";
         difficulty = (params.get("difficulty") as "easy" | "hard") || "easy";
@@ -38,6 +40,15 @@
         if (!userId) {
             goto("/");
             return;
+        }
+
+        try {
+            const userResponse = await fetch(`/api/users/${userId}`);
+            if (userResponse.ok) {
+                user = await userResponse.json();
+            }
+        } catch (error) {
+            console.error("Failed to load user:", error);
         }
 
         startGame();

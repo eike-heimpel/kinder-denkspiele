@@ -48,12 +48,6 @@
         if (disabled || mode !== "recalling") return;
         onSquareClick?.(index);
     }
-
-    function handleTouchStart(e: TouchEvent, index: number) {
-        if (disabled || mode !== "recalling") return;
-        e.preventDefault();
-        onSquareClick?.(index);
-    }
 </script>
 
 <div
@@ -92,7 +86,6 @@
                 : 'cursor-pointer active:scale-95'}
             "
             onclick={() => handleSquareClick(index)}
-            ontouchstart={(e) => handleTouchStart(e, index)}
             disabled={disabled || mode !== "recalling"}
         >
             {#if mode === "feedback"}

@@ -7,9 +7,10 @@ export class UserRepository {
         return getDatabase().collection<User>('users');
     }
 
-    async create(name: string): Promise<User> {
+    async create(name: string, avatar: string): Promise<User> {
         const user: User = {
             name,
+            avatar,
             createdAt: new Date()
         };
 

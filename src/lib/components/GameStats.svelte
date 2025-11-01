@@ -1,16 +1,26 @@
 <script lang="ts">
+    import type { User } from "$lib/types";
+
     interface Props {
         score: number;
         lives: number;
         round: number;
+        user?: User;
     }
 
-    let { score, lives, round }: Props = $props();
+    let { score, lives, round, user }: Props = $props();
 </script>
 
 <div
     class="flex justify-between items-center gap-4 text-xl font-extrabold bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-4 border-2 border-purple-200"
 >
+    {#if user}
+        <div class="flex items-center gap-2">
+            <span class="text-4xl">{user.avatar}</span>
+            <span class="text-lg text-gray-800 font-black">{user.name}</span>
+        </div>
+    {/if}
+
     <div class="flex items-center gap-2">
         <span class="text-blue-700 text-2xl">🎯</span>
         <div class="flex flex-col">

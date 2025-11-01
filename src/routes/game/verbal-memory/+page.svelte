@@ -5,9 +5,11 @@
     import Button from "$lib/components/Button.svelte";
     import Card from "$lib/components/Card.svelte";
     import GameStats from "$lib/components/GameStats.svelte";
+    import type { User } from "$lib/types";
 
     let userId = $state("");
     let difficulty = $state<"easy" | "hard">("easy");
+    let user = $state<User | undefined>(undefined);
     let sessionId = $state<string | null>(null);
     let currentWord = $state<string | null>(null);
     let score = $state(0);
@@ -18,7 +20,19 @@
     let loading = $state(true);
     let answering = $state(false);
 
-    onMount(() => {
+    // Debug info
+    let showDebug = $state(false);
+    let debugInfo = $state<{
+        wordsShown: string[];
+        seenWords: string[];
+        lastThree: Array<{word: string, wasNew: boolean, userAnswer: string, wasCorrect: boolean}>;
+    }>({
+        wordsShown: [],
+        seenWords: [],
+        lastThree: []
+    });
+
+    onMount(async () => {
         const params = new URLSearchParams(window.location.search);
         userId = params.get("userId") || "";
         difficulty = (params.get("difficulty") as "easy" | "hard") || "easy";
@@ -26,6 +40,15 @@
         if (!userId) {
             goto("/");
             return;
+        }
+
+        try {
+            const userResponse = await fetch(`/api/users/${userId}`);
+            if (userResponse.ok) {
+                user = await userResponse.json();
+            }
+        } catch (error) {
+            console.error("Failed to load user:", error);
         }
 
         startGame();
@@ -48,6 +71,12 @@
             round = data.round || 0;
             gameOver = false;
             message = null;
+
+            // Update debug info
+            if (data.debug) {
+                debugInfo.wordsShown = data.debug.wordsShown;
+                debugInfo.seenWords = data.debug.seenWords;
+            }
         } catch (error) {
             console.error("Failed to start game:", error);
             message = "Fehler beim Starten des Spiels";
@@ -69,6 +98,25 @@
             });
 
             const data = await response.json();
+
+            // Update debug info with last answer
+            if (data.debug && currentWord) {
+                const wasNew = !debugInfo.seenWords.includes(currentWord);
+                const wasCorrect = data.debug.wasCorrect;
+
+                debugInfo.lastThree = [
+                    {
+                        word: currentWord,
+                        wasNew: wasNew,
+                        userAnswer: answer,
+                        wasCorrect: wasCorrect
+                    },
+                    ...debugInfo.lastThree
+                ].slice(0, 3);
+
+                debugInfo.wordsShown = data.debug.wordsShown;
+                debugInfo.seenWords = data.debug.seenWords;
+            }
 
             if (data.gameOver) {
                 gameOver = true;
@@ -131,7 +179,7 @@
 >
     <div class="max-w-4xl mx-auto pt-14">
         <Card class="mb-2 py-3">
-            <GameStats {score} {lives} {round} />
+            <GameStats {score} {lives} {round} {user} />
         </Card>
 
         {#if loading}
@@ -238,6 +286,72 @@
                 </div>
             </Card>
         {/if}
+
+        <!-- Debug Panel -->
+        <div class="mt-4">
+            <button
+                class="text-xs text-white/70 hover:text-white underline"
+                onclick={() => showDebug = !showDebug}
+            >
+                {showDebug ? '🔻 Debug ausblenden' : '🔺 Debug anzeigen'}
+            </button>
+
+            {#if showDebug}
+                <Card class="mt-2 text-xs">
+                    <div class="space-y-3">
+                        <div>
+                            <h3 class="font-bold text-sm mb-1">Letzte 3 Wörter:</h3>
+                            {#if debugInfo.lastThree.length === 0}
+                                <p class="text-gray-500 italic">Noch keine Antworten</p>
+                            {:else}
+                                <div class="space-y-1">
+                                    {#each debugInfo.lastThree as entry}
+                                        <div class="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                                            <span class="font-bold">{entry.word}</span>
+                                            <span class="text-gray-600">
+                                                → war {entry.wasNew ? 'NEU' : 'GESEHEN'}
+                                            </span>
+                                            <span class="text-gray-600">
+                                                → du: {entry.userAnswer === 'new' ? 'NEU' : 'GESEHEN'}
+                                            </span>
+                                            <span class={entry.wasCorrect ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
+                                                {entry.wasCorrect ? '✓ Richtig' : '✗ Falsch'}
+                                            </span>
+                                        </div>
+                                    {/each}
+                                </div>
+                            {/if}
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-sm mb-1">
+                                Alle gezeigten Wörter ({debugInfo.wordsShown.length}):
+                            </h3>
+                            <div class="max-h-32 overflow-y-auto bg-gray-50 p-2 rounded">
+                                <div class="flex flex-wrap gap-1">
+                                    {#each debugInfo.wordsShown as word}
+                                        <span class="bg-blue-100 px-2 py-1 rounded">{word}</span>
+                                    {/each}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-sm mb-1">
+                                Gesehene Wörter (Set) ({debugInfo.seenWords.length}):
+                            </h3>
+                            <div class="max-h-32 overflow-y-auto bg-gray-50 p-2 rounded">
+                                <div class="flex flex-wrap gap-1">
+                                    {#each debugInfo.seenWords as word}
+                                        <span class="bg-green-100 px-2 py-1 rounded">{word}</span>
+                                    {/each}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </Card>
+            {/if}
+        </div>
     </div>
 </div>
 

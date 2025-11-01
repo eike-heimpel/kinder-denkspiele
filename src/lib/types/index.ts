@@ -5,6 +5,7 @@ export type GameType = 'verbal-memory' | 'visual-memory' | 'reaction-time' | 'lo
 export interface User {
     _id?: string;
     name: string;
+    avatar: string; // emoji avatar
     createdAt: Date;
 }
 
