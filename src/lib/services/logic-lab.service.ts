@@ -59,14 +59,14 @@ export class LogicLabEngine {
 			round: 1,
 			logicLabState: {
 				initialGuidance: params.initialGuidance || '',
-				modelName: 'anthropic/claude-3.5-haiku',
+				modelName: 'google/gemini-2.5-flash',
 				currentProblem: firstProblem,
 				problemHistory: [firstProblem],
 				correctAnswers: 0,
 				consecutiveCorrect: 0,
 				consecutiveIncorrect: 0,
 				currentDifficultyLevel: initialDifficultyLevel,
-				totalProblems: 5,
+				totalProblems: 15,
 				hintsUsed: 0
 			},
 			isActive: true,
@@ -176,9 +176,10 @@ export class LogicLabEngine {
 			initialGuidance: params.initialGuidance,
 			age,
 			difficulty: params.difficulty,
-			difficultyLevel: params.difficultyLevel,
 			problemType,
-			previousProblems: []
+			performanceHistory: [],
+			consecutiveCorrect: 0,
+			consecutiveIncorrect: 0
 		};
 
 		return await this.llmService.generateProblem(llmParams);
@@ -192,16 +193,25 @@ export class LogicLabEngine {
 		const previousTypes = state.problemHistory.map((p) => p.type);
 		const problemType = this.selectProblemType(previousTypes);
 
-		// Get previous problem themes to avoid repetition
-		const previousProblems = state.problemHistory.map((p) => p.question.slice(0, 30));
+		// Build performance history for LLM (last 5 problems with answers)
+		const performanceHistory = state.problemHistory
+			.filter((p) => p.userAnswerIndex !== undefined)
+			.slice(-5)
+			.map((p) => ({
+				question: p.question,
+				type: p.type,
+				difficulty: p.difficultyLevel,
+				correct: p.isCorrect || false
+			}));
 
 		const llmParams: GenerateProblemParams = {
 			initialGuidance: state.initialGuidance,
 			age,
 			difficulty: session.difficulty,
-			difficultyLevel: state.currentDifficultyLevel,
 			problemType,
-			previousProblems
+			performanceHistory,
+			consecutiveCorrect: state.consecutiveCorrect,
+			consecutiveIncorrect: state.consecutiveIncorrect
 		};
 
 		return await this.llmService.generateProblem(llmParams);

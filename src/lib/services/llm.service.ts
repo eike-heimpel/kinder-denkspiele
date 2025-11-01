@@ -5,9 +5,15 @@ export interface GenerateProblemParams {
 	initialGuidance?: string;
 	age: number;
 	difficulty: 'easy' | 'hard';
-	difficultyLevel: number;
 	problemType: 'riddle' | 'pattern' | 'category' | 'cause-effect';
-	previousProblems?: string[];
+	performanceHistory: Array<{
+		question: string;
+		type: string;
+		difficulty: number;
+		correct: boolean;
+	}>;
+	consecutiveCorrect: number;
+	consecutiveIncorrect: number;
 }
 
 export interface Problem {
@@ -116,26 +122,27 @@ export class LLMService {
 				initial_guidance: params.initialGuidance,
 				age: params.age,
 				difficulty: params.difficulty,
-				difficulty_level: params.difficultyLevel,
 				problem_type: params.problemType,
-				previous_problems: params.previousProblems || []
+				performance_history: params.performanceHistory,
+				consecutive_correct: params.consecutiveCorrect,
+				consecutive_incorrect: params.consecutiveIncorrect
 			});
 
 			// Call OpenRouter API
 			const response = await this.callOpenRouter(rendered);
 
 			// Parse and validate response
-			const problem = this.parseResponse(response, params);
+			const problem = this.parseResponse(response);
 
 			if (!this.validateProblem(problem)) {
 				console.error('Generated problem failed validation');
-				return this.getFallbackProblem(params.difficultyLevel);
+				return this.getFallbackProblem(2);
 			}
 
 			return problem;
 		} catch (error) {
 			console.error('LLM generation failed:', error);
-			return this.getFallbackProblem(params.difficultyLevel);
+			return this.getFallbackProblem(2);
 		}
 	}
 
@@ -174,17 +181,17 @@ export class LLMService {
 		return data.choices[0].message.content;
 	}
 
-	private parseResponse(content: string, params: GenerateProblemParams): Problem {
+	private parseResponse(content: string): Problem {
 		const parsed = JSON.parse(content);
 
 		return {
 			id: `prob-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-			type: parsed.type || params.problemType,
+			type: parsed.type,
 			question: parsed.question,
 			options: parsed.options,
 			correctIndex: parsed.correctIndex,
 			explanation: parsed.explanation,
-			difficultyLevel: params.difficultyLevel,
+			difficultyLevel: parsed.difficulty || 2,
 			timestamp: new Date()
 		};
 	}

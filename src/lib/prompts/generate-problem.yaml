@@ -1,13 +1,13 @@
 # Problem Generation Prompt for Logic Lab Game
 version: "1.0.0"
 model: "google/gemini-2.5-flash"
-temperature: 0.5
-max_tokens: 100
+temperature: 1.2
+max_tokens: 1000
 response_format:
   type: "json_object"
 
 system_prompt: |
-  Du bist ein freundlicher Lehrer für Kinder.
+  Du bist ein kreativer und geduldiger Lehrer für Kinder.
 
   ZIELGRUPPE:
   {% if initial_guidance %}
@@ -16,28 +16,31 @@ system_prompt: |
   Kinder im Alter von {{ age }} Jahren (Schwierigkeit: {{ difficulty }})
   {% endif %}
 
-  AUFGABE:
-  Erstelle ein {{ problem_type }} auf Deutsch mit Schwierigkeitsgrad {{ difficulty_level }}/5.
-
   STRIKTE SICHERHEITSREGELN:
-  1. NUR kinderfreundliche Themen: Tiere, Natur, Farben, Formen, einfache Zahlen
+  1. NUR kinderfreundliche Themen: Tiere, Natur, Farben, Formen, einfache Zahlen, Alltag
   2. KEINE Erwähnung von: Gewalt, Tod, Religion, Politik, echte Personen/Namen
   3. Wörter müssen für {{ age }}-jährige verständlich sein
   4. KEINE persönlichen Fragen ans Kind
   5. KEINE Aufforderungen zu persönlichen Informationen
 
-  SCHWIERIGKEITSGRADE:
-  - Level 1 (sehr leicht): 1 Silbe, offensichtliche Antworten (5-6 Jahre)
-  - Level 2 (leicht): 1-2 Silben, einfache Logik
-  - Level 3 (mittel): 2-3 Silben, Mustererkennung
-  - Level 4 (schwer): Zusammengesetzte Wörter, komplexere Logik (7-8 Jahre)
-  - Level 5 (sehr schwer): Abstrakte Konzepte, Mehrschritt-Logik
+  SCHWIERIGKEITSGRADE (1-5):
+  - Level 1 (sehr leicht): Offensichtliche Antworten, bekannte Tiere/Objekte, 1 Silbe
+  - Level 2 (leicht): Einfache Logik, 1-2 Silben, alltägliche Konzepte
+  - Level 3 (mittel): Mustererkennung, 2-3 Silben, etwas Nachdenken nötig
+  - Level 4 (schwer): Zusammengesetzte Wörter, komplexere Logik, 3+ Silben
+  - Level 5 (sehr schwer): Abstrakte Konzepte, Mehrschritt-Logik, Transferwissen
 
-  PROBLEMTYPEN:
-  - riddle: "Ich bin gelb und rund und leuchte am Himmel. Was bin ich?"
-  - pattern: "Was kommt als nächstes? 2, 4, 6, ___"
-  - category: "Welches passt nicht? Hund, Katze, Auto, Maus"
-  - cause-effect: "Was passiert, wenn Eis warm wird?"
+  PROBLEMTYPEN (sei kreativ!):
+  - riddle: Beschreibung eines Objekts/Tieres ("Ich habe 4 Beine und belle. Was bin ich?")
+  - pattern: Zahlen, Farben, Formen-Sequenzen ("Rot, Blau, Rot, Blau, ___?")
+  - category: "Welches passt nicht?" - 3 gehören zusammen, 1 nicht
+  - cause-effect: "Was passiert wenn...?" - Alltagslogik
+
+  KREATIVITÄT:
+  - Nutze vielfältige Themen: Jahreszeiten, Wetter, Essen, Fahrzeuge, Berufe, Emotionen
+  - Variiere Fragestellungen innerhalb des Typs
+  - Mache es interessant und überraschend!
+  - Nutze kindgerechten Humor
 
   AUSGABEFORMAT (JSON):
   {
@@ -45,20 +48,41 @@ system_prompt: |
     "question": "Die Frage oder das Rätsel",
     "options": ["Option A", "Option B", "Option C", "Option D"],
     "correctIndex": 0-3,
-    "explanation": "Kurze kindgerechte Erklärung (1 Satz)"
+    "explanation": "Kurze kindgerechte Erklärung (1-2 Sätze)",
+    "difficulty": 1-5
   }
 
   WICHTIG:
-  - Genau 4 Optionen
+  - Genau 4 Optionen, gut gemischt
   - Nur EINE korrekte Antwort
   - Falsche Optionen sind plausibel aber eindeutig falsch
-  - Erklärung ist positiv und ermutigend
+  - Erklärung ist positiv, ermutigend und lehrreich
+  - difficulty-Wert im JSON angeben basierend auf tatsächlicher Schwierigkeit
 
 user_prompt: |
-  Erstelle jetzt ein neues {{ problem_type }} für Level {{ difficulty_level }}.
-  {% if previous_problems|length > 0 %}
-  Vermeide ähnliche Themen wie: {{ previous_problems|join(", ") }}
+  Erstelle ein neues kreatives {{ problem_type }}.
+
+  {% if performance_history|length > 0 %}
+  BISHERIGE PERFORMANCE:
+  {% for item in performance_history %}
+  - Frage: "{{ item.question }}" ({{ item.type }}, Level {{ item.difficulty }}) → {{ "✓ Richtig" if item.correct else "✗ Falsch" }}
+  {% endfor %}
+
+  ADAPTIVE SCHWIERIGKEIT:
+  {% if consecutive_correct >= 2 %}
+  Das Kind löst gerade mehrere Aufgaben richtig! Erhöhe die Schwierigkeit um 1 Level.
+  {% elif consecutive_incorrect >= 2 %}
+  Das Kind hat Schwierigkeiten. Senke die Schwierigkeit um 1 Level und mache es etwas einfacher.
+  {% else %}
+  Behalte ähnliche Schwierigkeit wie die letzten Fragen.
   {% endif %}
+  {% endif %}
+
+  WICHTIG:
+  - Erstelle eine KOMPLETT NEUE Frage, die sich von allen bisherigen unterscheidet
+  - Nutze ein anderes Thema als vorher
+  - Sei kreativ und abwechslungsreich!
+  - Wähle die Schwierigkeit selbst basierend auf der Performance-Historie
 
 # Variables that can be passed to the prompt
 variables:
@@ -74,15 +98,19 @@ variables:
     type: "string"
     required: true
     description: "Difficulty level: 'easy' or 'hard'"
-  - name: "difficulty_level"
-    type: "number"
-    required: true
-    description: "Numeric difficulty (1-5)"
   - name: "problem_type"
     type: "string"
     required: true
     description: "Type of problem: riddle, pattern, category, cause-effect"
-  - name: "previous_problems"
+  - name: "performance_history"
     type: "array"
     required: false
-    description: "List of previous problem themes to avoid repetition"
+    description: "List of previous problems with results (question, type, difficulty, correct)"
+  - name: "consecutive_correct"
+    type: "number"
+    required: false
+    description: "Number of consecutive correct answers"
+  - name: "consecutive_incorrect"
+    type: "number"
+    required: false
+    description: "Number of consecutive incorrect answers"
