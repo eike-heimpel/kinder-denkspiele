@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
+	import SpeakerButton from '$lib/components/SpeakerButton.svelte';
+	import { speechService } from '$lib/services/speech.service';
 
 	type GamePhase = 'setup' | 'playing' | 'feedback' | 'gameOver';
 
@@ -39,6 +41,12 @@
 
 	// URL params
 	const userId = $derived($page.url.searchParams.get('userId') || '');
+
+	// Stop speech when game phase changes
+	$effect(() => {
+		gamePhase; // Track phase changes
+		speechService.stop();
+	});
 
 	onMount(() => {
 		if (!userId) {
@@ -181,20 +189,35 @@
 	}
 </script>
 
+<svelte:window
+	ontouchstart={(e) => {
+		if (e.touches.length > 1) {
+			e.preventDefault();
+		}
+	}}
+	ontouchmove={(e) => {
+		if (e.touches.length > 1) {
+			e.preventDefault();
+		}
+	}}
+/>
+
 <div
-	class="min-h-screen bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 flex items-center justify-center p-4"
+	class="min-h-screen bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 flex items-center justify-center p-2 pt-14"
+	style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; overflow-y: auto;"
 >
-	<div class="max-w-2xl w-full">
+	<div class="max-w-2xl w-full relative">
 		{#if gamePhase === 'setup'}
+			<!-- Home Button (outside card) -->
+			<button
+				onclick={goHome}
+				class="absolute -top-12 left-0 px-3 py-1 bg-white/90 hover:bg-white rounded-lg text-gray-700 text-sm shadow-lg"
+			>
+				🏠 Zurück
+			</button>
+
 			<!-- Setup Screen -->
 			<div class="bg-white rounded-3xl shadow-2xl p-8">
-				<!-- Home Button -->
-				<button
-					onclick={goHome}
-					class="absolute top-4 right-4 px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 text-sm"
-				>
-					🏠 Zurück
-				</button>
 
 				<h1 class="text-4xl font-bold text-center mb-2 text-purple-600">🧠 Logik-Labor</h1>
 				<p class="text-center text-gray-600 mb-6">
@@ -249,24 +272,26 @@
 				</button>
 			</div>
 		{:else if gamePhase === 'playing'}
-			<!-- Game Screen -->
-			<div class="bg-white rounded-3xl shadow-2xl p-8 relative">
-				<!-- Debug Toggle (small, top-right) -->
+			<!-- Control buttons (outside card) -->
+			<div class="absolute -top-12 left-0 right-0 flex justify-between items-center">
+				<button
+					onclick={goHome}
+					class="px-3 py-1 bg-white/90 hover:bg-white rounded-lg text-gray-700 text-sm shadow-lg"
+				>
+					🏠 Zurück
+				</button>
+
 				<button
 					onclick={() => (showDebug = !showDebug)}
-					class="absolute top-2 right-2 text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded text-gray-600"
+					class="px-3 py-1 bg-white/90 hover:bg-white rounded-lg text-gray-700 text-sm shadow-lg"
 					title="Debug-Info für Eltern"
 				>
 					{showDebug ? '🔒' : '🔓'} Debug
 				</button>
+			</div>
 
-				<!-- Home Button -->
-				<button
-					onclick={goHome}
-					class="absolute top-2 right-12 text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded text-gray-600"
-				>
-					🏠
-				</button>
+			<!-- Game Screen -->
+			<div class="bg-white rounded-3xl shadow-2xl p-8">
 
 				<!-- Header -->
 				<div class="flex justify-between items-center mb-6">
@@ -309,8 +334,12 @@
 				<!-- Problem Question -->
 				{#if currentProblem}
 					<div class="mb-8">
-						<div class="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-6">
-							<p class="text-2xl font-bold text-center text-gray-800">
+						<div class="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-6 relative">
+							<!-- Speaker button for question -->
+							<div class="absolute top-4 right-4">
+								<SpeakerButton text={currentProblem.question} size="lg" variant="primary" />
+							</div>
+							<p class="text-2xl font-bold text-center text-gray-800 pr-20">
 								{currentProblem.question}
 							</p>
 						</div>
@@ -319,14 +348,23 @@
 					<!-- Answer Options -->
 					<div class="grid grid-cols-1 gap-4">
 						{#each currentProblem.options as option, index}
-							<button
-								onclick={() => submitAnswer(index)}
-								disabled={submitting}
-								class="bg-gradient-to-r from-blue-400 to-blue-500 text-white text-xl font-bold py-6 px-8 rounded-xl hover:from-blue-500 hover:to-blue-600 transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-left"
-							>
-								<span class="inline-block w-8">{String.fromCharCode(65 + index)}.</span>
-								{option}
-							</button>
+							<div class="flex gap-3 items-center">
+								<button
+									onclick={() => submitAnswer(index)}
+									disabled={submitting}
+									class="flex-1 bg-gradient-to-r from-blue-400 to-blue-500 text-white text-xl font-bold py-6 px-8 rounded-xl hover:from-blue-500 hover:to-blue-600 transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-left"
+								>
+									<span class="inline-block w-8">{String.fromCharCode(65 + index)}.</span>
+									{option}
+								</button>
+								<!-- Speaker button for answer option -->
+								<SpeakerButton
+									text={option}
+									size="md"
+									variant="secondary"
+									disabled={submitting}
+								/>
+							</div>
 						{/each}
 					</div>
 				{/if}

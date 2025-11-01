@@ -156,10 +156,24 @@
     <title>Reaktionszeit - Kinder Denkspiele</title>
 </svelte:head>
 
+<svelte:window
+    ontouchstart={(e) => {
+        if (e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }}
+    ontouchmove={(e) => {
+        if (e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }}
+/>
+
 <div
-    class="min-h-screen bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 p-4"
+    class="min-h-screen bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 p-2"
+    style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; overflow-y: auto;"
 >
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-4xl mx-auto pt-14">
         {#if phase === "loading"}
             <Card>
                 <div class="text-center py-12">

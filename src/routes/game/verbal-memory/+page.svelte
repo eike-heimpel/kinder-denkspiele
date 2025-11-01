@@ -107,28 +107,30 @@
     }
 </script>
 
-<svelte:window onkeydown={handleKeyPress} />
+<svelte:window
+    onkeydown={handleKeyPress}
+    ontouchstart={(e) => {
+        if (e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }}
+    ontouchmove={(e) => {
+        if (e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }}
+/>
 
 <svelte:head>
     <title>Verbales Gedächtnis - Kinder Denkspiele</title>
 </svelte:head>
 
 <div
-    class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4 animate-gradient"
+    class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-2 animate-gradient"
+    style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; overflow-y: auto;"
 >
-    <div class="max-w-4xl mx-auto">
-        <div class="text-center mb-4 animate-fade-in">
-            <span class="text-5xl inline-block mb-2 animate-bounce-slow"
-                >🗣️</span
-            >
-            <h1
-                class="text-4xl font-black text-white drop-shadow-2xl tracking-tight"
-            >
-                Verbales Gedächtnis
-            </h1>
-        </div>
-
-        <Card class="mb-4">
+    <div class="max-w-4xl mx-auto pt-14">
+        <Card class="mb-2 py-3">
             <GameStats {score} {lives} {round} />
         </Card>
 
@@ -192,64 +194,50 @@
             </Card>
         {:else if currentWord}
             <Card>
-                <div class="text-center py-8">
+                <div class="text-center py-4">
                     {#key round}
-                        <div class="word-display mb-8">
+                        <div class="word-display mb-4">
                             <p
-                                class="text-7xl font-black bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent drop-shadow-2xl animate-word-appear"
+                                class="text-5xl font-black bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent drop-shadow-lg animate-word-appear"
                             >
                                 {currentWord}
                             </p>
                         </div>
                     {/key}
 
-                    <p
-                        class="text-2xl font-bold text-gray-700 mb-6 animate-fade-in"
-                    >
+                    <p class="text-base font-semibold text-gray-700 mb-3 animate-fade-in">
                         Hast du dieses Wort schon gesehen?
                     </p>
 
-                    <div class="flex gap-6 justify-center flex-wrap">
+                    <div class="flex gap-3 justify-center">
                         <Button
                             variant="danger"
-                            size="lg"
+                            size="md"
                             onclick={() => submitAnswer("new")}
                             disabled={answering}
                         >
                             <div class="flex flex-col items-center gap-1">
-                                <span class="text-4xl">🆕</span>
-                                <span>NEU</span>
-                                <span
-                                    class="text-xs normal-case font-normal opacity-75"
-                                    >(← oder N)</span
-                                >
+                                <span class="text-2xl">🆕</span>
+                                <span class="font-bold">NEU</span>
+                                <span class="text-xs opacity-75">(← / N)</span>
                             </div>
                         </Button>
                         <Button
                             variant="success"
-                            size="lg"
+                            size="md"
                             onclick={() => submitAnswer("seen")}
                             disabled={answering}
                         >
                             <div class="flex flex-col items-center gap-1">
-                                <span class="text-4xl">👀</span>
-                                <span>Gesehen</span>
-                                <span
-                                    class="text-xs normal-case font-normal opacity-75"
-                                    >(→ oder G)</span
-                                >
+                                <span class="text-2xl">👀</span>
+                                <span class="font-bold">Gesehen</span>
+                                <span class="text-xs opacity-75">(→ / G)</span>
                             </div>
                         </Button>
                     </div>
                 </div>
             </Card>
         {/if}
-
-        <div class="text-center mt-3">
-            <Button variant="secondary" onclick={() => goto("/")}>
-                ← Zurück zur Startseite
-            </Button>
-        </div>
     </div>
 </div>
 

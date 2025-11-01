@@ -186,22 +186,25 @@
     <title>Visuelles Gedächtnis - Kinder Denkspiele</title>
 </svelte:head>
 
-<div
-    class="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-4 animate-gradient"
->
-    <div class="max-w-4xl mx-auto">
-        <div class="text-center mb-4 animate-fade-in">
-            <span class="text-5xl inline-block mb-2 animate-bounce-slow"
-                >🎯</span
-            >
-            <h1
-                class="text-4xl font-black text-white drop-shadow-2xl tracking-tight"
-            >
-                Visuelles Gedächtnis
-            </h1>
-        </div>
+<svelte:window
+    ontouchstart={(e) => {
+        if (e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }}
+    ontouchmove={(e) => {
+        if (e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }}
+/>
 
-        <Card class="mb-4">
+<div
+    class="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-2 animate-gradient"
+    style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; overflow-y: auto;"
+>
+    <div class="max-w-4xl mx-auto pt-14">
+        <Card class="mb-2 py-3">
             <GameStats {score} {lives} {round} />
         </Card>
 
@@ -278,48 +281,35 @@
             </Card>
         {:else}
             <Card>
-                <div class="py-8">
-                    {#if phase === "showing"}
-                        <p
-                            class="text-2xl font-bold text-center text-gray-700 mb-6 animate-fade-in"
-                        >
-                            Merke dir die <span class="text-blue-600"
-                                >blauen</span
-                            > Quadrate!
-                        </p>
-                    {:else if phase === "memorizing"}
-                        <p
-                            class="text-2xl font-bold text-center text-gray-700 mb-6 animate-fade-in"
-                        >
-                            Warte kurz... 🧠
-                        </p>
-                        <div class="w-full max-w-md mx-auto mb-6">
-                            <div
-                                class="h-3 bg-gray-200 rounded-full overflow-hidden"
-                            >
-                                <div
-                                    class="h-full bg-gradient-to-r from-purple-500 to-pink-500 animate-progress"
-                                    style="animation-duration: {retentionDelay}ms;"
-                                ></div>
+                <div class="py-3">
+                    <!-- Fixed height instruction area to prevent shifts -->
+                    <div class="h-16 flex flex-col items-center justify-center mb-3">
+                        {#if phase === "showing"}
+                            <p class="text-lg font-bold text-center text-gray-700 animate-fade-in">
+                                Merke dir die <span class="text-blue-600">blauen</span> Quadrate!
+                            </p>
+                        {:else if phase === "memorizing"}
+                            <p class="text-lg font-bold text-center text-gray-700 mb-2 animate-fade-in">
+                                Warte kurz... 🧠
+                            </p>
+                            <div class="w-full max-w-md mx-auto">
+                                <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div
+                                        class="h-full bg-gradient-to-r from-purple-500 to-pink-500 animate-progress"
+                                        style="animation-duration: {retentionDelay}ms;"
+                                    ></div>
+                                </div>
                             </div>
-                        </div>
-                    {:else if phase === "recalling"}
-                        <p
-                            class="text-2xl font-bold text-center text-gray-700 mb-6 animate-fade-in"
-                        >
-                            Welche Quadrate waren blau?
-                        </p>
-                    {:else if phase === "feedback"}
-                        <p
-                            class="text-2xl font-bold text-center mb-6 animate-fade-in {isCorrect
-                                ? 'text-green-600'
-                                : 'text-red-600'}"
-                        >
-                            {isCorrect
-                                ? "✓ Richtig! Super! 🎉"
-                                : "✗ Nicht ganz richtig... 😔"}
-                        </p>
-                    {/if}
+                        {:else if phase === "recalling"}
+                            <p class="text-lg font-bold text-center text-gray-700 animate-fade-in">
+                                Welche Quadrate waren blau?
+                            </p>
+                        {:else if phase === "feedback"}
+                            <p class="text-lg font-bold text-center animate-fade-in {isCorrect ? 'text-green-600' : 'text-red-600'}">
+                                {isCorrect ? "✓ Richtig! Super! 🎉" : "✗ Nicht ganz richtig... 😔"}
+                            </p>
+                        {/if}
+                    </div>
 
                     <VisualMemoryGrid
                         {gridSize}
@@ -332,38 +322,30 @@
                         disabled={phase !== "recalling"}
                     />
 
-                    {#if phase === "recalling"}
-                        <div class="mt-6 text-center">
+                    <!-- Fixed height button area to prevent shifts -->
+                    <div class="mt-3 text-center h-20 flex flex-col items-center justify-center">
+                        {#if phase === "recalling"}
                             {#if message}
-                                <p class="text-red-600 font-bold mb-3">
+                                <p class="text-red-600 font-bold mb-2 text-sm">
                                     {message}
                                 </p>
                             {/if}
                             <Button
                                 variant="primary"
-                                size="lg"
+                                size="md"
                                 onclick={submitAnswer}
                                 disabled={userSelections.length === 0}
                             >
-                                <div class="flex items-center gap-2">
-                                    <span class="text-3xl">✓</span>
-                                    <span
-                                        >Antwort abgeben ({userSelections.length}
-                                        ausgewählt)</span
-                                    >
+                                <div class="flex items-center gap-1">
+                                    <span class="text-xl">✓</span>
+                                    <span>Bestätigen ({userSelections.length})</span>
                                 </div>
                             </Button>
-                        </div>
-                    {/if}
+                        {/if}
+                    </div>
                 </div>
             </Card>
         {/if}
-
-        <div class="text-center mt-3">
-            <Button variant="secondary" onclick={() => goto("/")}>
-                ← Zurück zur Startseite
-            </Button>
-        </div>
     </div>
 </div>
 

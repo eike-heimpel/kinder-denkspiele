@@ -218,10 +218,9 @@ export class LogicLabEngine {
 		const previousTypes = state.problemHistory.map((p) => p.type);
 		const problemType = this.selectProblemType(previousTypes);
 
-		// Build performance history for LLM (last 5 problems with answers)
+		// Build performance history for LLM (ALL problems with answers to avoid any repetition)
 		const performanceHistory = state.problemHistory
 			.filter((p) => p.userAnswerIndex !== undefined)
-			.slice(-5)
 			.map((p) => ({
 				question: p.question,
 				type: p.type,

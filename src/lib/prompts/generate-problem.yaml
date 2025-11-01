@@ -90,24 +90,23 @@ user_prompt: |
   Erstelle eine neue {{ problem_type }}-Frage auf LEVEL {{ difficulty_level }} (1=sehr leicht, 5=sehr schwer).
 
   {% if performance_history|length > 0 %}
-  BISHERIGE FRAGEN (vermeide diese Themen!):
+  ⚠️ KRITISCH - BEREITS GESTELLTE FRAGEN (DARF NICHT WIEDERHOLT WERDEN!):
   {% for item in performance_history %}
   - "{{ item.question }}" ({{ item.type }}, Level {{ item.difficulty }})
   {% endfor %}
+
+  WICHTIG - KEINE WIEDERHOLUNGEN:
+  - Stelle NIEMALS eine ähnliche oder gleiche Frage wie oben
+  - Nutze KOMPLETT ANDERE Themen und Konzepte
+  - Wenn oben eine Frage über Tiere war → jetzt KEINE Tiere!
+  - Wenn oben eine Zahlenreihe war → jetzt KEINE Zahlenreihe!
+  - Variiere radikal: Wechsle zwischen Tieren, Zahlen, Formen, Farben, Essen, Fahrzeugen, Wetter, Natur
+  - Sei kreativ und überraschend - jede Frage muss sich frisch und neu anfühlen!
   {% endif %}
 
-  ZIEL-SCHWIERIGKEIT: Level {{ difficulty_level }}
+  ZIEL-SCHWIERIGKEIT: Level {{ difficulty_level }} für {{ age }}-Jährige
   - Erstelle die Frage EXAKT auf diesem Schwierigkeitsgrad
   - Setze "difficulty": {{ difficulty_level }} im JSON
-
-  WICHTIG - VIELFALT:
-  - Nutze ein KOMPLETT ANDERES Thema als die bisherigen Fragen
-  - Wechsle zwischen: Tiere, Formen, Farben, Zahlen, Essen, Fahrzeuge, Wetter, Natur
-  - Wenn vorher Tiere → jetzt Zahlen oder Farben
-  - Wenn vorher Zahlen → jetzt Tiere oder Essen
-  - Sei kreativ und überraschend!
-
-  ZIEL-SCHWIERIGKEIT: Level {{ difficulty_level }} für {{ age }}-Jährige
 
   {% if difficulty_level == 1 %}
   ACHTUNG: Sehr einfach! Frage sollte ein {{ age - 2 }}-Jähriges Kind problemlos lösen können.
