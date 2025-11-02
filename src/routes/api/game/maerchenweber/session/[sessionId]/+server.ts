@@ -1,7 +1,10 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { env } from '$env/dynamic/private';
 
-const FASTAPI_URL = 'http://localhost:8000';
+// Use production URL if set, otherwise fallback to local development
+const FASTAPI_URL = env.MAERCHENWEBER_API_URL || 'http://localhost:8000';
+const API_KEY = env.MAERCHENWEBER_API_KEY;
 
 export const GET: RequestHandler = async ({ params }) => {
 	try {
@@ -11,11 +14,18 @@ export const GET: RequestHandler = async ({ params }) => {
 			return json({ error: 'sessionId parameter is required' }, { status: 400 });
 		}
 
+		// Build headers - add API key if available (production mode)
+		const headers: HeadersInit = {
+			'Content-Type': 'application/json'
+		};
+
+		if (API_KEY) {
+			headers['X-API-Key'] = API_KEY;
+		}
+
 		const response = await fetch(`${FASTAPI_URL}/adventure/session/${sessionId}`, {
 			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json'
-			}
+			headers
 		});
 
 		if (!response.ok) {

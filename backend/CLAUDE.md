@@ -20,12 +20,13 @@ FastAPI backend for the Märchenweber ("Story Weaver") game - a dynamic LLM-powe
 
 **Key Features:**
 - LLM-powered story generation (German language)
-- "Council of Choices" - 3 different models for diverse options
-- Wildcard injection for creativity
+- Unified choice generation (3 coherent choices)
+- Wildcard injection for story creativity
 - Content safety validation
-- AI image generation
+- AI image generation with scene-adaptive variation
+- Engaging waiting UX (journey recap, fun nuggets, progress steps)
 - MongoDB persistence
-- Full async/await
+- Full async/await with parallel generation
 
 ---
 
@@ -47,7 +48,7 @@ backend/
 │   └── routers/
 │       ├── __init__.py
 │       └── adventure.py     # /adventure/start & /adventure/turn
-├── config.yaml              # Prompts, models, wildcards, sampling params
+├── config.yaml              # Prompts, models, story wildcards, sampling params
 ├── pyproject.toml           # uv dependencies
 ├── .python-version          # Python 3.12
 └── CLAUDE.md                # This file
@@ -110,17 +111,18 @@ SvelteKit Frontend (Port 5173)
     ↓ (proxy requests)
 FastAPI Backend (Port 8000)
     ↓
-Game Engine (Orchestration)
+Game Engine (Orchestration with parallel generation)
     ↓
 Config Loader ← config.yaml
     ↓
-LLM Service → OpenRouter API
-    ├── Narrator Model (Gemini 2.0 Flash)
-    ├── Validator Model (Gemini 1.5 Flash)
-    ├── Image Generator (Gemini 2.0 Flash)
-    ├── Choice Agent Brave (Claude 3.5 Sonnet)
-    ├── Choice Agent Silly (Gemini 2.0 Flash)
-    └── Choice Agent Careful (GPT-4o Mini)
+LLM Service → OpenRouter API (parallel async calls)
+    ├── Narrator (Gemini 2.5 Pro)
+    ├── Fun Nugget Generator (Gemini 2.5 Flash)
+    ├── Validator (Gemini 2.5 Flash)
+    ├── Scene Analyzer (Gemini 2.5 Flash)
+    ├── Image Translator (Gemini 2.5 Flash)
+    ├── Image Generator (Gemini 2.5 Flash Image)
+    └── Choice Agent Unified (Gemini 2.5 Flash)
     ↓
 MongoDB (Shared)
 ```
@@ -144,62 +146,58 @@ Frontend Request → SvelteKit Proxy → FastAPI Backend → MongoDB
 
 ## 🎮 Core Game Logic
 
-### Turn Orchestration Chain
+### Turn Orchestration
 
-The `game_engine.py` implements this exact sequence on every turn:
+See `game_engine.py` for implementation details. The orchestration includes:
 
-1. **Load State** - Fetch GameSession from MongoDB
-2. **Update History** - Append user's choice
-3. **Wildcard Selection** - Random element injection
-4. **Narrator Call** - Generate story with wildcard
-5. **Safety Validation** - Check age-appropriateness
-6. **Council of Choices** - 3 parallel LLM calls (brave/silly/careful)
-7. **Image Generation** - Translate to English → Generate image
-8. **Save State** - Persist to MongoDB
-9. **Return Response** - Send to client
+**Parallel Generation:**
+- Story + Fun Nugget generated simultaneously (no added wait time)
+
+**Sequential Steps:**
+- Load state → Update history → Narrator call (with story wildcard for variety)
+- Safety validation → Choice generation (unified 3 choices)
+- Scene analysis → Image translation → Image generation
+- Save state → Return response with journey recap
+
+**Image Variation:**
+- Scene analyzer determines intensity, perspective, lighting
+- Image translator applies variation parameters
+- Character consistency maintained via previous image reference
+
+**Waiting Time UX:**
+- Journey recap (all previous choices)
+- Fun nugget (story-relevant fun fact)
+- Round number for progress tracking
 
 ### Anti-Repetition Strategy
 
-**Critical for non-repetitive stories:**
+See `config.yaml` for sampling parameters. Key mechanisms:
 
-1. **Wildcard Injection**: Every turn includes a random element from 25+ options
-2. **Council of Choices**: 3 different models with different personalities
-3. **Sampling Parameters**:
-   - `temperature: 0.95` (high creativity)
-   - `presence_penalty: 0.4` (discourage repetition)
-   - `top_p: 0.95` (diverse token selection)
-4. **Different Models**: Variety through model diversity
+1. **Story Wildcard Injection** - Random story elements injected into narrator prompt (25+ options)
+2. **High Temperature** - Creative, varied text generation
+3. **Presence Penalty** - Discourages word repetition
+4. **Unified Choice Generation** - 3 coherent yet diverse options per turn
 
 ---
 
 ## 📝 Configuration System
 
-### config.yaml Structure
+All prompts, models, and parameters configured in `config.yaml`. See the file for complete details.
 
-```yaml
-models:
-  narrator: "google/gemini-2.5-pro"
-  validator: "google/gemini-2.5-flash"
-  image_generator: "openai/gpt-5-image-mini"
-  image_translator: "google/gemini-flash-1.5"
-  choice_agent_brave: "qwen/qwen3-next-80b-a3b-instruct"
-  choice_agent_silly: "google/gemini-2.5-flash"
-  choice_agent_careful: "openai/gpt-5-mini"
+### Key Components
 
-prompts:
-  character_creation: "..." # Jinja2 template
-  narrator: "..."           # {{ history }}, {{ wildcard }}
-  validator: "..."          # {{ german_text }}
-  image_prompt_translator: "..." # {{ german_image_prompt }}
-  choice_prompts:
-    brave: "..."
-    silly: "..."
-    careful: "..."
+**Models:** Narrator, Validator, Image Generator/Translator, Scene Analyzer, Fun Nugget Generator, Choice Agent (Unified)
 
-wildcards:
+**Prompts:** Character creation, narrator, validator, summarizer, fun nugget, scene analyzer, image translator, choice generation (Jinja2 templates)
+
+**Game Mechanics:** Image generation interval, summarization interval, recent turns to keep
+
+**Sampling Parameters:** Temperature, presence_penalty, top_p, max_tokens, reasoning settings per model
+
+**Story Wildcards** (for narrator variety):
   - "Ein Tier in der Nähe beginnt plötzlich zu sprechen."
   - "Die Farbe des Himmels ändert sich abrupt zu einem sanften Lila."
-  # ... 25+ total
+  # ... 25+ total elements randomly injected into narrator prompt
 
 sampling_params:
   narrator:
@@ -231,18 +229,7 @@ sampling_params:
 
 ### Jinja2 Templating
 
-All prompts support variable injection:
-
-```python
-from app.services.config_loader import get_config_loader
-
-config = get_config_loader()
-prompt = config.get_prompt(
-    "narrator",
-    history="Previous story...",
-    wildcard="Ein Vogel beginnt zu singen."
-)
-```
+All prompts support variable injection. See `config_loader.py` and `config.yaml` for examples.
 
 ---
 
@@ -262,422 +249,82 @@ prompt = config.get_prompt(
 }
 ```
 
-**Response:**
-```json
-{
-  "session_id": "673abc123def456789012345",
-  "step": {
-    "story_text": "Es war einmal...",
-    "image_url": "data:image/png;base64,...",
-    "choices": [
-      "Ich gehe mutig in den Wald hinein",
-      "Ich tanze im Mondlicht",
-      "Ich schaue mich vorsichtig um"
-    ]
-  }
-}
-```
+**Response:** See `models.py` for schema. Includes:
+- `session_id`
+- `step` with `story_text`, `image_url`, `choices`, `fun_nugget`, `choices_history`, `round_number`
+- Optional `timing` and `warnings` for debugging
 
 ### POST /adventure/turn
 
 **Process a turn with user's choice**
 
-**Request:**
-```json
-{
-  "session_id": "673abc123def456789012345",
-  "choice_text": "Ich gehe mutig in den Wald hinein"
-}
-```
+**Request:** `session_id` and `choice_text`
 
-**Response:**
-```json
-{
-  "story_text": "Als Luna mutig...",
-  "image_url": "data:image/png;base64,...",
-  "choices": [
-    "Ich spreche mit dem Tier",
-    "Ich lache fröhlich",
-    "Ich bleibe ruhig stehen"
-  ]
-}
-```
+**Response:** See `models.py`. Includes story, image, choices, fun nugget, journey recap, round number.
 
 ### GET /adventure/session/{session_id}
 
-**Get current session state (for debugging)**
-
-**Response:**
-```json
-{
-  "_id": "673abc123def456789012345",
-  "userId": "507f1f77bcf86cd799439011",
-  "gameType": "maerchenweber",
-  "character_name": "Prinzessin Luna",
-  "history": ["Story 1", "[Wahl]: Choice 1", "Story 2", ...],
-  "round": 5,
-  "createdAt": "2025-11-01T12:00:00Z",
-  "lastUpdated": "2025-11-01T12:05:00Z"
-}
-```
+Returns session document from MongoDB. See `database.py` for schema.
 
 ---
 
 ## 🗄️ Database Schema
 
-### MongoDB Collection: `gamesessions`
+MongoDB collection `gamesessions` stores session state. See `game_engine.py` for schema details.
 
-```javascript
-{
-  _id: ObjectId,
-  userId: "507f1f77bcf86cd799439011",
-  gameType: "maerchenweber",
-  character_name: "Prinzessin Luna",
-  character_description: "eine mutige Prinzessin",
-  story_theme: "ein verzauberter Wald",
-  reading_level: "second_grade",
-  history: [
-    "Es war einmal...",                    // Story 1
-    "[Wahl]: Ich gehe in den Wald",       // User choice
-    "Luna ging in den Wald...",           // Story 2
-    "[Wahl]: Ich spreche mit dem Vogel",  // User choice
-    // ... continues
-  ],
-  score: 0,
-  round: 3,
-  createdAt: ISODate("2025-11-01T12:00:00Z"),
-  lastUpdated: ISODate("2025-11-01T12:05:00Z")
-}
-```
-
-**Note:** Shares the same `gamesessions` collection as other games in the project.
+**Key fields:** userId, gameType, character details, history array (alternating stories and choices), round number, timestamps, image tracking (first_image_url, first_image_description, previous_image_url, image_history)
 
 ---
 
 ## 🤖 LLM Integration
 
-### OpenRouter API
+See `llm_service.py` for implementation details. Uses OpenRouter API with async/await.
 
-**Base URL:** `https://openrouter.ai/api/v1/chat/completions`
+**Parallel generation:** Story + fun nugget use `asyncio.gather` to reduce wait time.
 
-**Headers:**
-```python
-{
-    "Authorization": f"Bearer {api_key}",
-    "Content-Type": "application/json",
-    "HTTP-Referer": "https://localhost:5173",
-    "X-Title": "Märchenweber"
-}
-```
-
-### Text Generation
-
-```python
-from app.services.llm_service import get_llm_service
-
-llm = get_llm_service()
-response = await llm.generate_text(
-    prompt="Tell a story...",
-    model="google/gemini-2.0-flash-exp:free",
-    sampling_params={
-        "temperature": 0.95,
-        "presence_penalty": 0.4,
-        "top_p": 0.95
-    },
-    json_mode=True  # Request JSON response
-)
-```
-
-### Image Generation
-
-```python
-image_url = await llm.generate_image(
-    prompt="A magical forest, digital art, vibrant colors, whimsical fairy tale style",
-    model="google/gemini-2.0-flash-exp:free",
-    aspect_ratio="4:3"
-)
-# Returns: Base64 data URL or hosted URL
-```
-
-### Council of Choices (Parallel)
-
-```python
-import asyncio
-
-brave_task = llm.generate_text(brave_prompt, brave_model, brave_params)
-silly_task = llm.generate_text(silly_prompt, silly_model, silly_params)
-careful_task = llm.generate_text(careful_prompt, careful_model, careful_params)
-
-choices = await asyncio.gather(brave_task, silly_task, careful_task)
-```
+**Image generation:** Scene analysis → prompt translation with variation → image generation with character consistency.
 
 ---
 
 ## 🛡️ Content Safety
 
-### Validation Flow
-
-1. **Narrator generates story** → `story_text`
-2. **Validator checks safety**:
-   ```python
-   prompt = "Is the following text appropriate for a 7-year-old? SAFE or UNSAFE: {text}"
-   response = await llm.generate_text(prompt, validator_model)
-   is_safe = "SAFE" in response.upper()
-   ```
-3. **If UNSAFE**:
-   - Log incident
-   - Replace with fallback: `"Oh, lass uns eine andere Geschichte beginnen!"`
-   - Do NOT show to child
-
-### Safety Criteria
-
-- No scary/violent themes
-- No inappropriate content
-- Age-appropriate language (7 years old)
-- Whimsical fairy tale style only
+Validator LLM checks each story for age-appropriateness (7 years old). Unsafe content replaced with fallback text. See `_validate_safety()` in `game_engine.py`.
 
 ---
 
 ## 🎨 Prompt Engineering
 
-### Best Practices
+All prompts in `config.yaml` use Jinja2 templating. Key principles:
+- Age-specific language (7 years, second-grade reading level)
+- DU-form (second person) for immersion
+- Sensory details (colors, textures, sounds)
+- Slow pacing with atmospheric descriptions
+- JSON output mode for structured responses
 
-1. **Be specific about age**: "für ein 7-jähriges Kind"
-2. **Reinforce style**: "märchenhaft", "fantasievoll", "magisch"
-3. **Use Jinja2 variables**: `{{ character_name }}`, `{{ wildcard }}`
-4. **Request JSON format**: Explicitly ask for structured output
-5. **Inject wildcards**: Always include a random element
-
-### Example Narrator Prompt
-
-```jinja2
-Du bist ein kreativer Geschichtenerzähler für Kinder.
-
-Bisherige Geschichte:
-{{ history }}
-
-WICHTIG: Baue das folgende Element ein:
-"{{ wildcard }}"
-
-Setze die Geschichte fort mit:
-- 3-4 Sätzen in deutscher Sprache
-- Märchenhafter Sprache
-- Altersgerecht für 7-jährige
-
-Antworte mit JSON:
-{
-  "story_text": "...",
-  "image_prompt": "..."
-}
-```
+See prompts in `config.yaml` for examples.
 
 ---
 
-## 🔧 Development Tips
+## 🔧 Development
 
-### Testing Locally
-
+**Running:**
 ```bash
-# Terminal 1: MongoDB (already running via Docker)
-# Terminal 2: SvelteKit
-npm run dev
-
-# Terminal 3: FastAPI
 cd backend
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
-### Testing API Directly
+**Environment:** Requires `MONGODB_URI` and `OPENROUTER_API_KEY` in root `.env`
 
-```bash
-# Health check
-curl http://localhost:8000/health
-
-# Start adventure
-curl -X POST http://localhost:8000/adventure/start \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user_id": "test123",
-    "character_name": "Luna",
-    "character_description": "eine mutige Prinzessin",
-    "story_theme": "ein verzauberter Wald"
-  }'
-```
-
-### Debugging
-
-```python
-# Add logging
-import logging
-logger = logging.getLogger(__name__)
-
-logger.info(f"Generated story: {story_text[:100]}")
-logger.warning(f"Unsafe content detected")
-logger.error(f"API call failed: {error}")
-```
-
-### Common Issues
-
-**Issue:** `ModuleNotFoundError: No module named 'app'`
-**Solution:** Run from backend directory: `cd backend && uv run uvicorn ...`
-
-**Issue:** `MONGODB_URI is not set`
-**Solution:** Ensure root `.env` has `MONGODB_URI` variable
-
-**Issue:** `OPENROUTER_API_KEY is not set`
-**Solution:** Add `OPENROUTER_API_KEY=sk-or-v1-...` to root `.env`
-
-**Issue:** `Connection refused to localhost:8000`
-**Solution:** Start FastAPI server first
-
----
-
-## 📦 Dependencies
-
-### Core (pyproject.toml)
-
-```toml
-[project]
-dependencies = [
-    "fastapi>=0.120.4",      # Modern web framework
-    "uvicorn>=0.38.0",       # ASGI server
-    "motor>=3.7.1",          # Async MongoDB driver
-    "jinja2>=3.1.6",         # Template engine
-    "pyyaml>=6.0.3",         # YAML parser
-    "httpx>=0.28.1",         # Async HTTP client
-    "python-dotenv>=1.2.1",  # Environment variables
-    "pydantic>=2.12.3",      # Data validation
-    "pydantic-settings>=2.11.0"  # Settings management
-]
-```
-
-### Why These Models?
-
-- **Gemini 2.5 Pro/Flash**: Advanced reasoning, excellent German support
-- **Qwen 3 Next 80B**: High-quality reasoning for creative choices
-- **GPT-5 Mini**: Latest OpenAI model with effort-based reasoning
-- **Mix of providers**: Diversity prevents repetition
-- **Reasoning-capable**: All models support extended thinking for better responses
-
----
-
-## 🚀 Deployment
-
-### Production Considerations
-
-1. **Environment Variables**: Use secrets manager
-2. **CORS**: Update allowed origins for production domain
-3. **Rate Limiting**: Add to prevent abuse
-4. **Logging**: Configure proper log aggregation
-5. **Monitoring**: Track LLM costs and latency
-6. **Caching**: Consider caching config.yaml
-7. **Error Handling**: Graceful degradation if LLM fails
-
-### Docker (Optional)
-
-```dockerfile
-FROM python:3.12-slim
-
-WORKDIR /app
-
-# Install uv
-RUN pip install uv
-
-# Copy dependencies
-COPY pyproject.toml uv.lock ./
-
-# Install dependencies
-RUN uv sync --frozen
-
-# Copy app
-COPY . .
-
-# Run
-CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
-```
-
----
-
-## 📊 Cost Estimation
-
-### Per Story Turn
-
-- Narrator: ~500 tokens × $0.01/1M = $0.000005
-- Validator: ~50 tokens × $0.01/1M = $0.0000005
-- 3 Choice Agents: ~150 tokens × $0.02/1M = $0.000003
-- Image: ~1 image × $0.02 = $0.02
-- **Total per turn: ~$0.02**
-
-### Per Session (10 turns)
-
-- **~$0.20 per child per adventure**
-- Very affordable for a unique storytelling experience
-
----
-
-## 🧪 Testing
-
-### Manual Testing
-
-```bash
-# 1. Start adventure
-curl -X POST http://localhost:8000/adventure/start -H "Content-Type: application/json" -d '{"user_id":"test","character_name":"Luna","character_description":"eine Prinzessin","story_theme":"ein Wald"}'
-
-# 2. Get session ID from response
-SESSION_ID="..."
-
-# 3. Make a choice
-curl -X POST http://localhost:8000/adventure/turn -H "Content-Type: application/json" -d '{"session_id":"'$SESSION_ID'","choice_text":"Ich gehe vorwärts"}'
-
-# 4. Check session
-curl http://localhost:8000/adventure/session/$SESSION_ID
-```
-
-### Unit Testing (Future)
-
-```python
-# tests/test_game_engine.py
-import pytest
-from app.services.game_engine import GameEngine
-
-@pytest.mark.asyncio
-async def test_start_adventure():
-    engine = GameEngine()
-    result = await engine.start_adventure(
-        user_id="test",
-        character_name="Luna",
-        character_description="eine Prinzessin",
-        story_theme="ein Wald"
-    )
-    assert "session_id" in result
-    assert "step" in result
-```
+**Dependencies:** See `pyproject.toml` - FastAPI, Motor (async MongoDB), httpx, Jinja2, PyYAML, Pydantic
 
 ---
 
 ## 📚 Related Documentation
 
 - [Main CLAUDE.md](../CLAUDE.md) - Project overview
-- [ARCHITECTURE.md](../docs/ARCHITECTURE.md) - System architecture
-- [API-REFERENCE.md](../docs/API-REFERENCE.md) - API documentation
-- [SvelteKit API Routes](../src/routes/api/CLAUDE.md) - Proxy implementation
-- [Game Page](../src/routes/game/maerchenweber/+page.svelte) - Frontend UI
+- [SvelteKit API Routes](../src/routes/api/CLAUDE.md) - Frontend proxy implementation
+- [Game Page](../src/routes/game/maerchenweber/play/+page.svelte) - Frontend UI
 
 ---
 
-## 🎯 Key Takeaways
-
-1. **Parallel Architecture**: FastAPI runs alongside SvelteKit (not replacing)
-2. **YAML Config**: All prompts/models externalized for easy tweaking
-3. **Council of Choices**: 3 models = diversity
-4. **Wildcards**: Random injection prevents repetition
-5. **Safety First**: Always validate before showing to child
-6. **Async Everything**: Motor + httpx for performance
-7. **Shared MongoDB**: Uses existing Atlas connection
-8. **German Language**: All stories and choices in German
-9. **Age 7 Target**: Designed for second-grade reading level
-10. **Cost Effective**: ~$0.02 per turn with mostly free models
-
----
-
-**For questions about implementation details, check the inline code comments in `game_engine.py` - the core orchestration logic is extensively documented.**
+**For implementation details, see code comments in `game_engine.py`, `llm_service.py`, and `config.yaml`.**

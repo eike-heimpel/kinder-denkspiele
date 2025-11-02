@@ -36,3 +36,22 @@ async def close_database():
         _client.close()
         _client = None
         _database = None
+
+
+async def ensure_indexes():
+    """Ensure required database indexes exist.
+
+    This helps prevent sort memory limit errors and improves query performance.
+    """
+    db = get_database()
+    collection = db["gamesessions"]
+
+    # Index for sorting user sessions by lastUpdated (descending)
+    # This is critical for the /adventure/user/{user_id}/sessions endpoint
+    await collection.create_index(
+        [("userId", 1), ("gameType", 1), ("lastUpdated", -1)],
+        name="user_sessions_sort_index",
+        background=True
+    )
+
+    print("✅ Database indexes created successfully")

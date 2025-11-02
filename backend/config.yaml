@@ -3,7 +3,7 @@
 
 # Game mechanics
 game_mechanics:
-  image_generation_interval: 5  # Generate images every N turns (1 = every turn, 5 = every 5th turn)
+  image_generation_interval: 1  # Generate images every N turns (1 = every turn, 5 = every 5th turn)
   summarization_interval: 5     # Summarize history every N turns
   recent_turns_to_keep: 5       # Number of recent turns to keep raw (rest get summarized)
 
@@ -13,9 +13,13 @@ models:
   image_generator: "google/gemini-2.5-flash-image"
   image_translator: "google/gemini-2.5-flash"
   summarizer: "google/gemini-2.5-flash"  # Fast & cost-effective for summarization
-  # New unified choice generation
+  fun_nugget_generator: "google/gemini-2.5-flash"  # Quick fun facts during loading
+  scene_analyzer: "google/gemini-2.5-flash"  # Quick scene analysis for image variation
+  # New choice-based image generation
+  style_guide_generator: "google/gemini-2.5-flash"  # Generate visual style guide (once)
+  choice_image_generator: "google/gemini-2.5-flash"  # Generate choice-specific image prompts
+  # Unified choice generation
   choice_agent_unified: "google/gemini-2.5-flash"  # Main 3 choices
-  choice_agent_wildcard: "google/gemini-2.5-flash"  # Creative 4th choice
   # Legacy choice agents (kept for backward compatibility)
   choice_agent_brave: "qwen/qwen3-next-80b-a3b-instruct"
   choice_agent_silly: "google/gemini-2.5-flash"
@@ -44,8 +48,8 @@ prompts:
     - Märchenhaft und fantasievoll sein
     - Für 7-jährige geeignet sein (keine gruseligen oder gewaltätigen Elemente)
     - Spannend beginnen mit einer interessanten Situation
-    - 12-18 Sätze lang sein (etwa eine ganze Seite Text)
-    - Verwende Absätze für bessere Lesbarkeit
+    - Etwa 20 Sätze lang sein, aufgeteilt in 2-4 Absätze
+    - Verwende Absätze für bessere Lesbarkeit und natürliche Pausen
     - Ende mit einer klaren Situation, die zu Entscheidungen führt
     - Stelle sicher, dass das Kind sich als {{ character_name }} fühlt
 
@@ -58,29 +62,72 @@ prompts:
     - Verwende Adjektive und Adverbien für mehr Atmosphäre
     - Kleine, ruhige Momente sind wichtig - nicht sofort Action!
 
+    WICHTIG - Generiere auch 3 Wahlmöglichkeiten für das Kind:
+
+    Die 3 Wahlmöglichkeiten sollten:
+    - Direkt auf die aktuelle Situation reagieren
+    - Unterschiedliche Wege sein, mit der Situation umzugehen
+    - In "Ich..."-Form geschrieben sein
+    - Einfache Wörter verwenden (Zweitklässler)
+    - Maximal 12 Wörter lang sein
+    - Kohärent und zur Geschichte passend sein
+    - Sich voneinander deutlich unterscheiden
+
+    WICHTIG - Generiere auch Charakter-Informationen:
+
+    Füge alle visuell sichtbaren Charaktere in der Szene hinzu (einschließlich {{ character_name }}):
+    - Für {{ character_name }}: Beschreibe visuelles Aussehen (Alter, Haare, Kleidung, etc.)
+    - Für neue Charaktere: Name und visuelle Beschreibung
+
     Antworte mit einem JSON-Objekt in diesem Format:
     {
       "story_text": "Die Geschichte in deutscher Sprache (in DU-Form!)",
-      "image_prompt": "Eine kurze Beschreibung für ein Bild in deutscher Sprache mit {{ character_name }} (max 20 Wörter)"
+      "image_prompt": "Eine kurze Beschreibung für ein Bild in deutscher Sprache mit {{ character_name }} (max 20 Wörter)",
+      "choice_1": "Ich...",
+      "choice_2": "Ich...",
+      "choice_3": "Ich...",
+      "characters_in_scene": [
+        {
+          "name": "{{ character_name }}",
+          "description": "7 Jahre alt, braune lockige Haare, lila Kleid, freundliches Lächeln"
+        }
+      ]
     }
 
   narrator: |
     Bisherige Geschichte:
     {{ history }}
 
-    Dies ist eine lange Abenteuergeschichte. Erzähle langsam und ruhig. Nicht jeder Moment muss wichtig sein.
+    KRITISCH - Du erzählst NUR EINEN KLEINEN MOMENT in einer sehr langen Geschichte:
+    - Dies ist NICHT eine komplette Szene oder ein Kapitel
+    - Du schreibst quasi "Seite 47 von 100" - nicht eine Kurzgeschichte
+    - Die Geschichte wird noch viele, viele weitere Runden weitergehen
+
+    WICHTIG - Pacing-Entscheidung liegt bei dir:
+    - Lies die bisherige Geschichte und entscheide: Braucht es jetzt Atmosphäre oder Action?
+    - Manchmal sind ruhige, beschreibende Momente richtig
+    - Manchmal ist es Zeit für spannende Ereignisse
+    - DU entscheidest basierend auf dem bisherigen Verlauf
+
+    ABER - Vermeide Story-Arcs innerhalb einer Runde:
+    - Baue KEINE kompletten Bögen (Problem → Höhepunkt → Lösung) in dieser Runde
+    - Wenn du Spannung aufbaust, löse sie NICHT sofort wieder auf
+    - Wenn ein Problem entsteht, löse es NICHT in derselben Runde
+    - Lass Dinge offen, ungelöst, in der Schwebe
+    - Ereignisse dürfen beginnen, aber nicht abgeschlossen werden
 
     Baue dieses Element natürlich ein: "{{ wildcard }}"
 
     Erzähle in DU-Form. Das Kind IST der Hauptcharakter.
 
-    12-18 Sätze. Einfache Wörter (Zweitklässler). Kurze Sätze (unter 15 Wörter).
+    Etwa 20 Sätze, aufgeteilt in 2-4 Absätze. Einfache Wörter (Zweitklässler). Kurze Sätze (unter 15 Wörter).
 
     Lass die Geschichte atmen:
     - Beschreibe, was du siehst, hörst, fühlst
     - Kleine Details und ruhige Momente
     - Nicht sofort zur nächsten Krise
     - Lass den Charakter die Welt erleben
+    - Verweile bei Eindrücken, bevor irgendetwas "passiert"
 
     WICHTIG - Langsames Erzähltempo mit vielen Details:
     - Beschreibe Farben lebhaft (z.B. "das goldene Licht", "die blauen Blumen", "der silberne Mond")
@@ -92,12 +139,48 @@ prompts:
     - Kleine, ruhige Momente sind wichtig - die Welt soll sich lebendig anfühlen!
     - Lass das Kind die Umgebung wahrnehmen, bevor du zur Handlung kommst
 
-    Ende mit einer klaren Entscheidung.
+    Ende mit einer klaren Entscheidungssituation, aber löse nichts auf.
+
+    WICHTIG - Generiere auch 3 Wahlmöglichkeiten für das Kind:
+
+    Die 3 Wahlmöglichkeiten sollten:
+    - Direkt auf die aktuelle Situation reagieren
+    - Unterschiedliche Wege sein, mit der Situation umzugehen
+    - In "Ich..."-Form geschrieben sein
+    - Einfache Wörter verwenden (Zweitklässler)
+    - Maximal 12 Wörter lang sein
+    - Kohärent und zur Geschichte passend sein
+    - Sich voneinander deutlich unterscheiden
+
+    {% if character_registry and character_registry|length > 0 %}
+    WICHTIG - Charakter-Konsistenz:
+    Diese Charaktere existieren bereits mit FESTEN Beschreibungen:
+    {% for char in character_registry %}
+    - {{ char.name }}: {{ char.description }}
+    {% endfor %}
+
+    Wenn diese Charaktere in deiner Geschichte vorkommen:
+    - Nutze die EXAKTEN Namen
+    - Füge sie zu characters_in_scene hinzu (nur Name, keine neue Beschreibung nötig)
+
+    Wenn NEUE Charaktere erscheinen:
+    - Füge sie zu characters_in_scene mit visueller Beschreibung hinzu
+    {% else %}
+    WICHTIG - Charakter-Informationen:
+    Füge alle visuell sichtbaren Charaktere in der Szene zu characters_in_scene hinzu mit Namen und visueller Beschreibung.
+    {% endif %}
 
     JSON-Format:
     {
       "story_text": "Die Geschichte in DU-Form",
-      "image_prompt": "Bildbeschreibung (max 20 Wörter)"
+      "image_prompt": "Bildbeschreibung (max 20 Wörter)",
+      "choice_1": "Ich...",
+      "choice_2": "Ich...",
+      "choice_3": "Ich...",
+      "characters_in_scene": [
+        {"name": "Charakter Name"},
+        {"name": "Neuer Charakter", "description": "visuelle Beschreibung"}
+      ]
     }
 
   validator: |
@@ -127,24 +210,124 @@ prompts:
 
     Antworte nur mit der Zusammenfassung, nichts anderes.
 
+  fun_nugget: |
+    Du bist ein kreativer Geschichtenerzähler für 7-jährige Kinder.
+
+    Basierend auf der aktuellen Geschichte, generiere einen kurzen, kinderfreundlichen Fun Fact (1 Satz).
+
+    Aktuelle Geschichte:
+    {{ current_story }}
+
+    Der Fun Fact soll:
+    - Zur aktuellen Szene oder zum Thema der Geschichte passen
+    - Interessant und lehrreich für 7-Jährige sein
+    - KEINE Spannung vorwegnehmen oder zukünftige Ereignisse enthüllen
+    - Positiv, motivierend und fantasievoll sein
+    - In einfacher deutscher Sprache geschrieben sein (Zweitklässler-Niveau)
+    - Maximal 20 Wörter lang sein
+
+    Wähle eines dieser Formate:
+    - "Wusstest du? [Interessante Tatsache]"
+    - "Spannendes Detail: [Interessante Tatsache]"
+    - "Magisches Geheimnis: [Interessante Tatsache]"
+
+    Beispiele (wenn die Geschichte in einem Zauberwald spielt):
+    - "Wusstest du? In verzauberten Wäldern wachsen manchmal Bäume, die nachts leuchten!"
+    - "Spannendes Detail: Sprechende Tiere können oft 100 verschiedene Sprachen verstehen!"
+    - "Magisches Geheimnis: Jeder Zauberwald hat einen geheimen Namen, den nur Kinder hören können!"
+
+    Antworte NUR mit dem Fun Fact in einem der Formate oben. Keine Erklärungen, keine Anführungszeichen.
+
+  scene_intensity_analyzer: |
+    Analyze the following story segment and determine its visual characteristics for image generation.
+
+    Story segment:
+    {{ story_segment }}
+
+    Analyze and respond with ONLY a JSON object (no explanations):
+
+    {
+      "intensity_level": 1-5 (1=calm/peaceful, 3=moderate, 5=exciting/dramatic),
+      "suggested_perspective": "close-up" | "wide" | "overhead" | "side" | "low-angle" | "eye-level",
+      "suggested_lighting": "golden-hour" | "moonlight" | "dramatic" | "soft-daylight" | "magical-glow" | "sunset" | "dawn"
+    }
+
+    Guidelines:
+    - Calm scenes (meeting characters, exploring, resting): intensity 1-2, soft lighting, varied perspectives
+    - Moderate scenes (discovery, dialogue, movement): intensity 3, balanced lighting, eye-level or side
+    - Exciting scenes (adventure, magic, challenges): intensity 4-5, dramatic lighting, dynamic angles
+
+    Examples:
+    - "You sit by a quiet stream": {"intensity_level": 1, "suggested_perspective": "wide", "suggested_lighting": "soft-daylight"}
+    - "You discover a hidden door": {"intensity_level": 3, "suggested_perspective": "close-up", "suggested_lighting": "magical-glow"}
+    - "The dragon swoops down": {"intensity_level": 5, "suggested_perspective": "low-angle", "suggested_lighting": "dramatic"}
+
   image_prompt_translator: |
     Translate the following German scene description to a rich, artistic English prompt for an image generation AI.
 
-    Add details like:
-    - "digital art, soft muted colors, gentle fairy tale style"
-    - "for kids, friendly, calm atmosphere"
-    - "storybook illustration, subtle tones, realistic but magical"
-    - "soft lighting, natural colors, not overly bright"
-    - "toned-down palette, warm earthy tones"
-
-    AVOID:
-    - "vibrant", "bright", "neon", "saturated"
-    - "whimsical", "cartoonish", "exaggerated"
-    - Use softer, more realistic aesthetics
-
     German description: {{ german_image_prompt }}
 
-    Respond with only the English prompt (no explanations, max 75 words).
+    Visual variation parameters:
+    - Perspective: {{ perspective }}
+    - Lighting: {{ lighting }}
+    - Intensity level: {{ intensity_level }} (1=calm, 5=exciting)
+
+    Instructions:
+    1. START with the perspective: "{{ perspective }} view of..."
+    2. Include lighting: "{{ lighting }}"
+    3. Adjust color saturation based on intensity:
+       - Intensity 1-2: "soft muted colors, gentle tones"
+       - Intensity 3: "balanced colors, moderate saturation"
+       - Intensity 4-5: "vibrant colors, rich saturation, dramatic contrast"
+    4. Add style: "digital art, fairy tale storybook illustration, for kids"
+    5. Ensure character consistency if mentioned: "maintain same character appearance and style"
+
+    Example outputs:
+    - Calm scene: "wide view of the character sitting by a stream, soft-daylight, soft muted colors, gentle fairy tale style"
+    - Exciting scene: "low-angle view of the dragon swooping down, dramatic lighting, vibrant colors with rich saturation, dynamic fairy tale illustration"
+
+    Respond with only the English prompt (no explanations, max 85 words).
+
+  style_guide_generator: |
+    Create a consistent visual style guide for a fairy tale story book.
+
+    Character: {{ character_name }}, {{ character_description }}
+    Theme: {{ story_theme }}
+
+    Generate a 1-2 sentence style description covering:
+    - Art style (watercolor, digital art, etc.)
+    - Color palette (soft pastels, vibrant, muted, etc.)
+    - Mood/atmosphere (whimsical, dreamy, adventurous, etc.)
+
+    Example: "Watercolor fairy tale style with soft pastel colors, dreamy magical atmosphere, whimsical storybook illustrations"
+
+    Respond with ONLY the style description in English, nothing else.
+
+  choice_image_generator: |
+    Create an image prompt that celebrates this specific action the child took:
+
+    Action taken: {{ choice_made }}
+    Current story: {{ story_text }}
+
+    {% if characters_in_scene and characters_in_scene|length > 0 %}
+    Characters in scene:
+    {% for char in characters_in_scene %}
+    - {{ char.name }}: {{ char.description }}
+    {% endfor %}
+    {% endif %}
+
+    Create a vivid, specific image prompt (2-3 sentences) that shows:
+    - The character performing this exact action
+    - The immediate moment/consequence of the choice
+    - Make it feel special and rewarding (this is the reward for making the choice!)
+
+    Focus on the ACTION, not just the scene summary.
+
+    Example:
+    Choice: "Ich öffne die leuchtende Tür"
+    Output: "Princess Luna reaching out to open a glowing wooden door, golden light streaming through the cracks, her face filled with wonder and excitement as the magical light illuminates her."
+
+    Respond in English, suitable for image generation AI. 2-3 sentences max.
 
   choice_prompts:
     # New unified approach: Generate 3 coherent choices + 1 wild card
@@ -166,20 +349,6 @@ prompts:
         "choice_3": "Ich..."
       }
 
-    wildcard_choice: |
-      Geschichte:
-      {{ history }}
-
-      Vorhandene Wahlmöglichkeiten:
-      1. {{ choice_1 }}
-      2. {{ choice_2 }}
-      3. {{ choice_3 }}
-
-      Generiere eine 4. Wahlmöglichkeit. Sie reagiert auf die Situation, aber überraschend oder kreativ anders als die ersten 3.
-
-      In "Ich..."-Form. Einfache Wörter. Max 12 Wörter.
-
-      Antworte nur mit der 4. Wahl.
 
     # Legacy personality-based prompts (kept for backward compatibility)
     brave: |
@@ -295,6 +464,51 @@ prompts:
 
       Antworte nur mit dem Text der Handlung, nichts anderes.
 
+# Image variance (RNG pools by scene intensity) - adds variety while staying scene-appropriate
+image_variance:
+  perspectives:
+    - "wide shot"
+    - "close-up"
+    - "eye-level view"
+    - "low-angle view"
+    - "overhead view"
+    - "side view"
+
+  # Lighting options grouped by scene intensity for appropriate variance
+  lighting_by_intensity:
+    # Intensity 1-2 (calm scenes)
+    low:
+      - "soft daylight"
+      - "golden hour"
+      - "dawn light"
+      - "morning glow"
+      - "gentle sunlight"
+
+    # Intensity 3 (moderate scenes)
+    medium:
+      - "soft daylight"
+      - "golden hour"
+      - "moonlight"
+      - "sunset"
+      - "dappled light"
+      - "afternoon light"
+
+    # Intensity 4-5 (exciting scenes)
+    high:
+      - "dramatic lighting"
+      - "stormy atmosphere"
+      - "magical glow"
+      - "intense sunset"
+      - "moonlit drama"
+      - "dynamic shadows"
+
+  framing:
+    - "centered composition"
+    - "rule of thirds"
+    - "environmental context"
+    - "character focus"
+    - "action moment"
+
 # List of random elements to inject into the story for variety
 wildcards:
   - "Ein Tier in der Nähe beginnt plötzlich zu sprechen."
@@ -331,7 +545,7 @@ sampling_params:
     top_p: 0.95
     max_tokens: 4000
     reasoning:
-      max_tokens: 500  # Gemini uses max_tokens for reasoning
+      max_tokens: 3000  # Gemini: more reasoning for story + choice generation
 
   validator:
     temperature: 0.3
@@ -345,20 +559,37 @@ sampling_params:
     reasoning:
       max_tokens: 200  # Gemini: moderate reasoning to identify key events
 
-  # New unified choice generation
+  fun_nugget_generator:
+    temperature: 0.9  # Creative but relevant
+    max_tokens: 150  # Short fun fact (1 sentence)
+    reasoning:
+      max_tokens: 0  # Gemini: no reasoning needed for quick fact
+
+  scene_analyzer:
+    temperature: 0.3  # Consistent, analytical
+    max_tokens: 200  # Small JSON response
+    reasoning:
+      max_tokens: 0  # Gemini: no reasoning needed for quick analysis
+
+  style_guide_generator:
+    temperature: 0.7  # Creative but consistent
+    max_tokens: 200  # 1-2 sentence style guide
+    reasoning:
+      max_tokens: 0  # Gemini: no reasoning needed
+
+  choice_image_generator:
+    temperature: 0.8  # Creative image descriptions
+    max_tokens: 300  # 2-3 sentences
+    reasoning:
+      max_tokens: 200  # Gemini: think about how to make image special and choice-specific
+
+  # Unified choice generation
   choice_agent_unified:
     temperature: 0.9  # Creative but coherent
     top_p: 0.95
     max_tokens: 800  # Enough for 3 choices + JSON structure
     reasoning:
       max_tokens: 150  # Qwen: good reasoning to ensure distinct choices
-
-  choice_agent_wildcard:
-    temperature: 1.2  # High creativity for wild card
-    top_p: 0.95
-    max_tokens: 500
-    reasoning:
-      max_tokens: 100  # Gemini: moderate reasoning for creative choice
 
   # Legacy choice agents (kept for backward compatibility)
   choice_agent_brave:

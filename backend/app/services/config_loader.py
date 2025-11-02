@@ -105,6 +105,17 @@ class ConfigLoader:
         game_mechanics = self._config.get("game_mechanics", {})
         return game_mechanics.get(mechanic_name, default)
 
+    def get_image_variance(self) -> Dict[str, Any]:
+        """Get image variance configuration for RNG-based variety.
+
+        Returns:
+            Dictionary with perspectives, lighting_by_intensity, and framing
+        """
+        variance = self._config.get("image_variance", {})
+        if not variance:
+            raise ValueError("Image variance configuration not found")
+        return variance
+
     def get_config(self) -> Dict[str, Any]:
         """Get the entire configuration dictionary.
 

@@ -4,6 +4,9 @@
 	import { goto } from "$app/navigation";
 	import Button from "$lib/components/Button.svelte";
 	import Card from "$lib/components/Card.svelte";
+	import JourneyRecap from "$lib/components/JourneyRecap.svelte";
+	import FunNuggetCard from "$lib/components/FunNuggetCard.svelte";
+	import ProgressSteps from "$lib/components/ProgressSteps.svelte";
 
 	type GamePhase = "setup" | "playing" | "loading" | "gameOver";
 
@@ -18,12 +21,29 @@
 
 	// Playing phase
 	let currentStory = $state<string>("");
-	let currentImageUrl = $state<string>("");
+	let currentImageUrl = $state<string | null>(null);
 	let currentChoices = $state<string[]>([]);
 	let round = $state<number>(1);
 
+	// Waiting UX engagement
+	let funNugget = $state<string>("");
+	let choicesHistory = $state<string[]>([]);
+
+	// Image polling state
+	let imageLoading = $state<boolean>(false);
+	let imageError = $state<boolean>(false);
+	let imageErrorMessage = $state<string>("");
+	let imageRetryAfter = $state<number>(5);
+	let pollInterval: number | null = null;
+	let pollTimeout: number | null = null;
+
+	// General error state
+	let errorMessage = $state<string>("");
+	let showError = $state<boolean>(false);
+
 	// Loading state
 	let loading = $state<boolean>(false);
+	let isStarting = $state<boolean>(false);
 
 	// Debug state
 	let debugMode = $state<boolean>(false);
@@ -47,6 +67,12 @@
 		if (existingSessionId) {
 			await loadExistingSession(existingSessionId);
 		}
+
+		// Cleanup polling on unmount
+		return () => {
+			if (pollInterval) clearInterval(pollInterval);
+			if (pollTimeout) clearTimeout(pollTimeout);
+		};
 	});
 
 	async function loadExistingSession(sessionIdToLoad: string) {
@@ -78,9 +104,11 @@
 				currentStory = history[history.length - 1];
 			}
 
-			// Get current image (reuse previous_image_url)
-			currentImageUrl =
-				session.previous_image_url || session.first_image_url || "";
+			// Get current image from image_history
+			const imageHistory = session.image_history || [];
+			if (imageHistory.length > 0) {
+				currentImageUrl = imageHistory[imageHistory.length - 1].url;
+			}
 
 			// Show a "continue" state - we need to generate new choices
 			// For now, we'll need the user to make a dummy choice to get new options
@@ -117,6 +145,7 @@
 		}
 
 		loading = true;
+		isStarting = true;
 		gamePhase = "loading";
 
 		try {
@@ -158,6 +187,9 @@
 			currentStory = data.step.story_text;
 			currentImageUrl = data.step.image_url;
 			currentChoices = data.step.choices;
+			funNugget = data.step.fun_nugget || "";
+			choicesHistory = data.step.choices_history || [];
+			round = data.step.round_number || 1;
 			lastTiming = data.step.timing || null;
 			warnings = data.step.warnings || [];
 
@@ -184,11 +216,91 @@
 			gamePhase = "setup";
 		} finally {
 			loading = false;
+			isStarting = false;
 		}
 	}
 
+	async function pollForImage(sessionIdToPoll: string, roundToPoll: number) {
+		// Clear any existing polls
+		if (pollInterval) clearInterval(pollInterval);
+		if (pollTimeout) clearTimeout(pollTimeout);
+
+		imageLoading = true;
+		imageError = false;
+		imageErrorMessage = "";
+		currentImageUrl = null;
+
+		let pollAttempts = 0;
+		const maxAttempts = 15; // 15 attempts * 2s = 30s
+
+		// Poll every 2 seconds
+		pollInterval = setInterval(async () => {
+			pollAttempts++;
+
+			try {
+				const response = await fetch(
+					`/api/game/maerchenweber/image/${sessionIdToPoll}/${roundToPoll}`,
+				);
+
+				if (!response.ok) {
+					const error = await response.json();
+					throw new Error(
+						error.user_message ||
+							error.error ||
+							"Fehler beim Laden des Bildes",
+					);
+				}
+
+				const data = await response.json();
+
+				if (data.status === "ready" && data.image_url) {
+					currentImageUrl = data.image_url;
+					imageLoading = false;
+					if (pollInterval) clearInterval(pollInterval);
+					if (pollTimeout) clearTimeout(pollTimeout);
+					console.log(`✅ Image loaded after ${pollAttempts} attempts`);
+				} else if (data.status === "failed") {
+					imageError = true;
+					imageErrorMessage =
+						data.user_message ||
+						data.error ||
+						"Bildgenerierung fehlgeschlagen";
+					imageRetryAfter = data.retry_after || 5;
+					imageLoading = false;
+					if (pollInterval) clearInterval(pollInterval);
+					if (pollTimeout) clearTimeout(pollTimeout);
+					console.error("Image generation failed:", data.error);
+				}
+
+				// Stop polling after max attempts
+				if (pollAttempts >= maxAttempts && imageLoading) {
+					imageError = true;
+					imageErrorMessage =
+						"Zeitüberschreitung: Das Bild konnte nicht geladen werden.";
+					imageLoading = false;
+					if (pollInterval) clearInterval(pollInterval);
+					if (pollTimeout) clearTimeout(pollTimeout);
+				}
+			} catch (error) {
+				console.error("Error polling for image:", error);
+				imageError = true;
+				imageErrorMessage =
+					error instanceof Error
+						? error.message
+						: "Fehler beim Laden des Bildes";
+				imageLoading = false;
+				if (pollInterval) clearInterval(pollInterval);
+				if (pollTimeout) clearTimeout(pollTimeout);
+			}
+		}, 2000);
+	}
+
 	async function makeChoice(choiceText: string) {
+		// Show loading state temporarily
 		loading = true;
+
+		// Optimistically add the choice to history for immediate display during loading
+		choicesHistory = [...choicesHistory, choiceText];
 
 		try {
 			const response = await fetch("/api/game/maerchenweber/turn", {
@@ -206,18 +318,50 @@
 			}
 
 			const data = await response.json();
+
+			// Update story and choices IMMEDIATELY (before image)
 			currentStory = data.story_text;
-			currentImageUrl = data.image_url;
 			currentChoices = data.choices;
-			round++;
+			funNugget = data.fun_nugget || "";
+			choicesHistory = data.choices_history || []; // Server response includes the same choice
+			round = data.round_number || round + 1;
+
+			// Stop loading state NOW - story is visible
+			loading = false;
+
+			// Handle image (async for rounds 2+)
+			if (data.image_url) {
+				// Round 1: image included in response
+				currentImageUrl = data.image_url;
+			} else {
+				// Rounds 2+: start polling for image
+				pollForImage(sessionId, round);
+			}
 		} catch (error) {
 			console.error("Error processing turn:", error);
-			alert(
-				"Fehler beim Verarbeiten deiner Wahl. Bitte versuche es erneut.",
-			);
-		} finally {
+
+			// Revert the optimistic update on error
+			choicesHistory = choicesHistory.slice(0, -1);
 			loading = false;
+
+			// Show user-friendly error message
+			if (error instanceof Error) {
+				errorMessage = error.message;
+			} else {
+				errorMessage =
+					"Fehler beim Verarbeiten deiner Wahl. Bitte versuche es erneut.";
+			}
+			showError = true;
+
+			// Auto-hide error after 5 seconds
+			setTimeout(() => {
+				showError = false;
+			}, 5000);
 		}
+	}
+
+	function retryImageGeneration() {
+		pollForImage(sessionId, round);
 	}
 
 	function returnHome() {
@@ -324,17 +468,19 @@
 				</div>
 			</Card>
 		{:else if gamePhase === "loading"}
-			<!-- Loading Phase -->
-			<Card>
-				<div class="text-center py-12">
-					<div
-						class="inline-block animate-spin rounded-full h-16 w-16 border-4 border-amber-500 border-t-transparent mb-4"
-					></div>
-					<p class="text-xl font-semibold text-gray-700">
-						Die Geschichte wird gewebt...
-					</p>
-				</div>
-			</Card>
+			<!-- Loading Phase with Engagement -->
+			<div class="space-y-4">
+				<!-- Journey Recap (if there are previous choices) -->
+				<JourneyRecap choices={choicesHistory} />
+
+				<!-- Fun Nugget (if generated) -->
+				{#if funNugget}
+					<FunNuggetCard text={funNugget} />
+				{/if}
+
+				<!-- Progress Steps -->
+				<ProgressSteps {isStarting} />
+			</div>
 		{:else if gamePhase === "playing"}
 			<!-- Playing Phase -->
 			<div class="space-y-6">
@@ -348,14 +494,60 @@
 				</div>
 
 				<!-- Story Image -->
-				{#if currentImageUrl}
+				{#if imageLoading}
+					<!-- Image loading state -->
 					<Card>
-						<img
-							src={currentImageUrl}
-							alt="Geschichtsbild"
-							class="w-full h-64 md:h-96 object-cover rounded-lg"
-							loading="lazy"
-						/>
+						<div
+							class="w-full h-64 md:h-96 flex flex-col items-center justify-center bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg"
+						>
+							<div class="text-6xl mb-4 animate-bounce">🎨</div>
+							<p class="text-xl md:text-2xl font-semibold text-amber-900">
+								Dein Bild wird gemalt...
+							</p>
+							<p class="text-sm text-amber-700 mt-2">
+								Dies kann ein paar Sekunden dauern
+							</p>
+						</div>
+					</Card>
+				{:else if imageError}
+					<!-- Image error state -->
+					<Card>
+						<div
+							class="w-full h-64 md:h-96 flex flex-col items-center justify-center bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-6"
+						>
+							<div class="text-6xl mb-4">⚠️</div>
+							<p
+								class="text-xl md:text-2xl font-semibold text-red-900 mb-2 text-center"
+							>
+								{imageErrorMessage ||
+									"Bildgenerierung fehlgeschlagen"}
+							</p>
+							<p class="text-sm text-red-700 mb-4 text-center">
+								Die Geschichte geht trotzdem weiter!
+							</p>
+							<Button
+								variant="primary"
+								onclick={retryImageGeneration}
+							>
+								🔄 Erneut versuchen
+							</Button>
+							<p class="text-xs text-red-600 mt-2">
+								Warte {imageRetryAfter} Sekunden vor dem
+								nächsten Versuch
+							</p>
+						</div>
+					</Card>
+				{:else if currentImageUrl}
+					<!-- Image ready state -->
+					<Card>
+						{#key currentImageUrl}
+							<img
+								src={currentImageUrl}
+								alt="Geschichtsbild"
+								class="w-full h-64 md:h-96 object-cover rounded-lg"
+								loading="eager"
+							/>
+						{/key}
 					</Card>
 				{/if}
 
@@ -404,16 +596,19 @@
 						{/each}
 					</div>
 				{:else}
-					<Card>
-						<div class="text-center py-8">
-							<div
-								class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-amber-500 border-t-transparent mb-4"
-							></div>
-							<p class="text-lg font-semibold text-gray-700">
-								Die Geschichte geht weiter...
-							</p>
-						</div>
-					</Card>
+					<!-- Loading during choice selection -->
+					<div class="space-y-4">
+						<!-- Journey Recap -->
+						<JourneyRecap choices={choicesHistory} />
+
+						<!-- Fun Nugget (from previous turn, will update when loaded) -->
+						{#if funNugget}
+							<FunNuggetCard text={funNugget} />
+						{/if}
+
+						<!-- Progress Steps -->
+						<ProgressSteps isStarting={false} />
+					</div>
 				{/if}
 
 				<!-- End Story Button -->
@@ -421,6 +616,29 @@
 					<Button variant="secondary" onclick={returnHome}>
 						Geschichte beenden und zurück
 					</Button>
+				</div>
+			</div>
+		{/if}
+
+		<!-- Error Toast (Top-center) -->
+		{#if showError}
+			<div
+				class="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 max-w-md"
+			>
+				<div
+					class="bg-red-500 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 animate-bounce"
+				>
+					<span class="text-2xl">⚠️</span>
+					<div>
+						<p class="font-semibold">Fehler</p>
+						<p class="text-sm">{errorMessage}</p>
+					</div>
+					<button
+						onclick={() => (showError = false)}
+						class="ml-auto text-white hover:text-red-200"
+					>
+						✕
+					</button>
 				</div>
 			</div>
 		{/if}

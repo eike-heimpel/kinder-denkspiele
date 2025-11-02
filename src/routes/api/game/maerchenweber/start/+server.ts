@@ -1,17 +1,27 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { env } from '$env/dynamic/private';
 
-const FASTAPI_URL = 'http://localhost:8000';
+// Use production URL if set, otherwise fallback to local development
+const FASTAPI_URL = env.MAERCHENWEBER_API_URL || 'http://localhost:8000';
+const API_KEY = env.MAERCHENWEBER_API_KEY;
 
 export const POST: RequestHandler = async ({ request }) => {
 	try {
 		const body = await request.json();
 
+		// Build headers - add API key if available (production mode)
+		const headers: HeadersInit = {
+			'Content-Type': 'application/json'
+		};
+
+		if (API_KEY) {
+			headers['X-API-Key'] = API_KEY;
+		}
+
 		const response = await fetch(`${FASTAPI_URL}/adventure/start`, {
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
+			headers,
 			body: JSON.stringify(body)
 		});
 

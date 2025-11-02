@@ -65,7 +65,7 @@ class LLMService:
                     "json_schema": json_schema
                 }
             else:
-                # Default story schema
+                # Default story schema with 3 choices + characters
                 payload["response_format"] = {
                     "type": "json_schema",
                     "json_schema": {
@@ -80,9 +80,40 @@ class LLMService:
                                 "image_prompt": {
                                     "type": "string",
                                     "description": "Image description in German"
+                                },
+                                "choice_1": {
+                                    "type": "string",
+                                    "description": "First choice in German (Ich... form)"
+                                },
+                                "choice_2": {
+                                    "type": "string",
+                                    "description": "Second choice in German (Ich... form)"
+                                },
+                                "choice_3": {
+                                    "type": "string",
+                                    "description": "Third choice in German (Ich... form)"
+                                },
+                                "characters_in_scene": {
+                                    "type": "array",
+                                    "description": "Characters visible in the scene",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "description": "Character name"
+                                            },
+                                            "description": {
+                                                "type": "string",
+                                                "description": "Visual description (for new characters only)"
+                                            }
+                                        },
+                                        "required": ["name"],
+                                        "additionalProperties": False
+                                    }
                                 }
                             },
-                            "required": ["story_text", "image_prompt"],
+                            "required": ["story_text", "image_prompt", "choice_1", "choice_2", "choice_3", "characters_in_scene"],
                             "additionalProperties": False
                         }
                     }
@@ -157,6 +188,7 @@ class LLMService:
             httpx.HTTPError: If the API request fails
         """
         # Build the content array for multimodal input
+        # OpenRouter docs: send text first, then images to avoid parsing issues
         content = []
 
         # Add style instructions if provided
@@ -165,21 +197,22 @@ class LLMService:
         else:
             enhanced_prompt = prompt
 
-        # Add text prompt
+        # Add text prompt first (recommended by OpenRouter)
         content.append({
             "type": "text",
             "text": enhanced_prompt
         })
 
         # Add previous image if provided (for style consistency)
-        if previous_image_url:
+        # Only add if it's a valid URL (not empty)
+        if previous_image_url and len(previous_image_url) > 0:
             content.append({
                 "type": "image_url",
                 "image_url": {
                     "url": previous_image_url
                 }
             })
-            logger.info(f"Including previous image for style consistency")
+            logger.info(f"Including previous image for style consistency (type: {'data URL' if previous_image_url.startswith('data:') else 'hosted URL'})")
 
         payload = {
             "model": model,
@@ -215,10 +248,15 @@ class LLMService:
 
             except httpx.HTTPError as e:
                 logger.error(f"OpenRouter image generation error: {e}")
+                if 'response' in locals():
+                    logger.error(f"Response status: {response.status_code}")
+                    logger.error(f"Response text: {response.text[:500]}")
                 # Return placeholder image on error
                 return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Crect width='800' height='600' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%236b7280' font-size='24'%3EMärchenweber%3C/text%3E%3C/svg%3E"
             except (KeyError, IndexError, ValueError) as e:
                 logger.error(f"Failed to parse image API response: {e}")
+                if 'result' in locals():
+                    logger.error(f"API response structure: {result}")
                 return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Crect width='800' height='600' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%236b7280' font-size='24'%3EMärchenweber%3C/text%3E%3C/svg%3E"
 
     async def generate_parallel(

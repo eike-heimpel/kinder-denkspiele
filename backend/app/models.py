@@ -34,8 +34,11 @@ class AdventureStepResponse(BaseModel):
     """Response containing a single step in the adventure."""
 
     story_text: str = Field(..., description="The new paragraph of the story in German")
-    image_url: str = Field(..., description="URL to the generated image")
-    choices: List[str] = Field(..., min_length=3, max_length=4, description="3-4 choices in German (3 main + 1 wild card)")
+    image_url: Optional[str] = Field(None, description="URL to the generated image (null for async generation)")
+    choices: List[str] = Field(..., min_length=3, max_length=3, description="3 choices in German")
+    fun_nugget: Optional[str] = Field(None, description="Fun fact or teaser (1 sentence) generated during loading")
+    choices_history: List[str] = Field(default_factory=list, description="List of all choices made so far (for journey recap)")
+    round_number: Optional[int] = Field(None, description="Current round number")
     timing: Optional[Dict[str, Any]] = Field(None, description="Timing breakdown for debugging")
     warnings: List[str] = Field(default_factory=list, description="Non-fatal warnings")
 
@@ -56,6 +59,36 @@ class DetailedErrorResponse(BaseModel):
     timing: Optional[Dict[str, Any]] = Field(None, description="Timing info up to failure point")
 
 
+class Character(BaseModel):
+    """Character in the story with consistent visual description."""
+
+    name: str = Field(..., description="Character name")
+    description: str = Field(..., description="Visual appearance description")
+    first_seen_round: int = Field(..., description="Round when character first appeared")
+    last_seen_round: int = Field(..., description="Round when character was last seen")
+
+
+class PendingImage(BaseModel):
+    """Status tracking for async image generation."""
+
+    status: str = Field(..., description="generating | ready | failed")
+    round: int = Field(..., description="Round number for this image")
+    image_url: Optional[str] = Field(None, description="Generated image URL (when ready)")
+    started_at: datetime = Field(default_factory=datetime.utcnow)
+    completed_at: Optional[datetime] = Field(None, description="When generation completed")
+    error: Optional[str] = Field(None, description="Error message if failed")
+
+
+class ImageHistoryEntry(BaseModel):
+    """Historical record of a generated image."""
+
+    round: int = Field(..., description="Round number")
+    choice_made: str = Field(..., description="User's choice that led to this image")
+    url: str = Field(..., description="Image URL")
+    prompt_used: str = Field(..., description="Prompt used for generation")
+    characters_in_scene: List[str] = Field(default_factory=list, description="Character names present")
+
+
 class GameSession(BaseModel):
     """MongoDB document model for game session."""
 
@@ -72,10 +105,11 @@ class GameSession(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_updated: datetime = Field(default_factory=datetime.utcnow)
 
-    # Image consistency tracking
-    first_image_url: Optional[str] = Field(None, description="URL of the first generated image")
-    first_image_description: Optional[str] = Field(None, description="Description of first image for style consistency")
-    previous_image_url: Optional[str] = Field(None, description="URL of the most recent image")
+    # New v2.0 fields
+    style_guide: Optional[str] = Field(None, description="Visual style guide for consistent art style")
+    character_registry: List[Character] = Field(default_factory=list, description="Persistent character descriptions")
+    pending_image: Optional[PendingImage] = Field(None, description="Current async image generation status")
+    image_history: List[ImageHistoryEntry] = Field(default_factory=list, description="All generated images")
 
     class Config:
         populate_by_name = True
