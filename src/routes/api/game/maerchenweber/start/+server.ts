@@ -19,23 +19,63 @@ export const POST: RequestHandler = async ({ request }) => {
 			headers['X-API-Key'] = API_KEY;
 		}
 
+		console.log(`[Märchenweber] Calling backend: ${FASTAPI_URL}/adventure/start`);
+		console.log(`[Märchenweber] API Key configured: ${!!API_KEY}`);
+
 		const response = await fetch(`${FASTAPI_URL}/adventure/start`, {
 			method: 'POST',
 			headers,
-			body: JSON.stringify(body)
+			body: JSON.stringify(body),
+			signal: AbortSignal.timeout(60000) // 60 second timeout
 		});
 
+		console.log(`[Märchenweber] Backend response status: ${response.status}`);
+
 		if (!response.ok) {
-			const error = await response.json();
-			return json({ error: error.detail || 'Failed to start adventure' }, { status: response.status });
+			let errorDetail = 'Unknown error';
+			try {
+				const error = await response.json();
+				errorDetail = error.detail || error.error || JSON.stringify(error);
+			} catch (e) {
+				const textError = await response.text();
+				errorDetail = textError || `HTTP ${response.status}`;
+			}
+
+			console.error(`[Märchenweber] Backend error:`, errorDetail);
+			return json(
+				{
+					error: `Backend error: ${errorDetail}`,
+					status: response.status,
+					backendUrl: FASTAPI_URL
+				},
+				{ status: response.status }
+			);
 		}
 
 		const data = await response.json();
 		return json(data);
 	} catch (error) {
-		console.error('Error proxying to FastAPI:', error);
+		console.error('[Märchenweber] Error proxying to FastAPI:', error);
+
+		// More detailed error message
+		let errorMessage = 'Failed to connect to story service';
+		if (error instanceof Error) {
+			if (error.name === 'AbortError') {
+				errorMessage = 'Request to backend timed out after 60 seconds';
+			} else if (error.message.includes('fetch')) {
+				errorMessage = `Network error: ${error.message}`;
+			} else {
+				errorMessage = error.message;
+			}
+		}
+
 		return json(
-			{ error: 'Failed to connect to story service. Is the FastAPI server running?' },
+			{
+				error: errorMessage,
+				backendUrl: FASTAPI_URL,
+				hasApiKey: !!API_KEY,
+				details: error instanceof Error ? error.message : String(error)
+			},
 			{ status: 500 }
 		);
 	}
