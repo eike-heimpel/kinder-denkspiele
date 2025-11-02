@@ -1,0 +1,18 @@
+# Backend (deployed separately to Fly.io)
+backend/
+
+# Docker configuration (local development only)
+docker-compose.yml
+
+# Documentation (not needed for builds)
+docs/
+*.md
+!README.md
+
+# Test files
+**/*.test.ts
+**/*.spec.ts
+
+# Development files
+.vscode/
+.idea/

@@ -74,10 +74,10 @@ After deployment, set your environment variables:
 
 ```bash
 # MongoDB connection string
-fly secrets set MONGODB_URI="mongodb+srv://mongodb:HzjPZmYdslhDQdby@cluster0.c6qg4eq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+fly secrets set MONGODB_URI="mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority&appName=YourApp"
 
 # OpenRouter API key for LLM
-fly secrets set OPENROUTER_API_KEY="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"
+fly secrets set OPENROUTER_API_KEY="sk-or-v1-YOUR-API-KEY-HERE"
 
 # API key for SvelteKit authentication (choose your own secure key)
 fly secrets set API_KEY="your-secure-random-api-key-here"
