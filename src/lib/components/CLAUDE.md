@@ -2,21 +2,21 @@
 title: "Components Layer Documentation"
 purpose: "Reusable UI components built with Svelte 5"
 parent: "../../../CLAUDE.md"
-last_updated: "2025-10-03"
+last_updated: "2025-11-02"
 keywords: ["components", "ui", "svelte-5", "runes", "button", "card", "reusable"]
 ---
 
 # 🧩 Components Layer - Reusable UI
 
-**Layer:** UI Components  
-**Location:** `src/lib/components/`  
+**Layer:** UI Components
+**Location:** `src/lib/components/`
 **Parent Guide:** [Main CLAUDE.md](../../../CLAUDE.md) | [Lib CLAUDE.md](../CLAUDE.md)
 
 ---
 
 ## 🎯 Purpose
 
-Reusable Svelte 5 UI components that are shared across multiple pages. All components:
+Reusable Svelte 5 UI components shared across multiple pages. All components:
 - Use Svelte 5 runes syntax
 - Follow consistent styling patterns
 - Are kid-friendly (large, colorful, clear)
@@ -24,12 +24,21 @@ Reusable Svelte 5 UI components that are shared across multiple pages. All compo
 
 ---
 
-## 📂 Components
+## 📂 Components (8 Total)
 
-### Button.svelte
-### Card.svelte  
-### GameStats.svelte
-### VisualMemoryGrid.svelte
+### Core UI
+- **Button.svelte** - Styled button with variants
+- **Card.svelte** - Container component
+- **GameStats.svelte** - Score/lives/round display
+
+### Game-Specific
+- **VisualMemoryGrid.svelte** - Grid for visual memory game
+
+### Märchenweber-Specific
+- **FunNuggetCard.svelte** - Fun fact display card
+- **JourneyRecap.svelte** - Story choices history
+- **ProgressSteps.svelte** - Visual progress indicator
+- **SpeakerButton.svelte** - Text-to-speech button
 
 ---
 
@@ -275,6 +284,38 @@ let {
 - Visual feedback
 - Hover effects (when not disabled)
 - Smooth transitions
+
+---
+
+## 🎭 Märchenweber Components
+
+**Note:** These components are specific to the Märchenweber storytelling game.
+
+### FunNuggetCard.svelte
+
+Displays fun facts during story generation wait time.
+
+**Props:** `nugget` (string) - The fun fact text
+
+### JourneyRecap.svelte
+
+Shows all previous choices made in the story.
+
+**Props:** `choices` (string[]) - Array of user choices
+
+### ProgressSteps.svelte
+
+Visual progress indicator during async LLM operations.
+
+**Props:** `steps` (array) - Array of {label, status} objects
+
+### SpeakerButton.svelte
+
+Text-to-speech button for reading story text aloud.
+
+**Props:** `text` (string), `voice` (optional)
+
+**See:** [backend/CLAUDE.md](../../../../backend/CLAUDE.md) for Märchenweber details
 
 ---
 

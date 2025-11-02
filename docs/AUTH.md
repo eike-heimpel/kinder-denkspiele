@@ -1,96 +1,119 @@
 # 🔐 Authentication Guide
 
-**Type:** Simple password-based authentication  
-**Purpose:** Prevent public access while keeping implementation minimal  
+**Type:** Two-tier password-based authentication
+**Purpose:** Site-wide access control + admin panel access
 **Security Level:** Basic (suitable for non-sensitive data)
+**Last Updated:** 2025-11-02
 
 ---
 
 ## 🎯 Overview
 
-This app uses a simple site-wide password gate to restrict access. All users share the same password, and authentication is tracked via a session cookie.
+This app uses a **two-tier authentication system**:
 
-### How It Works
+1. **Site-Wide Authentication:** Password gate for all users (shared password)
+2. **Admin Authentication:** Separate password for admin panel access
+
+Both authentication levels use environment variables and session cookies.
+
+### Site-Wide Authentication Flow
 
 1. User visits any page → redirected to `/login` if not authenticated
-2. User enters password → validated against environment variable
-3. On success → cookie is set for 7 days
+2. User enters password → validated against `GLOBA_SITE_PASSWORD` env var
+3. On success → `authenticated` cookie set for 7 days
 4. User can access all pages while cookie is valid
-5. Logout button available on all pages (top-right corner)
+
+### Admin Authentication Flow
+
+1. User with site access visits `/admin` → redirected to `/admin/login` if not admin
+2. User enters admin password → validated against env var
+3. On success → `admin_authenticated` cookie set
+4. User can access admin panel
 
 ---
 
 ## ⚙️ Setup
 
-### 1. Set Environment Variable
-
-**For Local Development:**
+### Environment Variables
 
 Create a `.env` file in the project root:
 
 ```bash
-GLOBA_SITE_PASSWORD=your-secret-password-here
+# Site-wide authentication (required)
+GLOBA_SITE_PASSWORD=your-site-password-here
+
+# Admin authentication (optional, only if you need admin panel)
+ADMIN_PASSWORD=your-admin-password-here
+
+# Note: Environment variable has a typo ("GLOBA" not "GLOBAL")
+# This is intentional to match the existing implementation
 ```
 
-**For Vercel Deployment:**
-
-1. Go to your project settings in Vercel
-2. Navigate to "Environment Variables"
-3. Add: `GLOBA_SITE_PASSWORD` = `your-secret-password-here`
-4. Redeploy
-
-### 2. Default Password
-
-If no environment variable is set, the default password is:
-
-```
-kinderspiele2024
-```
-
-**⚠️ IMPORTANT:** Change this before deploying to production!
+**⚠️ IMPORTANT:** The site password variable is named `GLOBA_SITE_PASSWORD` (typo in original implementation)
 
 ---
 
 ## 🏗️ Implementation Details
 
-### Files Created
+### Files
 
 ```
 src/
-├── hooks.server.ts                    # Middleware to protect all routes (excludes /api/auth)
+├── hooks.server.ts                         # Middleware for both auth layers
 ├── routes/
 │   ├── login/
-│   │   └── +page.svelte              # Login page
+│   │   └── +page.svelte                   # Site-wide login page
+│   ├── admin/
+│   │   ├── +page.svelte                   # Admin panel
+│   │   └── login/
+│   │       └── +page.svelte               # Admin login page
 │   └── api/
-│       └── auth/
-│           ├── login/+server.ts      # Login endpoint
-│           └── logout/+server.ts     # Logout endpoint
+│       ├── auth/
+│       │   ├── login/+server.ts           # Site-wide login endpoint
+│       │   └── logout/+server.ts          # Site-wide logout endpoint
+│       └── admin/
+│           └── verify/+server.ts          # Admin verification endpoint
 ```
 
-### How It Works
+### Middleware (hooks.server.ts)
 
-The `hooks.server.ts` middleware:
-- Checks for `authenticated` cookie on every request
-- **Allows** `/api/auth/*` endpoints (so login can work)
-- **Allows** `/login` page
-- **Redirects** all other routes to `/login` if not authenticated
-- **Redirects** to home if authenticated user tries to access `/login`
+The `hooks.server.ts` file implements both authentication layers:
 
-### Cookie Details
+**Site-Wide Auth:**
+- Checks for `authenticated` cookie
+- Allows `/login` and `/api/auth/*`
+- Redirects unauthenticated users to `/login`
 
-- **Name:** `authenticated`
-- **Type:** HttpOnly, SameSite=strict
-- **Secure:** Only in production (HTTPS) - disabled for local dev
-- **Duration:** 7 days
-- **Path:** `/` (applies to entire site)
+**Admin Auth:**
+- Checks for `admin_authenticated` cookie
+- Allows `/admin/login` and `/api/admin/*`
+- Redirects non-admin users to `/admin/login`
+
+### Cookies
+
+**Site-Wide Cookie:**
+- Name: `authenticated`
+- Type: HttpOnly, SameSite=strict
+- Duration: 7 days
+- Path: `/`
+
+**Admin Cookie:**
+- Name: `admin_authenticated`
+- Type: HttpOnly, SameSite=strict
+- Duration: Session-based
+- Path: `/admin`
 
 ### Protected Routes
 
-All routes are protected except:
-- `/login` - The login page itself
-- `/api/auth/*` - Authentication API endpoints (login/logout)
+**Site-Wide Protection (all routes except):**
+- `/login` - Site login page
+- `/api/auth/*` - Site auth endpoints
 
-If a user tries to access any page without being authenticated, they're redirected to `/login`.
+**Admin Protection (requires both cookies):**
+- `/admin` - Admin panel
+- `/admin/*` - Admin sub-pages
+
+**Note:** Admin routes require BOTH site-wide authentication AND admin authentication.
 
 ---
 

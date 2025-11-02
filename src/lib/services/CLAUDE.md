@@ -1,44 +1,112 @@
 ---
 title: "Services Layer Documentation"
-purpose: "Business logic and game engines"
+purpose: "Business logic, game engines, and LLM integration"
 parent: "../../../CLAUDE.md"
-last_updated: "2025-10-03"
-keywords: ["services", "business-logic", "game-engine", "word-service", "visual-memory", "reaction-time"]
+last_updated: "2025-11-02"
+keywords: ["services", "business-logic", "game-engine", "llm", "prompts", "openrouter"]
 ---
 
 # 🎮 Services Layer - Business Logic
 
-**Layer:** Service Layer  
-**Location:** `src/lib/services/`  
+**Layer:** Service Layer
+**Location:** `src/lib/services/`
 **Parent Guide:** [Main CLAUDE.md](../../../CLAUDE.md) | [Lib CLAUDE.md](../CLAUDE.md)
 
 ---
 
 ## 🎯 Purpose
 
-The services layer contains all business logic, game rules, and state management. This layer:
+The services layer contains all business logic, game rules, state management, and LLM integration. This layer:
 - Implements game mechanics
 - Manages game state
-- Calculates scores and progression
+- Integrates with LLM APIs
 - Enforces game rules
 - **Does NOT** handle database operations directly (uses repositories)
 
 ---
 
-## 📂 Files in This Directory
+## 📂 Services (8 Total)
 
-### Game Engines
-- **`game-engine.service.ts`** - Verbal memory game logic
-- **`visual-memory.service.ts`** - Visual memory game logic  
-- **`reaction-time.service.ts`** - Reaction time game logic
+### Game Engines (4)
+- **`game-engine.service.ts`** - Verbal memory game
+- **`visual-memory.service.ts`** - Visual memory game
+- **`reaction-time.service.ts`** - Reaction time game
+- **`logic-lab.service.ts`** - LLM-powered adaptive puzzle game
 
-### Supporting Services
+### Supporting Services (4)
 - **`word.service.ts`** - Word selection for verbal memory
+- **`llm.service.ts`** - OpenRouter API integration
+- **`prompt-loader.service.ts`** - YAML + Jinja2 prompt templates
+- **`speech.service.ts`** - Text-to-speech functionality
 
 ### Test Files
-- `game-engine.test.ts` (12 tests)
-- `word.service.test.ts` (20 tests)
-- `reaction-time.test.ts` (19 tests)
+- `game-engine.test.ts`
+- `word.service.test.ts`
+- `reaction-time.test.ts`
+
+**Note:** Märchenweber game is in separate FastAPI backend - see [backend/CLAUDE.md](../../../../backend/CLAUDE.md)
+
+---
+
+## 🤖 LLM Integration Services
+
+### LLMService
+
+**File:** `llm.service.ts`
+
+**Responsibilities:**
+- OpenRouter API communication
+- Prompt rendering via PromptLoader
+- Response parsing and validation
+- Content safety filtering
+- Fallback problem generation
+
+**Key Methods:**
+```typescript
+class LLMService {
+  async generateProblem(params: GenerateProblemParams): Promise<Problem>
+  private async callOpenRouter(rendered: RenderedPrompt): Promise<string>
+  private parseResponse(content: string): Problem
+}
+```
+
+**Used by:** Logic Lab game
+
+**See:** [docs/LOGIC-LAB.md](../../../docs/LOGIC-LAB.md) for complete details
+
+---
+
+### PromptLoader
+
+**File:** `prompt-loader.service.ts`
+
+**Responsibilities:**
+- Load YAML prompt templates from `src/lib/prompts/`
+- Render Jinja2 templates with variables
+- Return structured prompt + model config
+
+**Key Methods:**
+```typescript
+class PromptLoader {
+  loadPrompt(name: string): PromptConfig
+  renderPrompt(name: string, variables: Record<string, any>): RenderedPrompt
+}
+```
+
+**See:** [src/lib/prompts/CLAUDE.md](../prompts/CLAUDE.md) for prompt system details
+
+---
+
+### SpeechService
+
+**File:** `speech.service.ts`
+
+**Responsibilities:**
+- Text-to-speech functionality
+- Voice selection
+- Audio playback control
+
+**Used by:** UI components for audio feedback
 
 ---
 
@@ -137,6 +205,41 @@ class ReactionTimeEngine {
 - Game ends after 5 successful reactions
 
 **Testing:** 19 unit tests
+
+---
+
+### LogicLabEngine
+
+**File:** `logic-lab.service.ts`
+
+**Responsibilities:**
+- LLM-powered adaptive puzzle generation
+- Age-based difficulty scaling
+- Performance history tracking
+- Persistent state management (one session per user)
+
+**Key Methods:**
+```typescript
+class LogicLabEngine {
+  async startGame(userId: string, age: number, guidance?: string): Promise<GameState>
+  async submitAnswer(sessionId: string, answerIndex: number): Promise<GameState>
+  private async generateProblem(context: ProblemContext): Promise<Problem>
+}
+```
+
+**Game Rules:**
+- Infinite mode (no question limit)
+- Age-relative difficulty (4-10 years)
+- Adaptive scaling based on performance
+- 4 problem types: pattern, category, comparison, grouping
+- No lives (wrong answers decrease difficulty)
+
+**LLM Integration:**
+- Uses LLMService + PromptLoader
+- OpenRouter + Gemini 2.5 Flash
+- YAML prompts in `src/lib/prompts/`
+
+**See:** [docs/LOGIC-LAB.md](../../../docs/LOGIC-LAB.md) for complete documentation
 
 ---
 

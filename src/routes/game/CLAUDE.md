@@ -2,14 +2,14 @@
 title: "Game Pages Documentation"
 purpose: "Frontend game UI components and logic"
 parent: "../../../CLAUDE.md"
-last_updated: "2025-10-03"
+last_updated: "2025-11-02"
 keywords: ["game-pages", "ui", "svelte-5", "frontend", "gameplay", "interaction"]
 ---
 
 # 🎮 Game Pages - Frontend UI
 
-**Layer:** UI Layer (Game Pages)  
-**Location:** `src/routes/game/`  
+**Layer:** UI Layer (Game Pages)
+**Location:** `src/routes/game/`
 **Parent Guide:** [Main CLAUDE.md](../../../CLAUDE.md) | [Routes CLAUDE.md](../CLAUDE.md)
 
 ---
@@ -25,11 +25,19 @@ Game pages handle the frontend gameplay experience:
 
 ---
 
-## 📂 Files
+## 📂 Games (5 Total)
 
+### Traditional Games
 - **`verbal-memory/+page.svelte`** - Word memory game
 - **`visual-memory/+page.svelte`** - Grid memory game
 - **`reaction-time/+page.svelte`** - Reaction speed test
+
+### LLM-Powered Games
+- **`logic-lab/+page.svelte`** - Adaptive puzzle game (SvelteKit + LLM)
+- **`maerchenweber/`** - Interactive storytelling (proxies to FastAPI backend)
+  - `play/+page.svelte` - Active gameplay
+  - `stories/+page.svelte` - Story library
+  - `replay/[sessionId]/+page.svelte` - Replay saved stories
 
 ---
 
@@ -397,6 +405,98 @@ async function submitReaction(reactionTime: number) {
   {/if}
 </div>
 ```
+
+---
+
+## 🧩 Logic Lab Game
+
+**File:** `logic-lab/+page.svelte`
+
+**URL:** `/game/logic-lab?userId=X`
+
+### Features
+
+- LLM-generated adaptive puzzles
+- Age-based difficulty (4-10 years)
+- 4 problem types: pattern, category, comparison, grouping
+- Infinite mode (no question limit)
+- Optional parent guidance
+- Multiple choice answers (4 options)
+
+### Game Phases
+
+```typescript
+type GamePhase = 'setup' | 'playing' | 'feedback' | 'gameOver';
+let gamePhase = $state<GamePhase>('setup');
+```
+
+### Key State
+
+```typescript
+let sessionId = $state('');
+let age = $state(7);
+let guidance = $state('');
+let currentProblem = $state<Problem | null>(null);
+let score = $state(0);
+let selectedAnswerIndex = $state(-1);
+let lastAnswerCorrect = $state(false);
+let explanation = $state('');
+```
+
+### Flow
+
+1. **Setup:** User enters age and optional guidance
+2. **Start:** Call `/api/game/logic-lab/start` with age and guidance
+3. **Playing:** Display question with 4 options
+4. **Submit:** Call `/api/game/logic-lab/answer` with answer index
+5. **Feedback:** Show ✅ or ❌ with explanation (3 seconds)
+6. **Next:** Load next problem, repeat
+
+**Complete Documentation:** [docs/LOGIC-LAB.md](../../../docs/LOGIC-LAB.md)
+
+---
+
+## 🎭 Märchenweber Game
+
+**Directory:** `maerchenweber/`
+
+**Note:** This game proxies to a separate FastAPI backend running on port 8000.
+
+### Sub-Pages
+
+**Hub (`+page.svelte`):**
+- Entry point
+- Character creation
+- Navigation to play/stories
+
+**Play (`play/+page.svelte`):**
+- Active storytelling session
+- Story text display
+- Image generation
+- 3 choice buttons
+- Journey recap (previous choices)
+- Fun nuggets (during LLM wait time)
+- Progress steps indicator
+
+**Stories (`stories/+page.svelte`):**
+- List of all user's past stories
+- Click to replay
+
+**Replay (`replay/[sessionId]/+page.svelte`):**
+- Replay a saved story from start to finish
+- Read-only (no new choices)
+
+### Features
+
+- LLM-powered dynamic storytelling (Gemini 2.5 Pro)
+- AI image generation for each turn
+- Character consistency across images
+- Scene-adaptive image variation
+- Safety validation
+- Turn-based choice system
+- Story persistence in MongoDB
+
+**Complete Documentation:** [backend/CLAUDE.md](../../../../backend/CLAUDE.md)
 
 ---
 
