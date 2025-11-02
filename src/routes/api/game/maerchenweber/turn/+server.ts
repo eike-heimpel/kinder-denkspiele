@@ -26,7 +26,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			method: 'POST',
 			headers,
 			body: JSON.stringify(body),
-			signal: AbortSignal.timeout(60000) // 60 second timeout
+			signal: AbortSignal.timeout(10000) // 10 second timeout (should be fast now)
 		});
 
 		console.log(`[Märchenweber] Backend response status: ${response.status}`);
@@ -53,6 +53,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		const data = await response.json();
+
+		// Data now has: { session_id, status: "generating", message }
+		// Return this so frontend can start polling
 		return json(data);
 	} catch (error) {
 		console.error('[Märchenweber] Error proxying to FastAPI:', error);

@@ -1,13 +1,27 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { env } from '$env/dynamic/private';
 
-const BACKEND_URL = 'http://localhost:8000';
+const FASTAPI_URL = env.MAERCHENWEBER_API_URL || 'http://localhost:8000';
+const API_KEY = env.MAERCHENWEBER_API_KEY;
 
 export const GET: RequestHandler = async ({ params }) => {
 	const { sessionId, round } = params;
 
 	try {
-		const response = await fetch(`${BACKEND_URL}/adventure/image/${sessionId}/${round}`);
+		// Build headers
+		const headers: HeadersInit = {
+			'Content-Type': 'application/json'
+		};
+
+		if (API_KEY) {
+			headers['X-API-Key'] = API_KEY;
+		}
+
+		const response = await fetch(`${FASTAPI_URL}/adventure/image/${sessionId}/${round}`, {
+			method: 'GET',
+			headers
+		});
 
 		if (!response.ok) {
 			return json(

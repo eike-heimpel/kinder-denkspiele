@@ -182,12 +182,25 @@
 				return;
 			}
 
-			// Got session_id, now poll for completion
+			// Success! Extract data and timing
 			sessionId = data.session_id;
-			console.log(`[Märchenweber] Session created: ${sessionId}, starting polling...`);
+			currentStory = data.step.story_text;
+			currentImageUrl = data.step.image_url;
+			currentChoices = data.step.choices;
+			funNugget = data.step.fun_nugget || "";
+			choicesHistory = data.step.choices_history || [];
+			round = data.step.round_number || 1;
+			lastTiming = data.step.timing || null;
+			warnings = data.step.warnings || [];
 
-			// Poll for story completion
-			await pollForStoryCompletion(sessionId);
+			if (debugMode && lastTiming) {
+				console.log("⏱️ Timing:", lastTiming);
+			}
+			if (warnings.length > 0) {
+				console.warn("⚠️ Warnings:", warnings);
+			}
+
+			gamePhase = "playing";
 		} catch (error) {
 			console.error("Error starting adventure:", error);
 			lastError = {
@@ -205,122 +218,6 @@
 			loading = false;
 			isStarting = false;
 		}
-	}
-
-	async function pollForStoryCompletion(sid: string) {
-		const maxAttempts = 30; // 30 attempts * 2 seconds = 60 seconds max
-		let attempts = 0;
-
-		while (attempts < maxAttempts) {
-			try {
-				const response = await fetch(`/api/game/maerchenweber/status/${sid}`);
-				const data = await response.json();
-
-				console.log(`[Märchenweber] Poll attempt ${attempts + 1}: status=${data.status}`);
-
-				if (data.status === 'ready') {
-					// Story is ready!
-					currentStory = data.step.story_text;
-					currentImageUrl = data.step.image_url;
-					currentChoices = data.step.choices;
-					funNugget = data.step.fun_nugget || "";
-					choicesHistory = data.step.choices_history || [];
-					round = data.step.round_number || 1;
-
-					console.log('[Märchenweber] Story ready!');
-					gamePhase = "playing";
-					return;
-				} else if (data.status === 'error') {
-					// Generation failed
-					lastError = {
-						message: data.error || "Story generation failed",
-						step: "Generation",
-						details: {},
-						statusCode: 500,
-					};
-					alert("Die Geschichte konnte nicht erstellt werden. Bitte versuche es erneut.");
-					gamePhase = "setup";
-					return;
-				}
-
-				// Still generating, wait and retry
-				await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
-				attempts++;
-			} catch (error) {
-				console.error(`[Märchenweber] Polling error:`, error);
-				attempts++;
-				await new Promise(resolve => setTimeout(resolve, 2000));
-			}
-		}
-
-		// Timeout
-		alert("Die Geschichte braucht zu lange. Bitte versuche es erneut.");
-		gamePhase = "setup";
-	}
-
-	async function pollForTurnCompletion(sid: string) {
-		const maxAttempts = 30; // 30 attempts * 2 seconds = 60 seconds max
-		let attempts = 0;
-
-		while (attempts < maxAttempts) {
-			try {
-				const response = await fetch(`/api/game/maerchenweber/status/${sid}`);
-				const data = await response.json();
-
-				console.log(`[Märchenweber] Turn poll attempt ${attempts + 1}: status=${data.status}`);
-
-				if (data.status === 'ready') {
-					// Story is ready! Update state
-					currentStory = data.step.story_text;
-					currentChoices = data.step.choices;
-					funNugget = data.step.fun_nugget || "";
-					// Don't override choicesHistory - it already has the user's choice
-					round = data.step.round_number || round + 1;
-
-					console.log('[Märchenweber] Turn ready!');
-					loading = false;
-					gamePhase = "playing";
-
-					// Handle image (might be included or need polling)
-					if (data.step.image_url) {
-						currentImageUrl = data.step.image_url;
-					} else {
-						// Start polling for image
-						pollForImage(sessionId, round);
-					}
-					return;
-				} else if (data.status === 'error') {
-					// Generation failed
-					lastError = {
-						message: data.error || "Turn generation failed",
-						step: "Generation",
-						details: {},
-						statusCode: 500,
-					};
-					alert("Die Geschichte konnte nicht fortgesetzt werden. Bitte versuche es erneut.");
-					loading = false;
-					gamePhase = "playing";
-					// Revert optimistic update
-					choicesHistory = choicesHistory.slice(0, -1);
-					return;
-				}
-
-				// Still generating, wait and retry
-				await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
-				attempts++;
-			} catch (error) {
-				console.error(`[Märchenweber] Turn polling error:`, error);
-				attempts++;
-				await new Promise(resolve => setTimeout(resolve, 2000));
-			}
-		}
-
-		// Timeout
-		alert("Die Geschichte braucht zu lange. Bitte versuche es erneut.");
-		loading = false;
-		gamePhase = "playing";
-		// Revert optimistic update
-		choicesHistory = choicesHistory.slice(0, -1);
 	}
 
 	async function pollForImage(sessionIdToPoll: string, roundToPoll: number) {
@@ -399,9 +296,8 @@
 	}
 
 	async function makeChoice(choiceText: string) {
-		// Show loading state
+		// Show loading state temporarily
 		loading = true;
-		gamePhase = "loading";
 
 		// Optimistically add the choice to history for immediate display during loading
 		choicesHistory = [...choicesHistory, choiceText];
@@ -423,28 +319,23 @@
 
 			const data = await response.json();
 
-			// Check if we got immediate response with generating status
-			if (data.status === 'generating') {
-				console.log('[Märchenweber] Turn started, polling for completion...');
-				// Poll for completion
-				await pollForTurnCompletion(sessionId);
+			// Update story and choices IMMEDIATELY (before image)
+			currentStory = data.story_text;
+			currentChoices = data.choices;
+			funNugget = data.fun_nugget || "";
+			choicesHistory = data.choices_history || []; // Server response includes the same choice
+			round = data.round_number || round + 1;
+
+			// Stop loading state NOW - story is visible
+			loading = false;
+
+			// Handle image (async for rounds 2+)
+			if (data.image_url) {
+				// Round 1: image included in response
+				currentImageUrl = data.image_url;
 			} else {
-				// Fallback: old synchronous response (shouldn't happen with new backend)
-				currentStory = data.story_text;
-				currentChoices = data.choices;
-				funNugget = data.fun_nugget || "";
-				choicesHistory = data.choices_history || [];
-				round = data.round_number || round + 1;
-
-				loading = false;
-				gamePhase = "playing";
-
-				// Handle image
-				if (data.image_url) {
-					currentImageUrl = data.image_url;
-				} else {
-					pollForImage(sessionId, round);
-				}
+				// Rounds 2+: start polling for image
+				pollForImage(sessionId, round);
 			}
 		} catch (error) {
 			console.error("Error processing turn:", error);
@@ -452,7 +343,6 @@
 			// Revert the optimistic update on error
 			choicesHistory = choicesHistory.slice(0, -1);
 			loading = false;
-			gamePhase = "playing";
 
 			// Show user-friendly error message
 			if (error instanceof Error) {

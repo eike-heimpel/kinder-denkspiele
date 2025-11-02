@@ -2,6 +2,7 @@
 
 import logging
 import re
+from datetime import datetime
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from app.models import (
@@ -24,37 +25,45 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/start", response_model=AdventureStartResponse)
+@router.post("/start")
 async def start_adventure(request: AdventureStartRequest):
-    """Start a new adventure.
+    """Start a new adventure (async pattern to avoid Vercel timeout).
 
-    Creates a new game session and returns the opening scene with choices.
+    Creates a session immediately and generates story in background.
+    Client should poll /adventure/status/{session_id} for completion.
 
     Args:
         request: Adventure start request with character and theme details
 
     Returns:
-        AdventureStartResponse with session_id and first step
+        JSON with session_id and status="generating"
 
     Raises:
-        HTTPException: If adventure creation fails
+        HTTPException: If session creation fails
     """
     try:
         logger.info(f"Received request: user_id={request.user_id}, character_name={request.character_name}")
-        logger.info(f"Starting adventure for user {request.user_id}")
 
+        # Create session immediately with "generating" status
         engine = get_game_engine()
-        result = await engine.start_adventure(
+        session_id = await engine.create_session(
             user_id=request.user_id,
             character_name=request.character_name,
             character_description=request.character_description,
             story_theme=request.story_theme,
         )
 
-        return AdventureStartResponse(
-            session_id=result["session_id"],
-            step=result["step"],
-        )
+        logger.info(f"Created session {session_id}, starting background generation")
+
+        # Start background task to generate story
+        import asyncio
+        asyncio.create_task(engine.generate_first_story(session_id))
+
+        return JSONResponse({
+            "session_id": session_id,
+            "status": "generating",
+            "message": "Story is being generated. Poll /adventure/status/{session_id} for updates."
+        })
 
     except ValueError as e:
         error_msg = str(e)
@@ -91,17 +100,17 @@ async def start_adventure(request: AdventureStartRequest):
         )
 
 
-@router.post("/turn", response_model=AdventureStepResponse)
+@router.post("/turn")
 async def process_turn(request: TurnRequest):
-    """Process a turn in an existing adventure.
+    """Process a turn in an existing adventure (async pattern).
 
-    Takes the user's choice and generates the next story segment.
+    Takes the user's choice and starts background generation.
 
     Args:
         request: Turn request with session_id and choice_text
 
     Returns:
-        AdventureStepResponse with new story, image, and choices
+        JSON with session_id and status "generating"
 
     Raises:
         MaerchenweberError: If turn processing fails
@@ -129,21 +138,118 @@ async def process_turn(request: TurnRequest):
             value=len(request.choice_text)
         )
 
-    engine = get_game_engine()
-    result = await engine.process_turn(
-        session_id=request.session_id,
-        choice_text=request.choice_text,
-    )
+    try:
+        from bson import ObjectId
+        from app.database import get_database
 
-    logger.info(
-        f"Turn processed successfully",
-        extra={
+        # Mark session as generating
+        db = get_database()
+        collection = db["gamesessions"]
+
+        result = await collection.update_one(
+            {"_id": ObjectId(request.session_id)},
+            {
+                "$set": {
+                    "generation_status": "generating",
+                    "lastUpdated": datetime.utcnow()
+                }
+            }
+        )
+
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        logger.info(f"Marked session {request.session_id} as generating, starting background task")
+
+        # Start background generation
+        import asyncio
+        engine = get_game_engine()
+        asyncio.create_task(engine.process_turn_async(request.session_id, request.choice_text))
+
+        return JSONResponse({
             "session_id": request.session_id,
-            "round": result.round_number
-        }
-    )
+            "status": "generating",
+            "message": "Story is being generated. Poll /adventure/status/{session_id} for updates."
+        })
 
-    return result
+    except Exception as e:
+        logger.error(f"Error starting turn generation: {e}")
+        raise
+
+
+@router.get("/status/{session_id}")
+async def get_story_status(session_id: str):
+    """Poll for story generation status (for async pattern).
+
+    Args:
+        session_id: The game session ID
+
+    Returns:
+        JSON with:
+        - status: "generating" | "ready" | "error"
+        - step: Story data (when ready)
+        - error: Error message (if failed)
+
+    Raises:
+        HTTPException: If session not found
+    """
+    try:
+        from bson import ObjectId
+        from app.database import get_database
+
+        db = get_database()
+        collection = db["gamesessions"]
+
+        session = await collection.find_one({"_id": ObjectId(session_id)})
+
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        # Check generation status
+        generation_status = session.get("generation_status", "unknown")
+
+        if generation_status == "ready":
+            # Story is complete, return it
+            from app.models import AdventureStepResponse
+
+            round_number = session.get("round", 1)
+
+            # For round 1, include the first image. For other rounds, return None
+            # (frontend will poll /adventure/image/{sessionId}/{round} separately)
+            image_url = session.get("first_image_url", "") if round_number == 1 else None
+
+            step = AdventureStepResponse(
+                story_text=session.get("current_story", ""),
+                image_url=image_url,
+                choices=session.get("current_choices", []),
+                fun_nugget=session.get("fun_nugget", ""),
+                choices_history=[],
+                round_number=round_number
+            )
+
+            return {
+                "status": "ready",
+                "session_id": session_id,
+                "step": step.model_dump()
+            }
+
+        elif generation_status == "error":
+            return {
+                "status": "error",
+                "session_id": session_id,
+                "error": session.get("generation_error", "Unknown error occurred")
+            }
+
+        else:  # generating or unknown
+            return {
+                "status": "generating",
+                "session_id": session_id,
+                "message": "Story is still being generated..."
+            }
+
+    except Exception as e:
+        logger.error(f"Error fetching session status: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch status")
 
 
 @router.get("/session/{session_id}")

@@ -515,6 +515,161 @@ class GameEngine:
                 choices.append(choice_text)
         return choices
 
+    async def create_session(
+        self,
+        user_id: str,
+        character_name: str,
+        character_description: str,
+        story_theme: str,
+    ) -> str:
+        """Create a new session immediately with 'generating' status.
+
+        Args:
+            user_id: User ID from the main app
+            character_name: Name of the character
+            character_description: Description of the character
+            story_theme: Theme/setting of the story
+
+        Returns:
+            session_id: The created session ID
+        """
+        logger.info(f"Creating session for user {user_id}")
+
+        session_doc = {
+            "userId": user_id,
+            "gameType": "maerchenweber",
+            "character_name": character_name,
+            "character_description": character_description,
+            "story_theme": story_theme,
+            "reading_level": "second_grade",
+            "generation_status": "generating",  # Status for polling
+            "history": [],
+            "history_summary": "",
+            "score": 0,
+            "round": 1,
+            "createdAt": datetime.utcnow(),
+            "lastUpdated": datetime.utcnow(),
+            "style_guide": "",
+            "character_registry": [],
+            "pending_image": None,
+            "image_history": [],
+            "current_story": "",
+            "current_choices": [],
+            "fun_nugget": ""
+        }
+
+        result = await self.collection.insert_one(session_doc)
+        session_id = str(result.inserted_id)
+        logger.info(f"Created session {session_id} with status 'generating'")
+        return session_id
+
+    async def generate_first_story(self, session_id: str):
+        """Background task to generate the first story for a session.
+
+        Args:
+            session_id: The session ID to generate story for
+        """
+        try:
+            logger.info(f"Starting background story generation for session {session_id}")
+
+            # Get session to retrieve character details
+            session = await self.collection.find_one({"_id": ObjectId(session_id)})
+            if not session:
+                logger.error(f"Session {session_id} not found")
+                return
+
+            # Run the full story generation logic
+            result = await self.start_adventure(
+                user_id=session["userId"],
+                character_name=session["character_name"],
+                character_description=session["character_description"],
+                story_theme=session["story_theme"],
+            )
+
+            # Update session with the generated story
+            await self.collection.update_one(
+                {"_id": ObjectId(session_id)},
+                {
+                    "$set": {
+                        "generation_status": "ready",
+                        "current_story": result["step"].story_text,
+                        "current_choices": result["step"].choices,
+                        "first_image_url": result["step"].image_url,
+                        "fun_nugget": result["step"].fun_nugget,
+                        "history": [result["step"].story_text],
+                        "style_guide": session.get("style_guide", ""),
+                        "character_registry": session.get("character_registry", []),
+                        "image_history": session.get("image_history", []),
+                        "lastUpdated": datetime.utcnow()
+                    }
+                }
+            )
+
+            logger.info(f"Successfully generated story for session {session_id}")
+
+        except Exception as e:
+            logger.error(f"Error generating story for session {session_id}: {e}")
+
+            # Mark session as error
+            await self.collection.update_one(
+                {"_id": ObjectId(session_id)},
+                {
+                    "$set": {
+                        "generation_status": "error",
+                        "generation_error": str(e),
+                        "lastUpdated": datetime.utcnow()
+                    }
+                }
+            )
+
+
+    async def process_turn_async(self, session_id: str, choice_text: str):
+        """Background task to process a turn asynchronously.
+
+        Args:
+            session_id: The game session ID
+            choice_text: The user's choice text
+        """
+        try:
+            logger.info(f"Starting background turn processing for session {session_id}")
+
+            # Run the full turn generation logic
+            result = await self.process_turn(
+                session_id=session_id,
+                choice_text=choice_text,
+            )
+
+            # Update session with the generated story
+            await self.collection.update_one(
+                {"_id": ObjectId(session_id)},
+                {
+                    "$set": {
+                        "generation_status": "ready",
+                        "current_story": result.story_text,
+                        "current_choices": result.choices,
+                        "fun_nugget": result.fun_nugget,
+                        "lastUpdated": datetime.utcnow()
+                    }
+                }
+            )
+
+            logger.info(f"Successfully generated turn for session {session_id}")
+
+        except Exception as e:
+            logger.error(f"Error generating turn for session {session_id}: {e}")
+
+            # Mark session as error
+            await self.collection.update_one(
+                {"_id": ObjectId(session_id)},
+                {
+                    "$set": {
+                        "generation_status": "error",
+                        "generation_error": str(e),
+                        "lastUpdated": datetime.utcnow()
+                    }
+                }
+            )
+
 
 def get_game_engine() -> GameEngine:
     """Get an instance of the game engine."""
