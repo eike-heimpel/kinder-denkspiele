@@ -161,3 +161,59 @@ async def get_session(session_id: str):
     except Exception as e:
         logger.error(f"Error fetching session: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch session")
+
+
+@router.get("/user/{user_id}/sessions")
+async def get_user_sessions(user_id: str):
+    """Get all Märchenweber sessions for a specific user.
+
+    Returns a list of sessions with key metadata for displaying in a story list.
+
+    Args:
+        user_id: The user ID
+
+    Returns:
+        List of session summaries with:
+        - session_id
+        - character_name
+        - story_theme
+        - round (number of turns)
+        - lastUpdated (timestamp)
+        - first_image_url (for thumbnails)
+
+    Raises:
+        HTTPException: If query fails
+    """
+    try:
+        from bson import ObjectId
+        from app.database import get_database
+
+        db = get_database()
+        collection = db["gamesessions"]
+
+        # Find all märchenweber sessions for this user
+        cursor = collection.find(
+            {"userId": user_id, "gameType": "maerchenweber"}
+        ).sort("lastUpdated", -1)  # Most recent first
+
+        sessions = await cursor.to_list(length=100)  # Limit to 100 sessions
+
+        # Format for frontend
+        session_list = []
+        for session in sessions:
+            session_list.append({
+                "session_id": str(session["_id"]),
+                "character_name": session.get("character_name", "Unbekannt"),
+                "story_theme": session.get("story_theme", ""),
+                "round": session.get("round", 1),
+                "lastUpdated": session.get("lastUpdated").isoformat() if session.get("lastUpdated") else None,
+                "first_image_url": session.get("first_image_url", ""),
+                "createdAt": session.get("createdAt").isoformat() if session.get("createdAt") else None,
+            })
+
+        logger.info(f"Found {len(session_list)} sessions for user {user_id}")
+        return {"sessions": session_list}
+
+    except Exception as e:
+        logger.error(f"Error fetching user sessions: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch user sessions")

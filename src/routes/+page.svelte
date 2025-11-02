@@ -109,9 +109,15 @@
         difficulty: "easy" | "hard" | "extra-hard",
     ) {
         if (!selectedUser) return;
-        goto(
-            `/game/${gameType}?userId=${selectedUser._id}&difficulty=${difficulty}`,
-        );
+
+        // Märchenweber goes to hub page without difficulty param
+        if (gameType === "maerchenweber") {
+            goto(`/game/${gameType}?userId=${selectedUser._id}`);
+        } else {
+            goto(
+                `/game/${gameType}?userId=${selectedUser._id}&difficulty=${difficulty}`,
+            );
+        }
     }
 </script>
 

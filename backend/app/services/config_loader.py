@@ -92,6 +92,19 @@ class ConfigLoader:
         sampling_params = self._config.get("sampling_params", {})
         return sampling_params.get(agent_name, {})
 
+    def get_game_mechanic(self, mechanic_name: str, default: Any = None) -> Any:
+        """Get a game mechanic configuration value.
+
+        Args:
+            mechanic_name: Name of the mechanic (e.g., 'image_generation_interval')
+            default: Default value if not found
+
+        Returns:
+            Mechanic value or default
+        """
+        game_mechanics = self._config.get("game_mechanics", {})
+        return game_mechanics.get(mechanic_name, default)
+
     def get_config(self) -> Dict[str, Any]:
         """Get the entire configuration dictionary.
 

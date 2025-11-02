@@ -1,11 +1,18 @@
 # Märchenweber Configuration
 # All prompts must be in German for the story, English for meta-tasks
 
+# Game mechanics
+game_mechanics:
+  image_generation_interval: 5  # Generate images every N turns (1 = every turn, 5 = every 5th turn)
+  summarization_interval: 5     # Summarize history every N turns
+  recent_turns_to_keep: 5       # Number of recent turns to keep raw (rest get summarized)
+
 models:
   narrator: "google/gemini-2.5-pro"
   validator: "google/gemini-2.5-flash"
   image_generator: "google/gemini-2.5-flash-image"
   image_translator: "google/gemini-2.5-flash"
+  summarizer: "google/gemini-2.5-flash"  # Fast & cost-effective for summarization
   # New unified choice generation
   choice_agent_unified: "google/gemini-2.5-flash"  # Main 3 choices
   choice_agent_wildcard: "google/gemini-2.5-flash"  # Creative 4th choice
@@ -81,6 +88,25 @@ prompts:
     Text: {{ german_text }}
 
     Antworte mit einem einzigen Wort: SAFE oder UNSAFE.
+
+  summarizer: |
+    Du bist ein Geschichtenerzähler-Assistent. Fasse die folgende Geschichte für ein Kind zusammen.
+
+    Geschichte:
+    {{ history_to_summarize }}
+
+    WICHTIG:
+    - Schreibe in DU-Form (das Kind ist der Hauptcharakter)
+    - Behalte die wichtigsten Ereignisse und Entscheidungen
+    - Fasse 3-5 Geschichtenabschnitte in 2-3 prägnante Sätze zusammen
+    - Verwende einfache Wörter (Zweitklässler-Niveau)
+    - Bleibe chronologisch
+    - Erzähle in Vergangenheitsform
+
+    Beispiel:
+    "Du bist als Prinzessin Luna in den verzauberten Wald gegangen. Du hast mit einem sprechenden Vogel gesprochen und einen magischen Schlüssel gefunden."
+
+    Antworte nur mit der Zusammenfassung, nichts anderes.
 
   image_prompt_translator: |
     Translate the following German scene description to a rich, artistic English prompt for an image generation AI.
@@ -286,13 +312,19 @@ sampling_params:
     top_p: 0.95
     max_tokens: 4000
     reasoning:
-      max_tokens: 100  # Gemini uses max_tokens for reasoning
+      max_tokens: 500  # Gemini uses max_tokens for reasoning
 
   validator:
     temperature: 0.3
     max_tokens: 100
     reasoning:
       max_tokens: 100  # Gemini: minimal reasoning for validation
+
+  summarizer:
+    temperature: 0.5  # Balanced - not too creative, factual summary
+    max_tokens: 1000   # Enough for a comprehensive summary
+    reasoning:
+      max_tokens: 200  # Gemini: moderate reasoning to identify key events
 
   # New unified choice generation
   choice_agent_unified:
@@ -333,6 +365,6 @@ sampling_params:
 
   image_translator:
     temperature: 0.7
-    max_tokens: 150
+    max_tokens: 1000
     reasoning:
       max_tokens: 0  # Gemini: minimal reasoning for translation

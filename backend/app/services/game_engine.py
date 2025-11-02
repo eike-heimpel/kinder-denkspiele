@@ -56,6 +56,8 @@ class GameEngine:
                     "story_theme": story_theme,
                     "reading_level": "second_grade",
                     "history": [],
+                    "history_summary": "",  # Will accumulate summaries of old turns
+                    "image_history": [],  # Array of {round, url, description} objects
                     "score": 0,
                     "round": 1,
                     "createdAt": datetime.utcnow(),
@@ -116,15 +118,15 @@ class GameEngine:
                 )
 
             with timer.step("Generate Image Description for Future Consistency"):
-                # Ask the narrator to describe the image style for future consistency
+                # Ask the translator to describe the image style for future consistency
                 description_prompt = f"""Beschreibe kurz den Bildstil und die Charaktere in diesem Bild für ein Märchenbuch:
 
                 Bildprompt: {image_prompt}
 
                 Antworte in 1-2 Sätzen auf Deutsch (z.B. "Bunter Cartoon-Stil mit einer kleinen Prinzessin in einem lila Kleid")."""
 
-                model = self.config.get_model("narrator")
-                sampling_params = {"temperature": 0.3, "max_tokens": 100}
+                model = self.config.get_model("image_translator")
+                sampling_params = self.config.get_sampling_params("image_translator")
 
                 first_image_description = await self.llm.generate_text(
                     prompt=description_prompt,
@@ -138,12 +140,19 @@ class GameEngine:
                 await self.collection.update_one(
                     {"_id": ObjectId(session_id)},
                     {
-                        "$push": {"history": story_text},
+                        "$push": {
+                            "history": story_text,
+                            "image_history": {
+                                "round": 1,
+                                "url": image_url,
+                                "description": first_image_description,
+                            },
+                        },
                         "$set": {
                             "lastUpdated": datetime.utcnow(),
-                            "first_image_url": image_url,
+                            "first_image_url": image_url,  # Keep for backwards compatibility
                             "first_image_description": first_image_description,
-                            "previous_image_url": image_url,
+                            "previous_image_url": image_url,  # Current image for style consistency
                         },
                     },
                 )
@@ -201,9 +210,50 @@ class GameEngine:
             history = session.get("history", [])
             history.append(f"[Wahl]: {choice_text}")
 
+            # Check if we should summarize history
+            new_round = session.get("round", 0) + 1
+            summarization_interval = self.config.get_game_mechanic("summarization_interval", 5)
+            recent_turns_to_keep = self.config.get_game_mechanic("recent_turns_to_keep", 5)
+            current_summary = session.get("history_summary", "")
+
+            should_summarize = (new_round % summarization_interval) == 0 and len(history) > recent_turns_to_keep
+
+            if should_summarize:
+                logger.info(f"Round {new_round}: Generating summary (interval={summarization_interval})")
+
+                # Split history: old (to summarize) and recent (keep raw)
+                # Each turn adds 2 items: story + choice, so recent_turns * 2 items
+                recent_items_count = recent_turns_to_keep * 2
+                old_history = history[:-recent_items_count] if len(history) > recent_items_count else []
+                recent_history = history[-recent_items_count:] if len(history) > recent_items_count else history
+
+                # Generate summary of old history (if exists)
+                if old_history:
+                    new_summary = await self._summarize_history(old_history)
+                    # Append to existing summary if present
+                    if current_summary:
+                        current_summary = f"{current_summary}\n\n{new_summary}"
+                    else:
+                        current_summary = new_summary
+                else:
+                    # Not enough history yet, keep all
+                    recent_history = history
+
+                # Build history text for narrator: summary + recent turns
+                if current_summary:
+                    history_text = f"{current_summary}\n\n---\n\n" + "\n\n".join(recent_history)
+                else:
+                    history_text = "\n\n".join(recent_history)
+
+                logger.info(f"Using summary ({len(current_summary)} chars) + {len(recent_history)} recent items")
+            else:
+                # No summarization this turn, use full history
+                history_text = "\n\n".join(history)
+                if current_summary:
+                    history_text = f"{current_summary}\n\n---\n\n{history_text}"
+
             # 3. Prompt Narrator with Wildcard
             wildcard = self.config.get_random_wildcard()
-            history_text = "\n\n".join(history)
 
             narrator_prompt = self.config.get_prompt(
                 "narrator",
@@ -236,30 +286,59 @@ class GameEngine:
             # 5. Generate Choices (Council of Choices - 3 parallel calls)
             choices = await self._generate_choices(history_text + "\n\n" + story_text)
 
-            # 6. Generate Image (with style consistency)
+            # 6. Generate Image (conditionally based on round number)
+            # Note: new_round was already calculated earlier in step 2
+            image_generation_interval = self.config.get_game_mechanic("image_generation_interval", 5)
+
+            # Generate new image every N turns (1, 6, 11, 16, etc. if interval=5)
+            # Formula: round % interval == 1 (so rounds 1, 6, 11, 16...)
+            should_generate_image = (new_round % image_generation_interval) == 1
+
             previous_image_url = session.get("previous_image_url")
             first_image_description = session.get("first_image_description")
 
-            image_url = await self._generate_image(
-                german_image_prompt=image_prompt,
-                previous_image_url=previous_image_url,
-                first_image_description=first_image_description
-            )
+            if should_generate_image:
+                logger.info(f"Round {new_round}: Generating NEW image (interval={image_generation_interval})")
+                image_url = await self._generate_image(
+                    german_image_prompt=image_prompt,
+                    previous_image_url=previous_image_url,
+                    first_image_description=first_image_description
+                )
+
+                # Save to image history
+                image_history_entry = {
+                    "round": new_round,
+                    "url": image_url,
+                    "description": image_prompt,
+                }
+            else:
+                logger.info(f"Round {new_round}: Reusing previous image (next image at round {new_round + (image_generation_interval - (new_round % image_generation_interval))})")
+                image_url = previous_image_url  # Reuse last generated image
+                image_history_entry = None  # Don't add to history
 
             # 7. Save State
             history.append(story_text)
-            new_round = session.get("round", 0) + 1
+
+            update_doc = {
+                "$set": {
+                    "history": history,
+                    "round": new_round,
+                    "lastUpdated": datetime.utcnow(),
+                    "previous_image_url": image_url,  # Always update (either new or reused)
+                }
+            }
+
+            # Save summary if we generated one
+            if should_summarize and current_summary:
+                update_doc["$set"]["history_summary"] = current_summary
+
+            # Only push to image_history if we generated a new image
+            if image_history_entry:
+                update_doc["$push"] = {"image_history": image_history_entry}
 
             await self.collection.update_one(
                 {"_id": ObjectId(session_id)},
-                {
-                    "$set": {
-                        "history": history,
-                        "round": new_round,
-                        "lastUpdated": datetime.utcnow(),
-                        "previous_image_url": image_url,  # Track for next turn
-                    }
-                },
+                update_doc,
             )
 
             logger.info(f"Processed turn for session {session_id}, round {new_round}")
@@ -445,6 +524,44 @@ class GameEngine:
             logger.error(f"Error generating image: {e}")
             # Return placeholder SVG
             return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Crect width='800' height='600' fill='%23fef3c7'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%2378350f' font-size='32' font-family='sans-serif'%3E📖 Märchenweber%3C/text%3E%3C/svg%3E"
+
+    async def _summarize_history(self, history: List[str]) -> str:
+        """Summarize story history to keep context manageable.
+
+        Takes the full history and creates a concise summary of older events,
+        allowing us to keep only recent turns in full detail.
+
+        Args:
+            history: List of story segments and choices to summarize
+
+        Returns:
+            Summary text in German
+        """
+        try:
+            # Join history for summarization
+            history_text = "\n\n".join(history)
+
+            summarizer_prompt = self.config.get_prompt(
+                "summarizer",
+                history_to_summarize=history_text,
+            )
+
+            summarizer_model = self.config.get_model("summarizer")
+            summarizer_params = self.config.get_sampling_params("summarizer")
+
+            summary = await self.llm.generate_text(
+                prompt=summarizer_prompt,
+                model=summarizer_model,
+                sampling_params=summarizer_params,
+            )
+
+            logger.info(f"Generated summary ({len(summary)} chars) from {len(history_text)} chars of history")
+            return summary.strip()
+
+        except Exception as e:
+            logger.error(f"Error generating summary: {e}")
+            # Return a basic fallback summary
+            return "Die Geschichte bisher: Du hast ein spannendes Abenteuer erlebt."
 
 
 def get_game_engine() -> GameEngine:

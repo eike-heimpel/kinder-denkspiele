@@ -5,146 +5,68 @@
 	import Button from '$lib/components/Button.svelte';
 	import Card from '$lib/components/Card.svelte';
 
-	type GamePhase = 'setup' | 'playing' | 'loading' | 'gameOver';
+	interface StorySession {
+		session_id: string;
+		character_name: string;
+		story_theme: string;
+		round: number;
+		lastUpdated: string;
+		first_image_url: string;
+		createdAt: string;
+	}
 
-	// Game state
-	let gamePhase = $state<GamePhase>('setup');
-	let sessionId = $state<string>('');
+	let userId = $state('');
+	let sessions = $state<StorySession[]>([]);
+	let loading = $state(true);
+	let error = $state('');
 
-	// Setup phase
-	let characterName = $state<string>('');
-	let characterDescription = $state<string>('');
-	let storyTheme = $state<string>('');
+	onMount(async () => {
+		userId = $page.url.searchParams.get('userId') || '';
 
-	// Playing phase
-	let currentStory = $state<string>('');
-	let currentImageUrl = $state<string>('');
-	let currentChoices = $state<string[]>([]);
-	let round = $state<number>(1);
-
-	// Loading state
-	let loading = $state<boolean>(false);
-
-	// Debug state
-	let debugMode = $state<boolean>(false);
-	let lastTiming = $state<any>(null);
-	let lastError = $state<any>(null);
-	let warnings = $state<string[]>([]);
-
-	// URL params
-	const userId = $derived($page.url.searchParams.get('userId') || '');
-
-	onMount(() => {
 		if (!userId) {
 			goto('/');
-		}
-	});
-
-	async function startAdventure() {
-		if (!characterName.trim() || !characterDescription.trim() || !storyTheme.trim()) {
-			alert('Bitte fülle alle Felder aus!');
 			return;
 		}
 
-		loading = true;
-		gamePhase = 'loading';
-
 		try {
-			lastError = null;
-			lastTiming = null;
-			warnings = [];
-
-			const response = await fetch('/api/game/maerchenweber/start', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					user_id: userId,
-					character_name: characterName,
-					character_description: characterDescription,
-					story_theme: storyTheme
-				})
-			});
-
-			const data = await response.json();
+			const response = await fetch(`/api/game/maerchenweber/sessions?userId=${userId}`);
 
 			if (!response.ok) {
-				// Detailed error from backend
-				lastError = {
-					message: data.error || 'Failed to start adventure',
-					step: data.step || 'Unknown',
-					details: data.details || {},
-					statusCode: response.status
-				};
-				console.error('Adventure start error:', lastError);
-				alert(`Fehler beim Starten des Abenteuers.\n\nSchritt: ${lastError.step}\nDetails: ${lastError.message}`);
-				gamePhase = 'setup';
-				return;
-			}
-
-			// Success! Extract data and timing
-			sessionId = data.session_id;
-			currentStory = data.step.story_text;
-			currentImageUrl = data.step.image_url;
-			currentChoices = data.step.choices;
-			lastTiming = data.step.timing || null;
-			warnings = data.step.warnings || [];
-
-			if (debugMode && lastTiming) {
-				console.log('⏱️ Timing:', lastTiming);
-			}
-			if (warnings.length > 0) {
-				console.warn('⚠️ Warnings:', warnings);
-			}
-
-			gamePhase = 'playing';
-		} catch (error) {
-			console.error('Error starting adventure:', error);
-			lastError = {
-				message: error instanceof Error ? error.message : 'Unknown error',
-				step: 'Network/Client',
-				details: { type: 'ClientError' },
-				statusCode: 0
-			};
-			alert('Fehler beim Starten des Abenteuers. Bitte versuche es erneut.');
-			gamePhase = 'setup';
-		} finally {
-			loading = false;
-		}
-	}
-
-	async function makeChoice(choiceText: string) {
-		loading = true;
-
-		try {
-			const response = await fetch('/api/game/maerchenweber/turn', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					session_id: sessionId,
-					choice_text: choiceText
-				})
-			});
-
-			if (!response.ok) {
-				const error = await response.json();
-				throw new Error(error.error || 'Failed to process turn');
+				throw new Error('Failed to fetch sessions');
 			}
 
 			const data = await response.json();
-			currentStory = data.story_text;
-			currentImageUrl = data.image_url;
-			currentChoices = data.choices;
-			round++;
-		} catch (error) {
-			console.error('Error processing turn:', error);
-			alert('Fehler beim Verarbeiten deiner Wahl. Bitte versuche es erneut.');
+			sessions = data.sessions || [];
+		} catch (err) {
+			error = 'Fehler beim Laden der Geschichten. Ist der Backend-Server gestartet?';
+			console.error('Error loading sessions:', err);
 		} finally {
 			loading = false;
 		}
+	});
+
+	function startNewStory() {
+		goto(`/game/maerchenweber/play?userId=${userId}`);
 	}
 
-	function returnHome() {
-		goto('/');
+	function continueStory(sessionId: string) {
+		goto(`/game/maerchenweber/play?userId=${userId}&sessionId=${sessionId}`);
+	}
+
+	function viewStory(sessionId: string) {
+		goto(`/game/maerchenweber/replay/${sessionId}`);
+	}
+
+	function formatDate(isoDate: string): string {
+		if (!isoDate) return '';
+		const date = new Date(isoDate);
+		return date.toLocaleDateString('de-DE', {
+			day: '2-digit',
+			month: '2-digit',
+			year: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit'
+		});
 	}
 </script>
 
@@ -152,262 +74,153 @@
 	<title>Märchenweber - Kinder Denkspiele</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-100 to-orange-100">
-	<div class="container mx-auto p-4 md:p-8 max-w-4xl">
-		<!-- Header -->
-		<div class="flex justify-between items-center mb-6">
-			<h1 class="text-3xl md:text-4xl font-black text-amber-900 flex items-center gap-2">
+<div class="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-100 to-orange-100 p-8">
+	<div class="max-w-7xl mx-auto">
+		<!-- Header Section -->
+		<div class="text-center mb-12">
+			<div class="flex justify-between items-center mb-8">
+				<Button variant="secondary" onclick={() => goto('/')} class="text-lg">
+					← Zurück
+				</Button>
+				<div></div>
+			</div>
+
+			<h1 class="text-6xl font-black text-amber-900 mb-4 flex items-center justify-center gap-4">
 				📖 Märchenweber
 			</h1>
-			<Button variant="secondary" onclick={returnHome}>← Zurück</Button>
+			<p class="text-2xl text-amber-700 mb-8">
+				Erlebe magische Abenteuer und schreibe deine eigenen Geschichten!
+			</p>
+
+			<!-- Big Start New Story Button -->
+			<Button
+				variant="primary"
+				onclick={startNewStory}
+				class="text-2xl px-12 py-6 bg-amber-500 hover:bg-amber-600 text-white shadow-2xl transform hover:scale-105 transition-transform"
+			>
+				✨ Neue Geschichte beginnen
+			</Button>
 		</div>
 
-		{#if gamePhase === 'setup'}
-			<!-- Setup Phase -->
-			<Card>
-				<div class="space-y-6">
-					<div class="text-center mb-8">
-						<h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
-							Erzähle deine Geschichte!
-						</h2>
-						<p class="text-gray-600">
-							Erstelle deinen Charakter und beginne ein magisches Abenteuer
-						</p>
-					</div>
-
-					<div class="space-y-4">
-						<div>
-							<label for="characterName" class="block text-lg font-semibold text-gray-700 mb-2">
-								Wie heißt dein Charakter?
-							</label>
-							<input
-								id="characterName"
-								type="text"
-								bind:value={characterName}
-								placeholder="z.B. Prinzessin Luna"
-								class="w-full px-4 py-3 text-lg border-2 border-amber-300 rounded-lg focus:outline-none focus:border-amber-500 bg-white"
-								maxlength="100"
-							/>
-						</div>
-
-						<div>
-							<label
-								for="characterDescription"
-								class="block text-lg font-semibold text-gray-700 mb-2"
-							>
-								Beschreibe deinen Charakter
-							</label>
-							<input
-								id="characterDescription"
-								type="text"
-								bind:value={characterDescription}
-								placeholder="z.B. eine mutige Prinzessin mit magischen Kräften"
-								class="w-full px-4 py-3 text-lg border-2 border-amber-300 rounded-lg focus:outline-none focus:border-amber-500 bg-white"
-								maxlength="200"
-							/>
-						</div>
-
-						<div>
-							<label for="storyTheme" class="block text-lg font-semibold text-gray-700 mb-2">
-								Wo spielt die Geschichte?
-							</label>
-							<input
-								id="storyTheme"
-								type="text"
-								bind:value={storyTheme}
-								placeholder="z.B. in einem verzauberten Wald"
-								class="w-full px-4 py-3 text-lg border-2 border-amber-300 rounded-lg focus:outline-none focus:border-amber-500 bg-white"
-								maxlength="200"
-							/>
-						</div>
-					</div>
-
-					<div class="text-center mt-8">
-						<Button variant="primary" onclick={startAdventure} class="px-8 py-4 text-xl">
-							✨ Abenteuer beginnen
-						</Button>
-					</div>
-				</div>
-			</Card>
-		{:else if gamePhase === 'loading'}
-			<!-- Loading Phase -->
-			<Card>
-				<div class="text-center py-12">
-					<div class="inline-block animate-spin rounded-full h-16 w-16 border-4 border-amber-500 border-t-transparent mb-4"></div>
-					<p class="text-xl font-semibold text-gray-700">Die Geschichte wird gewebt...</p>
-				</div>
-			</Card>
-		{:else if gamePhase === 'playing'}
-			<!-- Playing Phase -->
-			<div class="space-y-6">
-				<!-- Round counter -->
-				<div class="text-center">
-					<span class="inline-block bg-amber-200 px-4 py-2 rounded-full text-sm font-semibold text-amber-900">
-						Runde {round}
-					</span>
-				</div>
-
-				<!-- Story Image -->
-				{#if currentImageUrl}
-					<Card>
-						<img
-							src={currentImageUrl}
-							alt="Geschichtsbild"
-							class="w-full h-64 md:h-96 object-cover rounded-lg"
-							loading="lazy"
-						/>
-					</Card>
-				{/if}
-
-				<!-- Story Text -->
-				<Card>
-					<div class="prose prose-lg max-w-none">
-						<p class="text-xl md:text-2xl leading-relaxed text-gray-800 whitespace-pre-wrap">
-							{currentStory}
-						</p>
-					</div>
-				</Card>
-
-				<!-- Choices -->
-				{#if !loading}
-					<div class="grid gap-4">
-						{#each currentChoices as choice, index}
-							<button
-								onclick={() => makeChoice(choice)}
-								class="group relative overflow-hidden bg-white border-3 border-amber-300 rounded-xl p-6 text-left transition-all hover:border-amber-500 hover:shadow-lg hover:-translate-y-1 active:translate-y-0"
-							>
-								<div class="flex items-start gap-4">
-									<span
-										class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full text-xl font-bold"
-										class:bg-red-100={index === 0}
-										class:text-red-700={index === 0}
-										class:bg-blue-100={index === 1}
-										class:text-blue-700={index === 1}
-										class:bg-green-100={index === 2}
-										class:text-green-700={index === 2}
-									>
-										{index === 0 ? '💪' : index === 1 ? '😄' : '🤔'}
-									</span>
-									<span class="flex-1 text-lg md:text-xl font-medium text-gray-800">
-										{choice}
-									</span>
-								</div>
-							</button>
-						{/each}
-					</div>
-				{:else}
-					<Card>
-						<div class="text-center py-8">
-							<div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-amber-500 border-t-transparent mb-4"></div>
-							<p class="text-lg font-semibold text-gray-700">
-								Die Geschichte geht weiter...
-							</p>
-						</div>
-					</Card>
-				{/if}
-
-				<!-- End Story Button -->
-				<div class="text-center mt-8">
-					<Button variant="secondary" onclick={returnHome}>
-						Geschichte beenden und zurück
-					</Button>
-				</div>
+		<!-- Divider -->
+		{#if !loading && sessions.length > 0}
+			<div class="my-12 flex items-center gap-4">
+				<div class="flex-1 h-px bg-amber-300"></div>
+				<h2 class="text-3xl font-bold text-amber-800">Deine Geschichten</h2>
+				<div class="flex-1 h-px bg-amber-300"></div>
 			</div>
 		{/if}
 
-		<!-- Debug Panel (Bottom-right floating) -->
-		<div class="fixed bottom-4 right-4 z-50">
-			<!-- Toggle Button -->
-			<button
-				onclick={() => (debugMode = !debugMode)}
-				class="bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-gray-700 text-sm font-mono"
-				title="Toggle debug info"
-			>
-				{debugMode ? '🐛 Hide Debug' : '🐛 Debug'}
-			</button>
-
-			<!-- Debug Info Panel -->
-			{#if debugMode}
+		<!-- Loading State -->
+		{#if loading}
+			<div class="text-center py-20">
 				<div
-					class="mt-2 bg-gray-900 text-gray-100 rounded-lg shadow-2xl p-4 max-w-md max-h-96 overflow-auto text-xs font-mono"
-				>
-					<h3 class="text-sm font-bold mb-2 text-amber-400">🐛 Debug Info</h3>
+					class="inline-block animate-spin rounded-full h-16 w-16 border-4 border-amber-500 border-t-transparent mb-4"
+				></div>
+				<p class="text-2xl text-amber-800">Lade Geschichten...</p>
+			</div>
+		{:else if error}
+			<!-- Error State -->
+			<Card class="text-center py-12 bg-red-50 border-2 border-red-300">
+				<div class="text-6xl mb-4">❌</div>
+				<h2 class="text-2xl font-bold mb-4 text-red-800">Fehler</h2>
+				<p class="text-red-600 mb-6">{error}</p>
+				<p class="text-sm text-gray-600">
+					Tipp: Stelle sicher, dass der FastAPI Backend-Server läuft (Port 8000)
+				</p>
+			</Card>
+		{:else if sessions.length === 0}
+			<!-- Empty State -->
+			<Card class="text-center py-20 bg-gradient-to-br from-amber-100 to-yellow-100">
+				<div class="text-9xl mb-6">📚</div>
+				<h2 class="text-4xl font-bold mb-4 text-amber-900">Noch keine Geschichten</h2>
+				<p class="text-xl text-amber-700 mb-8">
+					Klicke oben auf "Neue Geschichte beginnen", um dein erstes magisches Abenteuer zu
+					starten!
+				</p>
+			</Card>
+		{:else}
+			<!-- Stories Gallery -->
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+				{#each sessions as session}
+					<Card
+						class="overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
+					>
+						<!-- Story Thumbnail -->
+						{#if session.first_image_url}
+							<div class="w-full h-56 overflow-hidden bg-gray-200">
+								<img
+									src={session.first_image_url}
+									alt={session.character_name}
+									class="w-full h-full object-cover"
+								/>
+							</div>
+						{:else}
+							<div
+								class="w-full h-56 bg-gradient-to-br from-purple-400 via-pink-400 to-amber-400 flex items-center justify-center"
+							>
+								<div class="text-9xl">📖</div>
+							</div>
+						{/if}
 
-					<!-- Timing Info -->
-					{#if lastTiming}
-						<div class="mb-4">
-							<h4 class="text-xs font-semibold text-green-400 mb-1">⏱️ Last Request Timing</h4>
-							<div class="bg-gray-800 p-2 rounded">
-								<div class="text-yellow-300">
-									Total: <span class="font-bold">{lastTiming.total_ms}ms</span>
-								</div>
-								<div class="mt-2 space-y-1">
-									{#each lastTiming.steps as step}
-										<div
-											class="flex justify-between"
-											class:text-red-400={step.status === 'error'}
-											class:text-green-300={step.status === 'success'}
-										>
-											<span>{step.name}</span>
-											<span class="font-bold">{step.duration_ms}ms</span>
-										</div>
-										{#if step.error}
-											<div class="text-red-300 text-xs ml-2">Error: {step.error}</div>
-										{/if}
-									{/each}
-								</div>
+						<!-- Story Info -->
+						<div class="p-6">
+							<h3 class="text-2xl font-bold mb-2 text-gray-800 truncate">
+								{session.character_name}
+							</h3>
+							<p class="text-gray-600 mb-4 line-clamp-2">
+								{session.story_theme}
+							</p>
+
+							<div class="flex items-center gap-4 text-sm text-gray-500 mb-4">
+								<span class="flex items-center gap-1">
+									🎯 <strong>Runde {session.round}</strong>
+								</span>
+								<span class="flex items-center gap-1 text-xs">
+									🕐 {formatDate(session.lastUpdated).split(',')[0]}
+								</span>
+							</div>
+
+							<!-- Action Buttons -->
+							<div class="flex gap-2">
+								<Button
+									variant="primary"
+									onclick={() => continueStory(session.session_id)}
+									class="flex-1 text-sm bg-amber-500 hover:bg-amber-600"
+								>
+									▶️ Weiterspielen
+								</Button>
+								<Button
+									variant="secondary"
+									onclick={() => viewStory(session.session_id)}
+									class="text-sm"
+								>
+									👁️
+								</Button>
 							</div>
 						</div>
-					{/if}
+					</Card>
+				{/each}
+			</div>
 
-					<!-- Warnings -->
-					{#if warnings.length > 0}
-						<div class="mb-4">
-							<h4 class="text-xs font-semibold text-yellow-400 mb-1">⚠️ Warnings</h4>
-							<div class="bg-yellow-900 bg-opacity-30 p-2 rounded text-yellow-200">
-								{#each warnings as warning}
-									<div>• {warning}</div>
-								{/each}
-							</div>
-						</div>
-					{/if}
-
-					<!-- Last Error -->
-					{#if lastError}
-						<div class="mb-4">
-							<h4 class="text-xs font-semibold text-red-400 mb-1">❌ Last Error</h4>
-							<div class="bg-red-900 bg-opacity-30 p-2 rounded text-red-200">
-								<div><strong>Step:</strong> {lastError.step}</div>
-								<div><strong>Status:</strong> {lastError.statusCode}</div>
-								<div><strong>Message:</strong> {lastError.message}</div>
-								{#if lastError.details}
-									<div class="mt-1 text-xs">
-										<strong>Details:</strong>
-										<pre class="mt-1 bg-black bg-opacity-30 p-1 rounded overflow-auto">{JSON.stringify(
-												lastError.details,
-												null,
-												2
-											)}</pre>
-									</div>
-								{/if}
-							</div>
-						</div>
-					{/if}
-
-					<!-- Session Info -->
-					<div class="text-gray-400 text-xs">
-						<div>Session: {sessionId || 'None'}</div>
-						<div>Round: {round}</div>
-						<div>Phase: {gamePhase}</div>
-					</div>
-				</div>
-			{/if}
-		</div>
+			<!-- Summary Stats -->
+			<div class="mt-12 text-center">
+				<Card class="inline-block bg-amber-100 border-2 border-amber-300">
+					<p class="text-lg text-amber-800">
+						📚 Du hast <strong class="text-2xl text-amber-900">{sessions.length}</strong>
+						{sessions.length === 1 ? 'Geschichte' : 'Geschichten'} erstellt
+					</p>
+				</Card>
+			</div>
+		{/if}
 	</div>
 </div>
 
 <style>
-	.prose {
-		max-width: none;
+	.line-clamp-2 {
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
 	}
 </style>
