@@ -105,20 +105,21 @@
 
 ---
 
-### Make Story Rounds Longer & Narration Slower
+### ✅ COMPLETED: Make Story Rounds Longer & Narration Slower
 
-**Problem:** Story rounds may feel too short, and narration speed might be too fast for kids to follow.
+**Implementation Completed (2025-11-02):**
+- ✅ Increased story length from 6-10 sentences to 12-18 sentences (~1 full page)
+- ✅ Added rich sensory details and atmospheric descriptions
+- ✅ Emphasized slower pacing with color, texture, sound, and emotion descriptions
+- ✅ Instructed narrator to "paint the scene" before moving to action
 
-**Needed Changes:**
-- Increase story length per round (more sentences/paragraphs)
-- Slow down narration speed/pacing
-- Possibly add pauses between sentences for comprehension
-- Consider age-appropriate reading speeds
+**Changes Made:**
+- Updated `character_creation` prompt with detailed sensory guidance
+- Updated `narrator` prompt with same rich storytelling instructions
+- Added explicit examples: colors ("goldene Licht"), textures ("weiche Moos"), emotions ("Du fühlst dich mutig")
 
-**Implementation:**
-- Adjust prompt templates to request longer story segments
-- Configure narration timing/animation in frontend
-- Test with actual kids to find optimal pacing
+**Files Modified:**
+- `backend/config.yaml` - Both narrator and character_creation prompts (lines 25-101)
 
 ---
 
