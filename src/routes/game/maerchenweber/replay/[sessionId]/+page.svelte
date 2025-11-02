@@ -98,7 +98,7 @@
 	<title>Geschichte ansehen - Märchenweber</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-100 to-orange-100 p-8">
+<div class="min-h-screen bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 p-8">
 	<div class="max-w-4xl mx-auto">
 		<!-- Header -->
 		<div class="mb-8 flex justify-between items-center">

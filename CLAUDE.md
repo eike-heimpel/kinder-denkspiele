@@ -75,7 +75,9 @@ This is the **entry point** for AI agents working on this codebase. Read this fi
 - **Modify Logic Lab prompts** → [LOGIC-LAB.md](./docs/LOGIC-LAB.md#changing-prompt-behavior) (YAML editing, no code!)
 - **Change Logic Lab difficulty** → [LOGIC-LAB.md](./docs/LOGIC-LAB.md#adaptive-difficulty)
 - **Add new problem types** → [LOGIC-LAB.md](./docs/LOGIC-LAB.md#adding-new-problem-types)
-- **Change theme colors** → [Changing Theme Colors](#changing-theme-colors)
+- **Change theme colors** → [THEMING.md](./docs/THEMING.md#changing-the-color-palette)
+- **Use design tokens** → [Design Tokens](#design-tokens-system)
+- **Add a button variant** → [THEMING.md](./docs/THEMING.md#adding-a-new-button-variant)
 - **Fix Tailwind issues** → [TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md#tailwind-not-working)
 - **Add/modify words** → [Modifying Word Pools](#modifying-word-pools)
 - **Test the API** → [API-REFERENCE.md](./docs/API-REFERENCE.md#testing)
@@ -85,6 +87,8 @@ This is the **entry point** for AI agents working on this codebase. Read this fi
 ### "Where is..."
 - **User data stored** → MongoDB via `UserRepository` ([ARCHITECTURE.md](./docs/ARCHITECTURE.md#database-schema))
 - **Game logic** → `src/lib/services/` ([src/lib/services/CLAUDE.md](./src/lib/services/CLAUDE.md))
+- **Design tokens** → `src/lib/design-tokens.ts` ([THEMING.md](./docs/THEMING.md#design-tokens))
+- **Theme configuration** → `src/app.css` (@theme block, [THEMING.md](./docs/THEMING.md#color-palette))
 - **LLM prompts** → `src/lib/prompts/` (YAML files, [LOGIC-LAB.md](./docs/LOGIC-LAB.md#prompt-template-system))
 - **API endpoints** → `src/routes/api/` ([src/routes/api/CLAUDE.md](./src/routes/api/CLAUDE.md))
 - **UI components** → `src/lib/components/` ([src/lib/components/CLAUDE.md](./src/lib/components/CLAUDE.md))
@@ -95,6 +99,7 @@ This is the **entry point** for AI agents working on this codebase. Read this fi
 ### "What is..."
 - **The Svelte version** → Svelte 5 with runes ([Svelte 5 Runes](#svelte-5-runes))
 - **The Tailwind version** → Tailwind CSS v4 ([Tailwind CSS v4](#tailwind-css-v4))
+- **The design system** → Formalized tokens + @theme ([Design Tokens System](#design-tokens-system))
 - **The database** → MongoDB with repositories ([ARCHITECTURE.md](./docs/ARCHITECTURE.md#database-schema))
 - **The architecture** → Layered, decoupled ([Layered Architecture](#layered-architecture))
 - **The testing approach** → Vitest unit tests + manual Playwright ([Testing](#testing))
@@ -196,12 +201,69 @@ This project uses **Tailwind CSS v4**, which has different syntax from v3:
 
 ---
 
+## 🎨 Design Tokens System
+
+This project uses a **formalized design system** with centralized tokens for consistency.
+
+**Architecture:**
+```
+src/app.css (@theme)          ← Tailwind v4 CSS variables
+    ↓
+src/lib/design-tokens.ts      ← TypeScript design tokens
+    ↓
+Components use tokens         ← Consistent styling
+```
+
+### Using Design Tokens
+
+**File:** `src/lib/design-tokens.ts`
+
+```typescript
+import { tokens, components, combine } from '$lib/design-tokens';
+
+// Use individual tokens
+const cardClass = `${tokens.spacing.card.padding} ${tokens.radius.card}`;
+
+// Or use predefined component combinations
+const cardClass = components.gameCard;
+```
+
+### Token Categories
+
+- **colors** - Brand colors (purple-pink-blue) and game-specific colors
+- **gradients** - Background and button gradient definitions
+- **spacing** - Card, button, and container spacing
+- **typography** - Heading, body, button, and emoji sizes
+- **shadows** - Card, button, and text shadows
+- **effects** - Hover, blur, and animation effects
+- **components** - Predefined component class combinations
+
+### Key Design Principles
+
+✅ **Kid-Friendly:**
+- Large touch targets (48px+ buttons)
+- Bright, vibrant gradients (purple-pink-blue)
+- High contrast for readability
+- Emoji-first visual language
+
+✅ **Button Variants:**
+- **primary** - Blue→Cyan gradient (main actions)
+- **secondary** - White with purple text (back/cancel)
+- **success** - Green→Emerald gradient (correct/easy)
+- **danger** - Red→Rose gradient (wrong/hard)
+- **warning** - Purple→Pink gradient (special actions)
+
+**Complete Guide:** [THEMING.md](./docs/THEMING.md)
+
+---
+
 ## 🗂️ Project Structure
 
 ```
 src/
 ├── lib/
 │   ├── types/              # All TypeScript type definitions (index.ts is central)
+│   ├── design-tokens.ts    # Formalized design system tokens
 │   ├── db/                 # MongoDB connection (singleton client)
 │   ├── repositories/       # Data access layer (User, GameSession)
 │   ├── services/           # Business logic (GameEngine, WordService, etc.)
@@ -232,9 +294,14 @@ src/
 
 ### Entry Points
 - `src/app.html` - HTML template
-- `src/app.css` - Global CSS with Tailwind import
+- `src/app.css` - Global CSS with Tailwind v4 @theme block
 - `src/routes/+layout.svelte` - Root layout
 - `src/routes/+page.svelte` - Home page
+
+### Design System
+- `src/lib/design-tokens.ts` - Design system tokens (colors, spacing, typography)
+- `src/app.css` - Tailwind v4 @theme configuration
+- `docs/THEMING.md` - Complete theming guide
 
 ### Core Logic
 - `src/lib/services/game-engine.service.ts` - Main game logic

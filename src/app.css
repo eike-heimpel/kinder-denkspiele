@@ -1,5 +1,41 @@
 @import "tailwindcss";
 
+@theme {
+    /* Brand Colors - Purple-Pink-Blue Palette */
+    --color-brand-purple: #c084fc;
+    --color-brand-purple-dark: #a855f7;
+    --color-brand-pink: #f472b6;
+    --color-brand-pink-dark: #ec4899;
+    --color-brand-blue: #60a5fa;
+    --color-brand-blue-dark: #3b82f6;
+
+    /* Button Variant Colors */
+    --color-btn-primary-start: #3b82f6;
+    --color-btn-primary-end: #06b6d4;
+    --color-btn-primary-hover-start: #2563eb;
+    --color-btn-primary-hover-end: #0891b2;
+
+    --color-btn-secondary-start: #c084fc;
+    --color-btn-secondary-end: #818cf8;
+    --color-btn-secondary-hover-start: #a855f7;
+    --color-btn-secondary-hover-end: #6366f1;
+
+    --color-btn-success-start: #10b981;
+    --color-btn-success-end: #059669;
+    --color-btn-success-hover-start: #059669;
+    --color-btn-success-hover-end: #047857;
+
+    --color-btn-danger-start: #ef4444;
+    --color-btn-danger-end: #f43f5e;
+    --color-btn-danger-hover-start: #dc2626;
+    --color-btn-danger-hover-end: #e11d48;
+
+    --color-btn-warning-start: #f59e0b;
+    --color-btn-warning-end: #eab308;
+    --color-btn-warning-hover-start: #d97706;
+    --color-btn-warning-hover-end: #ca8a04;
+}
+
 html, body {
     margin: 0;
     padding: 0;

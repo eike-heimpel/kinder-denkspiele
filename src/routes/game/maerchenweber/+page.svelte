@@ -74,7 +74,7 @@
 	<title>Märchenweber - Kinder Denkspiele</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-100 to-orange-100 p-8">
+<div class="min-h-screen bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 p-8">
 	<div class="max-w-7xl mx-auto">
 		<!-- Header Section -->
 		<div class="text-center mb-12">

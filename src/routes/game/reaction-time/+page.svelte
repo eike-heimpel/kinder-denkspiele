@@ -181,7 +181,7 @@
 />
 
 <div
-    class="min-h-screen bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 p-2"
+    class="min-h-screen bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 p-2"
     style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; overflow-y: auto;"
 >
     <div class="max-w-4xl mx-auto pt-14">

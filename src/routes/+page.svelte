@@ -130,7 +130,7 @@
 <div
     class="min-h-screen bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 p-4 animate-gradient"
 >
-    <div class="max-w-4xl mx-auto pt-20">
+    <div class="max-w-4xl mx-auto">
         <div class="text-center mb-4 animate-fade-in">
             <h1
                 class="text-3xl font-black text-white mb-1 drop-shadow-2xl tracking-tight"
@@ -242,11 +242,11 @@
                 </div>
 
                 <div
-                    class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl p-5 mb-4 border-4 border-purple-200 hover:border-purple-300 transition-all duration-300"
+                    class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl p-8 mb-6 border-4 border-purple-200 hover:border-purple-300 transition-all duration-300 shadow-lg hover:shadow-xl"
                 >
-                    <div class="text-center mb-4">
-                        <span class="text-4xl mb-2 inline-block">🗣️</span>
-                        <h3 class="text-2xl font-black text-purple-700 mb-2">
+                    <div class="text-center mb-6">
+                        <span class="text-5xl mb-3 inline-block">🗣️</span>
+                        <h3 class="text-2xl font-black text-purple-700 mb-3">
                             Verbales Gedächtnis
                         </h3>
                         <p class="text-base text-gray-700 font-medium">
@@ -255,7 +255,7 @@
                         </p>
                     </div>
 
-                    <div class="flex gap-4 justify-center flex-wrap">
+                    <div class="flex gap-4 justify-center flex-wrap mt-4">
                         <Button
                             variant="success"
                             size="lg"
@@ -279,7 +279,8 @@
                         <Button
                             variant="primary"
                             size="lg"
-                            onclick={() => startGame("verbal-memory", "extra-hard")}
+                            onclick={() =>
+                                startGame("verbal-memory", "extra-hard")}
                         >
                             <div class="flex items-center gap-2">
                                 <span class="text-3xl">🟣</span>
@@ -290,11 +291,11 @@
                 </div>
 
                 <div
-                    class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-5 mb-4 border-4 border-blue-200 hover:border-blue-300 transition-all duration-300"
+                    class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-8 mb-6 border-4 border-blue-200 hover:border-blue-300 transition-all duration-300 shadow-lg hover:shadow-xl"
                 >
-                    <div class="text-center mb-4">
-                        <span class="text-4xl mb-2 inline-block">🎯</span>
-                        <h3 class="text-2xl font-black text-blue-700 mb-2">
+                    <div class="text-center mb-6">
+                        <span class="text-5xl mb-3 inline-block">🎯</span>
+                        <h3 class="text-2xl font-black text-blue-700 mb-3">
                             Visuelles Gedächtnis
                         </h3>
                         <p class="text-base text-gray-700 font-medium">
@@ -303,7 +304,7 @@
                         </p>
                     </div>
 
-                    <div class="flex gap-4 justify-center flex-wrap">
+                    <div class="flex gap-4 justify-center flex-wrap mt-4">
                         <Button
                             variant="success"
                             size="lg"
@@ -327,7 +328,8 @@
                         <Button
                             variant="primary"
                             size="lg"
-                            onclick={() => startGame("visual-memory", "extra-hard")}
+                            onclick={() =>
+                                startGame("visual-memory", "extra-hard")}
                         >
                             <div class="flex items-center gap-2">
                                 <span class="text-3xl">🟣</span>
@@ -338,11 +340,11 @@
                 </div>
 
                 <div
-                    class="bg-gradient-to-br from-orange-50 to-red-50 rounded-3xl p-5 mb-4 border-4 border-orange-200 hover:border-orange-300 transition-all duration-300"
+                    class="bg-gradient-to-br from-orange-50 to-red-50 rounded-3xl p-8 mb-6 border-4 border-orange-200 hover:border-orange-300 transition-all duration-300 shadow-lg hover:shadow-xl"
                 >
-                    <div class="text-center mb-4">
-                        <span class="text-4xl mb-2 inline-block">⚡</span>
-                        <h3 class="text-2xl font-black text-orange-700 mb-2">
+                    <div class="text-center mb-6">
+                        <span class="text-5xl mb-3 inline-block">⚡</span>
+                        <h3 class="text-2xl font-black text-orange-700 mb-3">
                             Reaktionszeit
                         </h3>
                         <p class="text-base text-gray-700 font-medium">
@@ -351,7 +353,7 @@
                         </p>
                     </div>
 
-                    <div class="flex gap-4 justify-center flex-wrap">
+                    <div class="flex gap-4 justify-center flex-wrap mt-4">
                         <Button
                             variant="success"
                             size="lg"
@@ -375,7 +377,8 @@
                         <Button
                             variant="primary"
                             size="lg"
-                            onclick={() => startGame("reaction-time", "extra-hard")}
+                            onclick={() =>
+                                startGame("reaction-time", "extra-hard")}
                         >
                             <div class="flex items-center gap-2">
                                 <span class="text-3xl">🟣</span>
@@ -386,11 +389,11 @@
                 </div>
 
                 <div
-                    class="bg-gradient-to-br from-green-50 to-teal-50 rounded-3xl p-5 mb-4 border-4 border-green-200 hover:border-green-300 transition-all duration-300"
+                    class="bg-gradient-to-br from-green-50 to-teal-50 rounded-3xl p-8 mb-6 border-4 border-green-200 hover:border-green-300 transition-all duration-300 shadow-lg hover:shadow-xl"
                 >
-                    <div class="text-center mb-4">
-                        <span class="text-4xl mb-2 inline-block">🧠</span>
-                        <h3 class="text-2xl font-black text-green-700 mb-2">
+                    <div class="text-center mb-6">
+                        <span class="text-5xl mb-3 inline-block">🧠</span>
+                        <h3 class="text-2xl font-black text-green-700 mb-3">
                             Logik-Labor
                         </h3>
                         <p class="text-base text-gray-700 font-medium">
@@ -399,7 +402,7 @@
                         </p>
                     </div>
 
-                    <div class="flex gap-4 justify-center flex-wrap">
+                    <div class="flex gap-4 justify-center flex-wrap mt-4">
                         <Button
                             variant="success"
                             size="lg"
@@ -424,19 +427,20 @@
                 </div>
 
                 <div
-                    class="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-3xl p-5 mb-4 border-4 border-amber-200 hover:border-amber-300 transition-all duration-300"
+                    class="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-3xl p-8 mb-6 border-4 border-amber-200 hover:border-amber-300 transition-all duration-300 shadow-lg hover:shadow-xl"
                 >
-                    <div class="text-center mb-4">
-                        <span class="text-4xl mb-2 inline-block">📖</span>
-                        <h3 class="text-2xl font-black text-amber-700 mb-2">
+                    <div class="text-center mb-6">
+                        <span class="text-5xl mb-3 inline-block">📖</span>
+                        <h3 class="text-2xl font-black text-amber-700 mb-3">
                             Märchenweber
                         </h3>
                         <p class="text-base text-gray-700 font-medium">
-                            Erschaffe deine eigenen magischen Geschichten! KI hilft dir beim Erzählen.
+                            Erschaffe deine eigenen magischen Geschichten! KI
+                            hilft dir beim Erzählen.
                         </p>
                     </div>
 
-                    <div class="flex gap-4 justify-center flex-wrap">
+                    <div class="flex gap-4 justify-center flex-wrap mt-4">
                         <Button
                             variant="warning"
                             size="lg"

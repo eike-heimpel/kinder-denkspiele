@@ -70,7 +70,7 @@
 	}
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-8">
+<div class="min-h-screen bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 p-8">
 	<div class="max-w-7xl mx-auto">
 		<!-- Header -->
 		<div class="mb-8 flex justify-between items-center">

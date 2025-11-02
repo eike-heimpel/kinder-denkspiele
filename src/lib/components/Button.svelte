@@ -1,6 +1,6 @@
 <script lang="ts">
     interface Props {
-        variant?: "primary" | "secondary" | "success" | "danger";
+        variant?: "primary" | "secondary" | "success" | "danger" | "warning";
         size?: "sm" | "md" | "lg" | "xl";
         onclick?: () => void;
         disabled?: boolean;
@@ -21,11 +21,13 @@
         primary:
             "bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg hover:shadow-xl",
         secondary:
-            "bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white shadow-lg hover:shadow-xl",
+            "bg-white/95 hover:bg-white text-purple-700 shadow-xl hover:shadow-2xl border-4 border-white/50",
         success:
             "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg hover:shadow-xl",
         danger:
             "bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white shadow-lg hover:shadow-xl",
+        warning:
+            "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl",
     };
 
     const sizes = {

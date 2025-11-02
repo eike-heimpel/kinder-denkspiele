@@ -230,7 +230,7 @@
 </svelte:head>
 
 <div
-	class="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-100 to-orange-100"
+	class="min-h-screen bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400"
 >
 	<div class="container mx-auto p-4 md:p-8 max-w-4xl">
 		<!-- Header -->

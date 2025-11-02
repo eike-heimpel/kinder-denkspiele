@@ -10,10 +10,14 @@
 	// Extract game title and emoji from path
 	const gameInfo = $derived.by(() => {
 		const path = $page.url.pathname;
-		if (path.includes('/visual-memory')) return { emoji: '🎯', title: 'Visuelles Gedächtnis' };
-		if (path.includes('/verbal-memory')) return { emoji: '🗣️', title: 'Verbales Gedächtnis' };
-		if (path.includes('/reaction-time')) return { emoji: '⚡', title: 'Reaktionszeit' };
-		if (path.includes('/logic-lab')) return { emoji: '🧩', title: 'Logik Labor' };
+		if (path.includes("/visual-memory"))
+			return { emoji: "🎯", title: "Visuelles Gedächtnis" };
+		if (path.includes("/verbal-memory"))
+			return { emoji: "🗣️", title: "Verbales Gedächtnis" };
+		if (path.includes("/reaction-time"))
+			return { emoji: "⚡", title: "Reaktionszeit" };
+		if (path.includes("/logic-lab"))
+			return { emoji: "🧩", title: "Logik Labor" };
 		return null;
 	});
 
@@ -29,9 +33,13 @@
 
 {#if !isLoginPage}
 	<!-- Fixed navigation bar -->
-	<div class="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-black/20 to-transparent backdrop-blur-sm px-2 py-2 flex items-center justify-between">
+	<div
+		class="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-500/80 via-pink-500/80 to-blue-500/80 backdrop-blur-md px-2 py-2 flex items-center justify-between"
+	>
 		{#if gameInfo}
-			<div class="text-white font-bold text-lg drop-shadow-lg flex items-center gap-2">
+			<div
+				class="text-white font-bold text-lg drop-shadow-lg flex items-center gap-2"
+			>
 				<span class="text-2xl">{gameInfo.emoji}</span>
 				<span>{gameInfo.title}</span>
 			</div>
@@ -43,7 +51,7 @@
 			{#if !isHomePage}
 				<button
 					onclick={goHome}
-					class="bg-white/80 hover:bg-white text-gray-700 px-3 py-1.5 rounded-lg shadow-lg transition-all duration-200 text-sm font-medium"
+					class="bg-gradient-to-r from-white/90 to-white/95 hover:from-white hover:to-white text-purple-700 px-3 py-1.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-bold transform hover:scale-105"
 					title="Zur Startseite"
 				>
 					🏠 Start
@@ -51,7 +59,7 @@
 			{/if}
 			<button
 				onclick={handleLogout}
-				class="bg-white/80 hover:bg-white text-gray-700 px-3 py-1.5 rounded-lg shadow-lg transition-all duration-200 text-sm font-medium"
+				class="bg-gradient-to-r from-white/90 to-white/95 hover:from-white hover:to-white text-purple-700 px-3 py-1.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-sm font-bold transform hover:scale-105"
 				title="Abmelden"
 			>
 				Abmelden
@@ -60,7 +68,7 @@
 	</div>
 
 	<!-- Content wrapper with top padding to account for fixed navbar -->
-	<div class="pt-14">
+	<div class="pt-10">
 		{@render children()}
 	</div>
 {:else}

@@ -44,10 +44,19 @@ prompts:
     - Märchenhaft und fantasievoll sein
     - Für 7-jährige geeignet sein (keine gruseligen oder gewaltätigen Elemente)
     - Spannend beginnen mit einer interessanten Situation
-    - 6-10 Sätze lang sein (etwa eine Seite Text)
+    - 12-18 Sätze lang sein (etwa eine ganze Seite Text)
     - Verwende Absätze für bessere Lesbarkeit
     - Ende mit einer klaren Situation, die zu Entscheidungen führt
     - Stelle sicher, dass das Kind sich als {{ character_name }} fühlt
+
+    WICHTIG - Langsames Erzähltempo mit vielen Details:
+    - Beschreibe Farben lebhaft (z.B. "das goldene Licht", "die blauen Blumen", "der silberne Mond")
+    - Nutze alle Sinne: Was siehst, hörst, riechst, fühlst du?
+    - Beschreibe Texturen und Materialien ("das weiche Moos", "die raue Baumrinde", "die glatten Steine")
+    - Nimm dir Zeit, die Szene zu malen, bevor etwas passiert
+    - Beschreibe Gefühle und Stimmungen ("Du fühlst dich mutig", "Die Luft fühlt sich magisch an")
+    - Verwende Adjektive und Adverbien für mehr Atmosphäre
+    - Kleine, ruhige Momente sind wichtig - nicht sofort Action!
 
     Antworte mit einem JSON-Objekt in diesem Format:
     {
