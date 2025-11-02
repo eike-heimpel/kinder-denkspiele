@@ -336,9 +336,28 @@ class ImageGenerator:
         """
         # Format character descriptions
         char_lines = []
+        missing_descriptions = []
+
         for name, desc in character_descriptions.items():
-            char_lines.append(f"{name}: {desc}")
+            if desc:
+                char_lines.append(f"{name}: {desc}")
+            else:
+                missing_descriptions.append(name)
+                logger.warning(f"⚠️ Character '{name}' has NO description for image generation!")
+
         char_text = ", ".join(char_lines) if char_lines else "no specific character descriptions"
+
+        # Log character info
+        if char_lines:
+            logger.info(f"✅ Characters with descriptions: {len(char_lines)}")
+            for line in char_lines:
+                logger.info(f"  - {line}")
+
+        if missing_descriptions:
+            logger.error(
+                f"❌ CONSISTENCY PROBLEM: {len(missing_descriptions)} character(s) "
+                f"without descriptions: {', '.join(missing_descriptions)}"
+            )
 
         # Build final prompt
         prompt_parts = [
@@ -350,7 +369,10 @@ class ImageGenerator:
             f"\nFraming: {variance['framing']}"
         ]
 
-        return " ".join(prompt_parts)
+        final_prompt = " ".join(prompt_parts)
+        logger.info(f"📝 Final image prompt length: {len(final_prompt)} characters")
+
+        return final_prompt
 
 
 def get_image_generator() -> ImageGenerator:

@@ -102,8 +102,26 @@ class CharacterManager:
         Returns:
             Dict mapping character name to description
         """
-        registry_map = {char["name"]: char["description"] for char in character_registry if "description" in char}
-        return {name: registry_map.get(name, "") for name in character_names if name in registry_map}
+        # Build full registry map (include all characters, even without descriptions)
+        registry_map = {}
+        for char in character_registry:
+            name = char.get("name")
+            if name:
+                registry_map[name] = char.get("description", "")
+
+        # Build result dict and log warnings for missing descriptions
+        result = {}
+        for name in character_names:
+            description = registry_map.get(name, "")
+            result[name] = description
+
+            if not description:
+                logger.warning(
+                    f"Character '{name}' requested but has no description in registry. "
+                    f"This will cause visual inconsistency!"
+                )
+
+        return result
 
     @staticmethod
     def format_for_prompt(character_registry: List[Dict[str, Any]]) -> str:

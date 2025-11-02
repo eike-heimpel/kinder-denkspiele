@@ -152,10 +152,30 @@ class GameEngine:
             with timer.step("Generate Round 1 Image (Blocking)"):
                 # Get character descriptions for image generation
                 char_names = [c["name"] for c in characters]
+
+                # Log initial character registry
+                logger.info(f"📊 Initial Character Registry (Round 1):")
+                logger.info(f"  - Total characters: {len(characters)}")
+                for char in characters:
+                    has_desc = "description" in char and bool(char.get("description"))
+                    desc_preview = char.get("description", "")[:60] if has_desc else "N/A"
+                    logger.info(
+                        f"  - {char['name']}: "
+                        f"{'✅ ' + desc_preview if has_desc else '❌ NO DESCRIPTION'}"
+                    )
+
                 char_descriptions = self.char_manager.get_character_descriptions(
                     character_registry=characters,
                     character_names=char_names
                 )
+
+                # Log retrieved descriptions
+                logger.info(f"📝 Retrieved descriptions for Round 1 image:")
+                for name, desc in char_descriptions.items():
+                    if desc:
+                        logger.info(f"  ✅ {name}: {desc[:60]}...")
+                    else:
+                        logger.error(f"  ❌ {name}: EMPTY DESCRIPTION!")
 
                 # Generate image using choice-based system (but with empty choice for round 1)
                 # We'll use story_text as the "choice" for round 1
@@ -355,10 +375,30 @@ class GameEngine:
             # 9. Launch async image generation (fire and forget)
             style_guide = session.get("style_guide", "")
             char_names = [c["name"] for c in new_characters if "name" in c]
+
+            # Log character registry state before retrieval
+            logger.info(f"📊 Character Registry Status (Round {new_round}):")
+            logger.info(f"  - Total characters in registry: {len(updated_registry)}")
+            logger.info(f"  - Characters in current scene: {char_names}")
+            for char in updated_registry:
+                has_desc = "description" in char and bool(char.get("description"))
+                logger.info(
+                    f"  - {char['name']}: "
+                    f"{'✅ Has description' if has_desc else '❌ NO DESCRIPTION'}"
+                )
+
             char_descriptions = self.char_manager.get_character_descriptions(
                 character_registry=updated_registry,
                 character_names=char_names
             )
+
+            # Log what descriptions were actually retrieved
+            logger.info(f"📝 Retrieved descriptions for image generation:")
+            for name, desc in char_descriptions.items():
+                if desc:
+                    logger.info(f"  ✅ {name}: {desc[:60]}...")
+                else:
+                    logger.error(f"  ❌ {name}: EMPTY DESCRIPTION!")
 
             asyncio.create_task(
                 self.image_gen.generate_choice_based_image(
@@ -372,7 +412,7 @@ class GameEngine:
                 )
             )
 
-            logger.info(f"Launched async image generation for round {new_round}")
+            logger.info(f"🚀 Launched async image generation for round {new_round}")
 
             # 10. Return response WITHOUT image (null)
             choices_history = self._extract_choices_from_history(history)

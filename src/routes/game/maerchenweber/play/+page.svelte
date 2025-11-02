@@ -45,6 +45,9 @@
 	let loading = $state<boolean>(false);
 	let isStarting = $state<boolean>(false);
 
+	// Choice visibility state
+	let showChoices = $state<boolean>(false);
+
 	// Debug state
 	let debugMode = $state<boolean>(false);
 	let lastTiming = $state<any>(null);
@@ -226,6 +229,7 @@
 					funNugget = data.step.fun_nugget || "";
 					choicesHistory = data.step.choices_history || [];
 					round = data.step.round_number || 1;
+					showChoices = false; // Hide choices initially
 
 					console.log('[Märchenweber] Story ready!');
 					gamePhase = "playing";
@@ -276,6 +280,7 @@
 					funNugget = data.step.fun_nugget || "";
 					// Don't override choicesHistory - it already has the user's choice
 					round = data.step.round_number || round + 1;
+					showChoices = false; // Hide choices initially
 
 					console.log('[Märchenweber] Turn ready!');
 					loading = false;
@@ -435,6 +440,7 @@
 				funNugget = data.fun_nugget || "";
 				choicesHistory = data.choices_history || [];
 				round = data.round_number || round + 1;
+				showChoices = false; // Hide choices initially
 
 				loading = false;
 				gamePhase = "playing";
@@ -665,7 +671,8 @@
 				<Card>
 					<div class="prose prose-lg max-w-none">
 						<p
-							class="text-xl md:text-2xl leading-relaxed text-gray-800 whitespace-pre-wrap"
+							class="text-2xl md:text-3xl leading-loose tracking-wide text-gray-800 whitespace-pre-wrap"
+							style="word-spacing: 0.15em;"
 						>
 							{currentStory}
 						</p>
@@ -674,37 +681,51 @@
 
 				<!-- Choices -->
 				{#if !loading}
-					<div class="grid gap-4">
-						{#each currentChoices as choice, index}
-							<button
-								onclick={() => makeChoice(choice)}
-								class="group relative overflow-hidden bg-white border-3 border-amber-300 rounded-xl p-6 text-left transition-all hover:border-amber-500 hover:shadow-lg hover:-translate-y-1 active:translate-y-0"
+					{#if !showChoices}
+						<!-- Button to reveal choices -->
+						<div class="text-center">
+							<Button
+								variant="primary"
+								onclick={() => showChoices = true}
+								class="px-8 py-4 text-xl bg-amber-500 hover:bg-amber-600 shadow-lg"
 							>
-								<div class="flex items-start gap-4">
-									<span
-										class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full text-xl font-bold"
-										class:bg-red-100={index === 0}
-										class:text-red-700={index === 0}
-										class:bg-blue-100={index === 1}
-										class:text-blue-700={index === 1}
-										class:bg-green-100={index === 2}
-										class:text-green-700={index === 2}
-									>
-										{index === 0
-											? "💪"
-											: index === 1
-												? "😄"
-												: "🤔"}
-									</span>
-									<span
-										class="flex-1 text-lg md:text-xl font-medium text-gray-800"
-									>
-										{choice}
-									</span>
-								</div>
-							</button>
-						{/each}
-					</div>
+								📜 Zeige mir meine Auswahlmöglichkeiten
+							</Button>
+						</div>
+					{:else}
+						<!-- Choice buttons -->
+						<div class="grid gap-4">
+							{#each currentChoices as choice, index}
+								<button
+									onclick={() => makeChoice(choice)}
+									class="group relative overflow-hidden bg-white border-3 border-amber-300 rounded-xl p-6 text-left transition-all hover:border-amber-500 hover:shadow-lg hover:-translate-y-1 active:translate-y-0"
+								>
+									<div class="flex items-start gap-4">
+										<span
+											class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full text-xl font-bold"
+											class:bg-red-100={index === 0}
+											class:text-red-700={index === 0}
+											class:bg-blue-100={index === 1}
+											class:text-blue-700={index === 1}
+											class:bg-green-100={index === 2}
+											class:text-green-700={index === 2}
+										>
+											{index === 0
+												? "💪"
+												: index === 1
+													? "😄"
+													: "🤔"}
+										</span>
+										<span
+											class="flex-1 text-lg md:text-xl font-medium text-gray-800"
+										>
+											{choice}
+										</span>
+									</div>
+								</button>
+							{/each}
+						</div>
+					{/if}
 				{:else}
 					<!-- Loading during choice selection -->
 					<div class="space-y-4">

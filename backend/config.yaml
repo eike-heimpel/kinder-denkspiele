@@ -44,7 +44,8 @@ prompts:
     - In deutscher Sprache sein
     - Verwende einfache Wörter und kurze Sätze, passend für ein 7-jähriges Kind (Zweitklässler)
     - Vermeide zusammengesetzte Wörter mit mehr als 3 Silben
-    - Halte Sätze unter 15 Wörtern
+    - WICHTIG: Halte Sätze unter 12 Wörtern (nicht länger!)
+    - Bevorzuge kurze, klare Sätze mit einfacher Struktur
     - Märchenhaft und fantasievoll sein
     - Für 7-jährige geeignet sein (keine gruseligen oder gewaltätigen Elemente)
     - Spannend beginnen mit einer interessanten Situation
@@ -89,10 +90,12 @@ prompts:
       "characters_in_scene": [
         {
           "name": "{{ character_name }}",
-          "description": "7 Jahre alt, braune lockige Haare, lila Kleid, freundliches Lächeln"
+          "description": "VOLLSTÄNDIGE visuelle Beschreibung basierend auf {{ character_description }} (z.B. Alter, Haare, Kleidung, Besonderheiten)"
         }
       ]
     }
+
+    WICHTIG: Vergiss NICHT die "description" für JEDEN Charakter - sie ist ZWINGEND erforderlich!
 
   narrator: |
     Bisherige Geschichte:
@@ -120,7 +123,7 @@ prompts:
 
     Erzähle in DU-Form. Das Kind IST der Hauptcharakter.
 
-    Etwa 20 Sätze, aufgeteilt in 2-4 Absätze. Einfache Wörter (Zweitklässler). Kurze Sätze (unter 15 Wörter).
+    Etwa 20 Sätze, aufgeteilt in 2-4 Absätze. Einfache Wörter (Zweitklässler). WICHTIG: Kurze Sätze (maximal 12 Wörter, bevorzuge 8-10 Wörter).
 
     Lass die Geschichte atmen:
     - Beschreibe, was du siehst, hörst, fühlst
@@ -159,12 +162,16 @@ prompts:
     - {{ char.name }}: {{ char.description }}
     {% endfor %}
 
-    Wenn diese Charaktere in deiner Geschichte vorkommen:
-    - Nutze die EXAKTEN Namen
-    - Füge sie zu characters_in_scene hinzu (nur Name, keine neue Beschreibung nötig)
+    KRITISCH - Für characters_in_scene:
+    Für JEDEN Charakter in der Szene musst du Name UND Beschreibung angeben!
 
-    Wenn NEUE Charaktere erscheinen:
-    - Füge sie zu characters_in_scene mit visueller Beschreibung hinzu
+    - EXISTIERENDE Charaktere: Nutze EXAKT die obige Beschreibung
+      Beispiel: {"name": "{{ character_registry[0].name if character_registry else 'Luna' }}", "description": "{{ character_registry[0].description[:50] if character_registry else 'die Beschreibung von oben' }}..."}
+
+    - NEUE Charaktere: Gib Name und neue visuelle Beschreibung an
+      Beispiel: {"name": "Neuer Charakter", "description": "visuelle Details"}
+
+    Vergiss NIEMALS die "description" - sie ist für Bildgenerierung ZWINGEND erforderlich!
     {% else %}
     WICHTIG - Charakter-Informationen:
     Füge alle visuell sichtbaren Charaktere in der Szene zu characters_in_scene hinzu mit Namen und visueller Beschreibung.
@@ -178,8 +185,8 @@ prompts:
       "choice_2": "Ich...",
       "choice_3": "Ich...",
       "characters_in_scene": [
-        {"name": "Charakter Name"},
-        {"name": "Neuer Charakter", "description": "visuelle Beschreibung"}
+        {"name": "Charakter Name", "description": "VOLLSTÄNDIGE visuelle Beschreibung (PFLICHT!)"},
+        {"name": "Weiterer Charakter", "description": "VOLLSTÄNDIGE visuelle Beschreibung (PFLICHT!)"}
       ]
     }
 
@@ -276,15 +283,15 @@ prompts:
     1. START with the perspective: "{{ perspective }} view of..."
     2. Include lighting: "{{ lighting }}"
     3. Adjust color saturation based on intensity:
-       - Intensity 1-2: "soft muted colors, gentle tones"
-       - Intensity 3: "balanced colors, moderate saturation"
-       - Intensity 4-5: "vibrant colors, rich saturation, dramatic contrast"
-    4. Add style: "digital art, fairy tale storybook illustration, for kids"
+       - Intensity 1-2: "soft muted colors, gentle pastel tones, low saturation"
+       - Intensity 3: "mellow colors, subtle tones, moderate saturation"
+       - Intensity 4-5: "warm muted colors, soft contrast, gentle saturation"
+    4. Add style: "digital art, fairy tale storybook illustration, for kids, watercolor aesthetic"
     5. Ensure character consistency if mentioned: "maintain same character appearance and style"
 
     Example outputs:
-    - Calm scene: "wide view of the character sitting by a stream, soft-daylight, soft muted colors, gentle fairy tale style"
-    - Exciting scene: "low-angle view of the dragon swooping down, dramatic lighting, vibrant colors with rich saturation, dynamic fairy tale illustration"
+    - Calm scene: "wide view of the character sitting by a stream, soft-daylight, soft muted colors, gentle pastel tones, watercolor fairy tale style"
+    - Exciting scene: "low-angle view of the dragon swooping down, dramatic lighting, warm muted colors with soft contrast, gentle watercolor illustration"
 
     Respond with only the English prompt (no explanations, max 85 words).
 
@@ -567,19 +574,19 @@ sampling_params:
 
   scene_analyzer:
     temperature: 0.3  # Consistent, analytical
-    max_tokens: 200  # Small JSON response
+    max_tokens: 400  # Small JSON response
     reasoning:
       max_tokens: 0  # Gemini: no reasoning needed for quick analysis
 
   style_guide_generator:
     temperature: 0.7  # Creative but consistent
-    max_tokens: 200  # 1-2 sentence style guide
+    max_tokens: 400  # 1-2 sentence style guide
     reasoning:
       max_tokens: 0  # Gemini: no reasoning needed
 
   choice_image_generator:
     temperature: 0.8  # Creative image descriptions
-    max_tokens: 300  # 2-3 sentences
+    max_tokens: 400  # 2-3 sentences
     reasoning:
       max_tokens: 200  # Gemini: think about how to make image special and choice-specific
 
