@@ -639,12 +639,12 @@
 								{#each previousImages.slice(-4).reverse() as imageUrl, index}
 									<div
 										class="relative rounded-md overflow-hidden"
-										style="opacity: {1 - (index * 0.15)}; max-height: 120px;"
+										style="opacity: {1 - (index * 0.15)};"
 									>
 										<img
 											src={imageUrl}
 											alt="Szene {previousImages.length - index}"
-											class="w-full h-full object-cover rounded-md"
+											class="w-full h-auto object-contain rounded-md"
 										/>
 									</div>
 								{/each}
@@ -802,12 +802,12 @@
 										{#each previousImages.slice(-4).reverse() as imageUrl, index}
 											<div
 												class="relative rounded-md overflow-hidden"
-												style="opacity: {1 - (index * 0.15)}; max-height: 120px;"
+												style="opacity: {1 - (index * 0.15)};"
 											>
 												<img
 													src={imageUrl}
 													alt="Szene {previousImages.length - index}"
-													class="w-full h-full object-cover rounded-md"
+													class="w-full h-auto object-contain rounded-md"
 												/>
 											</div>
 										{/each}
