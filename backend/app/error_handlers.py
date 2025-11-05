@@ -1,6 +1,6 @@
 """Global error handlers for FastAPI with structured logging."""
 
-import logging
+from app.logger import logger
 import traceback
 from typing import Dict, Any
 from fastapi import Request, status
@@ -10,7 +10,6 @@ from pydantic import ValidationError
 
 from app.exceptions import MaerchenweberError
 
-logger = logging.getLogger(__name__)
 
 
 async def maerchenweber_error_handler(

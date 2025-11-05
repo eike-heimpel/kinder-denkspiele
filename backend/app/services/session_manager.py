@@ -1,13 +1,12 @@
 """Session management service - handles session CRUD and recovery."""
 
-import logging
+from app.logger import logger
 from datetime import datetime
 from typing import Optional, Dict, Any
 from bson import ObjectId
 
 from app.database import get_database
 
-logger = logging.getLogger(__name__)
 
 
 class SessionManager:

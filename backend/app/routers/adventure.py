@@ -1,6 +1,6 @@
 """API router for Märchenweber adventure endpoints."""
 
-import logging
+from app.logger import logger
 import re
 from datetime import datetime
 from fastapi import APIRouter, HTTPException
@@ -20,7 +20,6 @@ from app.exceptions import (
     ImageGenerationError
 )
 
-logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -213,19 +212,38 @@ async def get_story_status(session_id: str):
             from app.models import AdventureStepResponse
 
             round_number = session.get("round", 1)
+            turns = session.get("turns", [])
 
-            # For round 1, include the first image. For other rounds, return None
-            # (frontend will poll /adventure/image/{sessionId}/{round} separately)
-            image_url = session.get("first_image_url", "") if round_number == 1 else None
+            # Get the latest turn data
+            if turns:
+                latest_turn = turns[-1]
+                story_text = latest_turn.get("story_text", "")
+                choices = latest_turn.get("choices", [])
+                fun_nugget = latest_turn.get("fun_nugget", "")
+                image_url = latest_turn.get("image_url")
+            else:
+                logger.error(f"Session {session_id} has no turns!")
+                story_text = ""
+                choices = []
+                fun_nugget = ""
+                image_url = None
+
+            # Build choices history (all previous choices)
+            choices_history = [t.get("choice_made") for t in turns if t.get("choice_made")]
 
             step = AdventureStepResponse(
-                story_text=session.get("current_story", ""),
+                story_text=story_text,
                 image_url=image_url,
-                choices=session.get("current_choices", []),
-                fun_nugget=session.get("fun_nugget", ""),
-                choices_history=[],
+                choices=choices,
+                fun_nugget=fun_nugget,
+                choices_history=choices_history,
                 round_number=round_number
             )
+
+            logger.info(f"✅ [STATUS] Returning ready status for session {session_id}, round {round_number}")
+            logger.info(f"  - Story length: {len(story_text)} chars")
+            logger.info(f"  - Choices: {len(choices)}")
+            logger.info(f"  - Image URL: {'✅ Present' if image_url else '❌ Missing'}")
 
             return {
                 "status": "ready",

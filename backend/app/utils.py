@@ -1,11 +1,10 @@
 """Utility functions for timing and error tracking."""
 
 import time
-import logging
+from app.logger import logger
 from typing import Dict, List, Optional
 from contextlib import contextmanager
 
-logger = logging.getLogger(__name__)
 
 
 class StepTimer:

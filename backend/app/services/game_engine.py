@@ -2,7 +2,7 @@
 
 import asyncio
 import json
-import logging
+from app.logger import logger
 from datetime import datetime
 from typing import Dict, Any
 from bson import ObjectId
@@ -18,7 +18,6 @@ from app.services.history_builder import get_history_builder
 from app.models import AdventureStepResponse
 from app.utils import StepTimer
 
-logger = logging.getLogger(__name__)
 
 
 class GameEngine:
@@ -35,6 +34,31 @@ class GameEngine:
         self.history_builder = get_history_builder()
         self.db = get_database()
         self.collection = self.db["gamesessions"]
+
+    async def create_session(
+        self,
+        user_id: str,
+        character_name: str,
+        character_description: str,
+        story_theme: str,
+    ) -> str:
+        """Create a new session with 'generating' status.
+
+        Args:
+            user_id: User ID from the main app
+            character_name: Name of the character
+            character_description: Description of the character
+            story_theme: Theme/setting of the story
+
+        Returns:
+            session_id: The created session ID
+        """
+        return await self.session_mgr.create_session(
+            user_id=user_id,
+            character_name=character_name,
+            character_description=character_description,
+            story_theme=story_theme,
+        )
 
     async def start_adventure(
         self,
@@ -433,24 +457,55 @@ class GameEngine:
             session_id: The session ID to generate story for
         """
         try:
-            logger.info(f"Starting background story generation for session {session_id}")
+            logger.info(f"🚀 [BACKGROUND TASK] Starting story generation for session {session_id}")
 
             session = await self.session_mgr.load_session(session_id)
             if not session:
-                logger.error(f"Session {session_id} not found")
+                logger.error(f"❌ Session {session_id} not found")
                 return
 
-            await self.start_adventure(
+            # Generate the story content (this creates a NEW session)
+            result = await self.start_adventure(
                 user_id=session["userId"],
                 character_name=session["character_name"],
                 character_description=session["character_description"],
                 story_theme=session["story_theme"],
             )
 
-            logger.info(f"Successfully generated story for session {session_id}")
+            # Load the newly created session to get style_guide and character_registry
+            new_session_id = result["session_id"]
+            new_session = await self.session_mgr.load_session(new_session_id)
+
+            if not new_session:
+                logger.error(f"❌ Newly created session {new_session_id} not found!")
+                await self.session_mgr.mark_error(session_id, "Failed to load generated session")
+                return
+
+            logger.info(f"📝 [BACKGROUND TASK] Copying data from {new_session_id} to {session_id}")
+
+            # Copy all data from the new session to the original session
+            await self.collection.update_one(
+                {"_id": ObjectId(session_id)},
+                {
+                    "$set": {
+                        "turns": new_session.get("turns", []),
+                        "round": new_session.get("round", 1),
+                        "generation_status": "ready",
+                        "lastUpdated": datetime.utcnow(),
+                        "style_guide": new_session.get("style_guide", ""),
+                        "character_registry": new_session.get("character_registry", [])
+                    }
+                }
+            )
+
+            # Delete the temporary new session
+            await self.collection.delete_one({"_id": ObjectId(new_session_id)})
+            logger.info(f"🗑️  [BACKGROUND TASK] Deleted temporary session {new_session_id}")
+
+            logger.info(f"✅ [BACKGROUND TASK] Successfully generated story for session {session_id}")
 
         except Exception as e:
-            logger.error(f"Error generating story for session {session_id}: {e}")
+            logger.error(f"❌ [BACKGROUND TASK] Error generating story for session {session_id}: {e}")
             await self.session_mgr.mark_error(session_id, str(e))
 
     async def process_turn_async(self, session_id: str, choice_text: str):

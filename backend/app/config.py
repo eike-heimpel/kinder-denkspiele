@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     mongodb_uri: str
     openrouter_api_key: str
     fastapi_port: int = 8000
+    dev_mode: bool = False  # Skip image generation for faster testing
 
     model_config = SettingsConfigDict(
         env_file=str(Path(__file__).parent.parent.parent / ".env"),

@@ -1,12 +1,11 @@
 """History formatting service - converts turns to LLM context."""
 
-import logging
+from app.logger import logger
 from typing import Dict, Any, List
 
 from app.services.config_loader import get_config_loader
 from app.services.llm_service import get_llm_service
 
-logger = logging.getLogger(__name__)
 
 
 class HistoryBuilder:

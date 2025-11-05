@@ -1,12 +1,11 @@
 """Story generation service for Märchenweber - handles narrator, validation, fun nuggets."""
 
-import logging
+from app.logger import logger
 from typing import Any
 
 from app.services.config_loader import get_config_loader
 from app.services.llm_service import get_llm_service
 
-logger = logging.getLogger(__name__)
 
 
 class StoryGenerator:

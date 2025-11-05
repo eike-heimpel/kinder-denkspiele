@@ -1,12 +1,10 @@
 """LLM service for OpenRouter API integration."""
 
 import json
-import logging
 from typing import Any, Dict, List
 import httpx
 from app.config import settings
-
-logger = logging.getLogger(__name__)
+from app.logger import logger
 
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -187,6 +185,11 @@ class LLMService:
         Raises:
             httpx.HTTPError: If the API request fails
         """
+        # DEV MODE: Skip image generation and return placeholder
+        if settings.dev_mode:
+            logger.info("🚧 [DEV MODE] Skipping image generation, returning placeholder")
+            return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Crect width='800' height='600' fill='%23e0f2fe'/%3E%3Ctext x='50%25' y='45%25' text-anchor='middle' fill='%230369a1' font-size='32' font-weight='bold'%3EM%C3%A4rchenweber%3C/text%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' fill='%2306b6d4' font-size='20'%3EDEV MODE%3C/text%3E%3C/svg%3E"
+
         # Build the content array for multimodal input
         # OpenRouter docs: send text first, then images to avoid parsing issues
         content = []
@@ -223,31 +226,63 @@ class LLMService:
 
         async with httpx.AsyncClient(timeout=120.0) as client:
             try:
+                logger.info(f"🌐 [API CALL] Calling OpenRouter image generation API...")
+                logger.info(f"  - Model: {model}")
+                logger.info(f"  - Prompt length: {len(prompt)} chars")
+                logger.info(f"  - Aspect ratio: {aspect_ratio}")
+                logger.info(f"  - Timeout: 120s")
+
                 response = await client.post(
                     OPENROUTER_API_URL,
                     headers=self.headers,
                     json=payload,
                 )
+
+                logger.info(f"📥 [API RESPONSE] Status: {response.status_code}")
+
+                if response.status_code != 200:
+                    logger.error(f"❌ [API ERROR] Non-200 status code: {response.status_code}")
+                    logger.error(f"  - Response text: {response.text[:1000]}")
+
                 response.raise_for_status()
                 result = response.json()
+
+                logger.info(f"📦 [API RESPONSE] Response keys: {list(result.keys())}")
+
+                # Check for API errors in response
+                if "error" in result:
+                    logger.error(f"❌ [API ERROR] Error in response: {result['error']}")
+                    raise ValueError(f"OpenRouter API error: {result['error']}")
 
                 # Extract image URL from response
                 if "choices" in result and len(result["choices"]) > 0:
                     message = result["choices"][0]["message"]
+                    logger.info(f"📦 [API RESPONSE] Message keys: {list(message.keys())}")
 
                     # Check for images in the response
                     if "images" in message and len(message["images"]) > 0:
                         image_data = message["images"][0]
                         image_url = image_data["image_url"]["url"]
+                        url_type = "data URL" if image_url.startswith("data:") else "hosted URL"
+                        url_preview = image_url[:100] if len(image_url) > 100 else image_url
+                        logger.info(f"✅ [API RESPONSE] Image URL received ({url_type}): {url_preview}...")
                         return image_url
                     else:
-                        logger.warning("No images in API response, returning placeholder")
+                        logger.warning("⚠️ [API RESPONSE] No images in API response, returning placeholder")
+                        logger.warning(f"  - Message content: {message}")
                         return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Crect width='800' height='600' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%236b7280' font-size='24'%3EMärchenweber%3C/text%3E%3C/svg%3E"
                 else:
+                    logger.error(f"❌ [API RESPONSE] No choices in API response")
+                    logger.error(f"  - Full response: {result}")
                     raise ValueError("No choices in API response")
 
+            except httpx.TimeoutException as e:
+                logger.error(f"❌ [API TIMEOUT] Image generation timed out after 120s")
+                logger.error(f"  - Model: {model}")
+                logger.error(f"  - This may indicate the model is slow, unavailable, or doesn't support image generation")
+                raise ValueError(f"Image generation timed out. Model '{model}' may not support image generation or is overloaded.")
             except httpx.HTTPError as e:
-                logger.error(f"OpenRouter image generation error: {e}")
+                logger.error(f"❌ [API ERROR] OpenRouter image generation error: {e}")
                 if 'response' in locals():
                     logger.error(f"Response status: {response.status_code}")
                     logger.error(f"Response text: {response.text[:500]}")

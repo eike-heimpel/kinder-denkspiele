@@ -1,10 +1,9 @@
 """Character registry management for consistent character appearances."""
 
-import logging
+from app.logger import logger
 from typing import List, Dict, Any
 from datetime import datetime
 
-logger = logging.getLogger(__name__)
 
 
 class CharacterManager:

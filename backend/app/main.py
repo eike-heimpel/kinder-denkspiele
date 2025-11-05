@@ -1,6 +1,5 @@
 """Main FastAPI application for Märchenweber."""
 
-import logging
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
@@ -9,11 +8,10 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from app.logger import logger
 from app.database import close_database, ensure_indexes
 from app.routers import adventure
 from app.error_handlers import add_error_handlers
-
-logger = logging.getLogger(__name__)
 
 
 class APIKeyMiddleware(BaseHTTPMiddleware):

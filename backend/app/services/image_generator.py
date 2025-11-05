@@ -1,7 +1,6 @@
 """Async image generation service with choice-based prompts and RNG variance."""
 
 import asyncio
-import logging
 import random
 from typing import Dict, Any, List, Optional
 from datetime import datetime
@@ -10,9 +9,8 @@ from app.database import get_database
 from app.services.config_loader import get_config_loader
 from app.services.llm_service import get_llm_service
 from app.exceptions import ImageGenerationError, LLMError
+from app.logger import logger
 from bson import ObjectId
-
-logger = logging.getLogger(__name__)
 
 
 class ImageGenerator:
@@ -86,7 +84,11 @@ class ImageGenerator:
             current_round: Current round number
         """
         try:
+            logger.info(f"🎨 [IMAGE GEN START] Session: {session_id}, Round: {current_round}")
+            start_time = datetime.utcnow()
+
             # Step 1: Mark as generating
+            logger.info(f"[STEP 1/6] Marking session as 'generating' in DB...")
             await self.collection.update_one(
                 {"_id": ObjectId(session_id)},
                 {
@@ -95,39 +97,52 @@ class ImageGenerator:
                             "status": "generating",
                             "round": current_round,
                             "image_url": None,
-                            "started_at": datetime.utcnow(),
+                            "started_at": start_time,
                             "completed_at": None,
                             "error": None
                         }
                     }
                 }
             )
-            logger.info(f"Started async image generation for session {session_id}, round {current_round}")
+            logger.info(f"✅ [STEP 1/6] DB updated successfully")
 
             # Step 2: Generate choice-specific prompt
+            logger.info(f"[STEP 2/6] Generating choice-specific prompt...")
+            logger.info(f"  - Choice: {choice_made[:60]}...")
+            logger.info(f"  - Characters in scene: {characters_in_scene}")
             choice_prompt_text = await self._generate_choice_prompt(
                 choice_made=choice_made,
                 story_text=story_text,
                 characters_in_scene=characters_in_scene,
                 character_descriptions=character_descriptions
             )
+            logger.info(f"✅ [STEP 2/6] Choice prompt generated: {choice_prompt_text[:100]}...")
 
             # Step 3: Analyze scene for intensity (for variance)
+            logger.info(f"[STEP 3/6] Analyzing scene intensity...")
             intensity = await self._analyze_scene_intensity(story_text)
+            logger.info(f"✅ [STEP 3/6] Scene intensity: {intensity}/5")
 
             # Step 4: Get random variance parameters
+            logger.info(f"[STEP 4/6] Generating variance parameters...")
             variance = self.get_random_variance(intensity)
+            logger.info(f"✅ [STEP 4/6] Variance: perspective={variance['perspective']}, lighting={variance['lighting']}, framing={variance['framing']}")
 
             # Step 5: Build final prompt
+            logger.info(f"[STEP 5/6] Building final image prompt...")
             final_prompt = self._build_final_prompt(
                 choice_prompt=choice_prompt_text,
                 style_guide=style_guide,
                 character_descriptions=character_descriptions,
                 variance=variance
             )
+            logger.info(f"✅ [STEP 5/6] Final prompt built ({len(final_prompt)} chars)")
 
             # Step 6: Generate image (NO previous image input!)
+            logger.info(f"[STEP 6/6] Calling LLM to generate image...")
             image_model = self.config.get_model("image_generator")
+            logger.info(f"  - Model: {image_model}")
+            logger.info(f"  - Aspect ratio: 4:3")
             image_url = await self.llm.generate_image(
                 prompt=final_prompt,
                 model=image_model,
@@ -135,8 +150,13 @@ class ImageGenerator:
                 previous_image_url=None,  # No image feeding!
                 style_description=None  # Style comes from text only
             )
+            logger.info(f"✅ [STEP 6/6] Image generated successfully")
 
             # Step 7: Update turn's image_url atomically
+            logger.info(f"[STEP 7/7] Saving image URL to DB...")
+            end_time = datetime.utcnow()
+            duration = (end_time - start_time).total_seconds()
+
             result = await self.collection.update_one(
                 {"_id": ObjectId(session_id), "turns.round": current_round},
                 {
@@ -146,7 +166,7 @@ class ImageGenerator:
                             "status": "ready",
                             "round": current_round,
                             "image_url": image_url,
-                            "completed_at": datetime.utcnow(),
+                            "completed_at": end_time,
                             "error": None
                         }
                     }
@@ -155,11 +175,13 @@ class ImageGenerator:
 
             if result.modified_count == 0:
                 logger.warning(
-                    f"⚠️ Image generated but turn not found for round {current_round}. "
+                    f"⚠️ [STEP 7/7] Image generated but turn not found for round {current_round}. "
                     f"Turn may have been removed during error recovery."
                 )
             else:
-                logger.info(f"✅ Image generation complete for session {session_id}, round {current_round}")
+                logger.info(f"✅ [STEP 7/7] Image URL saved to DB successfully")
+
+            logger.info(f"🎉 [IMAGE GEN COMPLETE] Session: {session_id}, Round: {current_round}, Duration: {duration:.2f}s")
 
         except Exception as e:
             error_message = str(e)
