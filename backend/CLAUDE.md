@@ -270,9 +270,11 @@ Returns session document from MongoDB. See `database.py` for schema.
 
 ## 🗄️ Database Schema
 
-MongoDB collection `gamesessions` stores session state. See `game_engine.py` for schema details.
+MongoDB collection `gamesessions` stores session state. See `app/models.py` for complete schema.
 
-**Key fields:** userId, gameType, character details, history array (alternating stories and choices), round number, timestamps, image tracking (first_image_url, first_image_description, previous_image_url, image_history)
+**Key fields:** userId, gameType, character details, turns array (atomic turn objects), summary, round number, timestamps, style_guide, character_registry, pending_image
+
+**Note:** Old sessions with `history[]` format are no longer supported. Users must start new stories or manually migrate in MongoDB.
 
 ---
 

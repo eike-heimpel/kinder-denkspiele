@@ -89,6 +89,19 @@ class ImageHistoryEntry(BaseModel):
     characters_in_scene: List[str] = Field(default_factory=list, description="Character names present")
 
 
+class Turn(BaseModel):
+    """Single turn in the adventure."""
+
+    round: int
+    choice_made: Optional[str]
+    story_text: str
+    choices: List[str]
+    image_url: Optional[str]
+    fun_nugget: str
+    started_at: datetime
+    completed_at: Optional[datetime]
+
+
 class GameSession(BaseModel):
     """MongoDB document model for game session."""
 
@@ -99,17 +112,16 @@ class GameSession(BaseModel):
     character_description: str
     story_theme: str
     reading_level: str = "second_grade"
-    history: List[str] = Field(default_factory=list, description="Alternating story paragraphs and choices")
+    turns: List[Turn] = Field(default_factory=list, description="Atomic turn objects")
+    summary: str = Field(default="", description="Summary of old turns for context management")
     score: int = 0
     round: int = 0
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_updated: datetime = Field(default_factory=datetime.utcnow)
-
-    # New v2.0 fields
+    generation_status: str = "ready"
     style_guide: Optional[str] = Field(None, description="Visual style guide for consistent art style")
     character_registry: List[Character] = Field(default_factory=list, description="Persistent character descriptions")
     pending_image: Optional[PendingImage] = Field(None, description="Current async image generation status")
-    image_history: List[ImageHistoryEntry] = Field(default_factory=list, description="All generated images")
 
     class Config:
         populate_by_name = True

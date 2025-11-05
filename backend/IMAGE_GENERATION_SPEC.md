@@ -529,17 +529,14 @@ image_url = await llm.generate_image(prompt=final_prompt)
 - Lighting appropriate to mood
 - Best of both worlds (smart + random)
 
-### Migration from v1.0
+### Data Format
 
-**Breaking changes:**
-- Session documents lose `first_image_url`, `first_image_description`, `previous_image_url`
-- Images return `null` initially, require polling
-- Frontend must handle async image loading
+**Current format:**
+- Sessions use `turns[]` array with atomic turn objects
+- Each turn contains: round, choice_made, story_text, choices, image_url, fun_nugget, timestamps
+- Old sessions with `history[]` format are no longer supported
 
-**Backward compatibility:**
-- Old sessions won't break (missing fields default to empty)
-- Can run migration script to add `character_registry: []` and `style_guide: "default"`
-- Image history format is additive (old entries still valid)
+**Note:** Old sessions must be manually migrated in MongoDB or users should start new stories
 
 ---
 
