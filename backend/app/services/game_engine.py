@@ -90,7 +90,7 @@ class GameEngine:
                 )
                 logger.info(f"Generated style guide: {style_guide[:100]}...")
 
-            with timer.step("Generate Opening Story + Fun Nugget (Parallel)"):
+            with timer.step("Generate Opening Story"):
                 narrator_prompt = self.config.get_prompt(
                     "character_creation",
                     character_name=character_name,
@@ -101,20 +101,14 @@ class GameEngine:
                 narrator_model = self.config.get_model("narrator")
                 narrator_params = self.config.get_sampling_params("narrator")
 
-                theme_context = f"Thema: {story_theme}"
-
-                response_text, fun_nugget = await asyncio.gather(
-                    self.llm.generate_text(
-                        prompt=narrator_prompt,
-                        model=narrator_model,
-                        sampling_params=narrator_params,
-                        json_mode=True,
-                    ),
-                    self.story_gen.generate_fun_nugget(theme_context),
+                response_text = await self.llm.generate_text(
+                    prompt=narrator_prompt,
+                    model=narrator_model,
+                    sampling_params=narrator_params,
+                    json_mode=True,
                 )
 
                 logger.info(f"Received response (first 200 chars): {response_text[:200]}")
-                logger.info(f"Generated fun nugget: {fun_nugget[:80]}...")
 
             with timer.step("Parse Narrator JSON Response"):
                 try:
@@ -156,7 +150,6 @@ class GameEngine:
                     "story_text": story_text,
                     "choices": choices,
                     "image_url": None,
-                    "fun_nugget": fun_nugget,
                     "started_at": datetime.utcnow(),
                     "completed_at": None
                 }
@@ -254,7 +247,7 @@ class GameEngine:
                     story_text=story_text,
                     image_url=image_url,
                     choices=choices,
-                    fun_nugget=fun_nugget,
+                    previous_images=[],
                     choices_history=[],
                     round_number=1,
                     timing=timing_summary,
@@ -325,14 +318,11 @@ class GameEngine:
             narrator_model = self.config.get_model("narrator")
             narrator_params = self.config.get_sampling_params("narrator")
 
-            response_text, fun_nugget = await asyncio.gather(
-                self.llm.generate_text(
-                    prompt=narrator_prompt,
-                    model=narrator_model,
-                    sampling_params=narrator_params,
-                    json_mode=True,
-                ),
-                self.story_gen.generate_fun_nugget(history_text),
+            response_text = await self.llm.generate_text(
+                prompt=narrator_prompt,
+                model=narrator_model,
+                sampling_params=narrator_params,
+                json_mode=True,
             )
 
             response_data = json.loads(response_text)
@@ -370,7 +360,6 @@ class GameEngine:
                 "story_text": story_text,
                 "choices": choices,
                 "image_url": None,
-                "fun_nugget": fun_nugget,
                 "started_at": datetime.utcnow(),
                 "completed_at": datetime.utcnow()
             }
@@ -433,12 +422,13 @@ class GameEngine:
             logger.info(f"🚀 Launched async image generation for round {new_round}")
 
             choices_history = [t.get("choice_made") for t in turns if t.get("choice_made")]
+            previous_images = [t.get("image_url") for t in turns if t.get("image_url")]
 
             return AdventureStepResponse(
                 story_text=story_text,
                 image_url=None,
                 choices=choices,
-                fun_nugget=fun_nugget,
+                previous_images=previous_images,
                 choices_history=choices_history,
                 round_number=new_round,
             )

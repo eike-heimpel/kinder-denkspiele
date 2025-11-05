@@ -219,23 +219,24 @@ async def get_story_status(session_id: str):
                 latest_turn = turns[-1]
                 story_text = latest_turn.get("story_text", "")
                 choices = latest_turn.get("choices", [])
-                fun_nugget = latest_turn.get("fun_nugget", "")
                 image_url = latest_turn.get("image_url")
             else:
                 logger.error(f"Session {session_id} has no turns!")
                 story_text = ""
                 choices = []
-                fun_nugget = ""
                 image_url = None
 
             # Build choices history (all previous choices)
             choices_history = [t.get("choice_made") for t in turns if t.get("choice_made")]
 
+            # Build previous images list (all previous image URLs)
+            previous_images = [t.get("image_url") for t in turns[:-1] if t.get("image_url")]
+
             step = AdventureStepResponse(
                 story_text=story_text,
                 image_url=image_url,
                 choices=choices,
-                fun_nugget=fun_nugget,
+                previous_images=previous_images,
                 choices_history=choices_history,
                 round_number=round_number
             )

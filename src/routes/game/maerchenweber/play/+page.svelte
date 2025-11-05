@@ -5,7 +5,6 @@
 	import Button from "$lib/components/Button.svelte";
 	import Card from "$lib/components/Card.svelte";
 	import JourneyRecap from "$lib/components/JourneyRecap.svelte";
-	import FunNuggetCard from "$lib/components/FunNuggetCard.svelte";
 	import ProgressSteps from "$lib/components/ProgressSteps.svelte";
 
 	type GamePhase = "setup" | "playing" | "loading" | "gameOver";
@@ -26,7 +25,7 @@
 	let round = $state<number>(1);
 
 	// Waiting UX engagement
-	let funNugget = $state<string>("");
+	let previousImages = $state<string[]>([]);
 	let choicesHistory = $state<string[]>([]);
 
 	// Image polling state
@@ -121,7 +120,7 @@
 				currentStory = lastTurn.story_text;
 				currentChoices = lastTurn.choices || [];
 				currentImageUrl = lastTurn.image_url;  // May be null if image failed
-				funNugget = lastTurn.fun_nugget || "";
+				previousImages = [];  // Will be populated on next API call
 				round = lastTurn.round;
 
 				// Extract choices history from turns
@@ -241,7 +240,7 @@
 					currentStory = data.step.story_text;
 					currentImageUrl = data.step.image_url;
 					currentChoices = data.step.choices;
-					funNugget = data.step.fun_nugget || "";
+					previousImages = data.step.previous_images || [];
 					choicesHistory = data.step.choices_history || [];
 					round = data.step.round_number || 1;
 					showChoices = false; // Hide choices initially
@@ -289,31 +288,21 @@
 				console.log(`[Märchenweber] Turn poll attempt ${attempts + 1}: status=${data.status}`);
 
 				if (data.status === 'ready') {
-					// Story is ready! Load full session state
-					const sessionResponse = await fetch(`/api/game/maerchenweber/session/${sid}`);
-					const session = await sessionResponse.json();
-
-					const turns = session.turns || [];
-					const lastTurn = turns[turns.length - 1];
-
-					currentStory = lastTurn.story_text;
-					currentChoices = lastTurn.choices;
-					funNugget = lastTurn.fun_nugget || "";
-					round = lastTurn.round;
+					// Story is ready! Get data from status response
+					currentStory = data.step.story_text;
+					currentChoices = data.step.choices;
+					previousImages = data.step.previous_images || [];
+					choicesHistory = data.step.choices_history || [];
+					round = data.step.round_number || round;
 					showChoices = false; // Hide choices initially
-
-					// Load choices history from turns
-					choicesHistory = turns
-						.map((t: any) => t.choice_made)
-						.filter((c: any) => c !== null && c !== undefined);
 
 					console.log('[Märchenweber] Turn ready!');
 					loading = false;
 					gamePhase = "playing";
 
 					// Handle image (might be included or need polling)
-					if (lastTurn.image_url) {
-						currentImageUrl = lastTurn.image_url;
+					if (data.step.image_url) {
+						currentImageUrl = data.step.image_url;
 					} else {
 						// Start polling for image
 						pollForImage(sessionId, round);
@@ -330,7 +319,7 @@
 						currentStory = lastTurn.story_text;
 						currentChoices = lastTurn.choices;
 						currentImageUrl = lastTurn.image_url;
-						funNugget = lastTurn.fun_nugget || "";
+						previousImages = [];  // Will be populated on next API call
 						round = lastTurn.round;
 
 						choicesHistory = turns
@@ -370,7 +359,7 @@
 			currentStory = lastTurn.story_text;
 			currentChoices = lastTurn.choices;
 			currentImageUrl = lastTurn.image_url;
-			funNugget = lastTurn.fun_nugget || "";
+			previousImages = [];  // Will be populated on next API call
 			round = lastTurn.round;
 
 			choicesHistory = turns
@@ -489,7 +478,7 @@
 				// Fallback: old synchronous response (shouldn't happen with new backend)
 				currentStory = data.story_text;
 				currentChoices = data.choices;
-				funNugget = data.fun_nugget || "";
+				previousImages = data.previous_images || [];
 				choicesHistory = data.choices_history || [];
 				round = data.round_number || round + 1;
 				showChoices = false; // Hide choices initially
@@ -639,9 +628,29 @@
 				<!-- Journey Recap (if there are previous choices) -->
 				<JourneyRecap choices={choicesHistory} />
 
-				<!-- Fun Nugget (if generated) -->
-				{#if funNugget}
-					<FunNuggetCard text={funNugget} />
+				<!-- Previous Images Gallery (if available) -->
+				{#if previousImages.length > 0}
+					<Card>
+						<div class="flex flex-col gap-2">
+							<h3 class="text-sm font-semibold text-center text-gray-600 mb-1">
+								Deine bisherige Reise
+							</h3>
+							<div class="flex flex-col gap-2">
+								{#each previousImages.slice(-4).reverse() as imageUrl, index}
+									<div
+										class="relative rounded-md overflow-hidden"
+										style="opacity: {1 - (index * 0.15)}; max-height: 120px;"
+									>
+										<img
+											src={imageUrl}
+											alt="Szene {previousImages.length - index}"
+											class="w-full h-full object-cover rounded-md"
+										/>
+									</div>
+								{/each}
+							</div>
+						</div>
+					</Card>
 				{/if}
 
 				<!-- Progress Steps -->
@@ -782,9 +791,29 @@
 						<!-- Journey Recap -->
 						<JourneyRecap choices={choicesHistory} />
 
-						<!-- Fun Nugget (from previous turn, will update when loaded) -->
-						{#if funNugget}
-							<FunNuggetCard text={funNugget} />
+						<!-- Previous Images Gallery (if available) -->
+						{#if previousImages.length > 0}
+							<Card>
+								<div class="flex flex-col gap-2">
+									<h3 class="text-sm font-semibold text-center text-gray-600 mb-1">
+										Deine bisherige Reise
+									</h3>
+									<div class="flex flex-col gap-2">
+										{#each previousImages.slice(-4).reverse() as imageUrl, index}
+											<div
+												class="relative rounded-md overflow-hidden"
+												style="opacity: {1 - (index * 0.15)}; max-height: 120px;"
+											>
+												<img
+													src={imageUrl}
+													alt="Szene {previousImages.length - index}"
+													class="w-full h-full object-cover rounded-md"
+												/>
+											</div>
+										{/each}
+									</div>
+								</div>
+							</Card>
 						{/if}
 
 						<!-- Progress Steps -->

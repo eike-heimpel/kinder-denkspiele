@@ -36,7 +36,7 @@ class AdventureStepResponse(BaseModel):
     story_text: str = Field(..., description="The new paragraph of the story in German")
     image_url: Optional[str] = Field(None, description="URL to the generated image (null for async generation)")
     choices: List[str] = Field(..., min_length=3, max_length=3, description="3 choices in German")
-    fun_nugget: Optional[str] = Field(None, description="Fun fact or teaser (1 sentence) generated during loading")
+    previous_images: List[str] = Field(default_factory=list, description="URLs of previous images (for loading screen gallery)")
     choices_history: List[str] = Field(default_factory=list, description="List of all choices made so far (for journey recap)")
     round_number: Optional[int] = Field(None, description="Current round number")
     timing: Optional[Dict[str, Any]] = Field(None, description="Timing breakdown for debugging")
