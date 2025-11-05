@@ -269,6 +269,10 @@ async def get_session(session_id: str):
         from bson import ObjectId
         from app.database import get_database
 
+        # Migrate session if needed before returning
+        engine = get_game_engine()
+        await engine._migrate_session_if_needed(session_id)
+
         db = get_database()
         collection = db["gamesessions"]
 

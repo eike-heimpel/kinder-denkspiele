@@ -93,39 +93,54 @@
 
 			const session = await response.json();
 
-			// Extract session data
+			// Extract session metadata
 			sessionId = sessionIdToLoad;
 			characterName = session.character_name;
 			characterDescription = session.character_description;
 			storyTheme = session.story_theme;
-			round = session.round || 1;
+			round = session.round || 0;
 
-			// Get the last story and image from history
-			const history = session.history || [];
-			if (history.length > 0) {
-				// Last non-choice item is the latest story
-				currentStory = history[history.length - 1];
+			// Get turns array
+			const turns = session.turns || [];
+
+			// Check generation status
+			const generationStatus = session.generation_status;
+
+			if (generationStatus === "generating") {
+				// Still generating, poll for completion
+				gamePhase = "loading";
+				await pollForTurnCompletion(sessionIdToLoad);
+			} else if (generationStatus === "error") {
+				// Generation failed
+				alert("Story generation failed. Please start a new story.");
+				goto("/game/maerchenweber");
+			} else if (turns.length > 0) {
+				// Ready - restore from last turn
+				const lastTurn = turns[turns.length - 1];
+
+				currentStory = lastTurn.story_text;
+				currentChoices = lastTurn.choices || [];
+				currentImageUrl = lastTurn.image_url;  // May be null if image failed
+				funNugget = lastTurn.fun_nugget || "";
+				round = lastTurn.round;
+
+				// Extract choices history from turns
+				choicesHistory = turns
+					.map((t: any) => t.choice_made)
+					.filter((c: any) => c !== null && c !== undefined);
+
+				// Check if image is still generating
+				if (!lastTurn.image_url && session.pending_image?.status === "generating") {
+					pollForImage(sessionIdToLoad, round);
+				}
+
+				gamePhase = "playing";
+				console.log(`Loaded session ${sessionId} at round ${round}`);
+			} else {
+				// No turns yet (shouldn't happen, but handle gracefully)
+				alert("Session has no story data. Please start a new story.");
+				goto("/game/maerchenweber");
 			}
-
-			// Get current image from image_history
-			const imageHistory = session.image_history || [];
-			if (imageHistory.length > 0) {
-				currentImageUrl = imageHistory[imageHistory.length - 1].url;
-			}
-
-			// Show a "continue" state - we need to generate new choices
-			// For now, we'll need the user to make a dummy choice to get new options
-			// Or we could call a special "resume" endpoint
-			// For simplicity, let's show the last story and allow them to continue
-
-			// Generate choices for the current state
-			// We'll create a simple continue button that makes a dummy turn
-			gamePhase = "playing";
-
-			// Set placeholder choices - user will click "Continue Story" to generate real choices
-			currentChoices = ["Geschichte fortsetzen..."];
-
-			console.log(`Loaded session ${sessionId} at round ${round}`);
 		} catch (error) {
 			console.error("Error loading session:", error);
 			alert(
@@ -274,28 +289,55 @@
 				console.log(`[Märchenweber] Turn poll attempt ${attempts + 1}: status=${data.status}`);
 
 				if (data.status === 'ready') {
-					// Story is ready! Update state
-					currentStory = data.step.story_text;
-					currentChoices = data.step.choices;
-					funNugget = data.step.fun_nugget || "";
-					// Don't override choicesHistory - it already has the user's choice
-					round = data.step.round_number || round + 1;
+					// Story is ready! Load full session state
+					const sessionResponse = await fetch(`/api/game/maerchenweber/session/${sid}`);
+					const session = await sessionResponse.json();
+
+					const turns = session.turns || [];
+					const lastTurn = turns[turns.length - 1];
+
+					currentStory = lastTurn.story_text;
+					currentChoices = lastTurn.choices;
+					funNugget = lastTurn.fun_nugget || "";
+					round = lastTurn.round;
 					showChoices = false; // Hide choices initially
+
+					// Load choices history from turns
+					choicesHistory = turns
+						.map((t: any) => t.choice_made)
+						.filter((c: any) => c !== null && c !== undefined);
 
 					console.log('[Märchenweber] Turn ready!');
 					loading = false;
 					gamePhase = "playing";
 
 					// Handle image (might be included or need polling)
-					if (data.step.image_url) {
-						currentImageUrl = data.step.image_url;
+					if (lastTurn.image_url) {
+						currentImageUrl = lastTurn.image_url;
 					} else {
 						// Start polling for image
 						pollForImage(sessionId, round);
 					}
 					return;
 				} else if (data.status === 'error') {
-					// Generation failed
+					// Generation failed - reload session to get reverted state
+					const sessionResponse = await fetch(`/api/game/maerchenweber/session/${sid}`);
+					const session = await sessionResponse.json();
+
+					const turns = session.turns || [];
+					if (turns.length > 0) {
+						const lastTurn = turns[turns.length - 1];
+						currentStory = lastTurn.story_text;
+						currentChoices = lastTurn.choices;
+						currentImageUrl = lastTurn.image_url;
+						funNugget = lastTurn.fun_nugget || "";
+						round = lastTurn.round;
+
+						choicesHistory = turns
+							.map((t: any) => t.choice_made)
+							.filter((c: any) => c !== null && c !== undefined);
+					}
+
 					lastError = {
 						message: data.error || "Turn generation failed",
 						step: "Generation",
@@ -305,8 +347,6 @@
 					alert("Die Geschichte konnte nicht fortgesetzt werden. Bitte versuche es erneut.");
 					loading = false;
 					gamePhase = "playing";
-					// Revert optimistic update
-					choicesHistory = choicesHistory.slice(0, -1);
 					return;
 				}
 
@@ -320,12 +360,27 @@
 			}
 		}
 
-		// Timeout
+		// Timeout - reload session to get current state
+		const sessionResponse = await fetch(`/api/game/maerchenweber/session/${sid}`);
+		const session = await sessionResponse.json();
+
+		const turns = session.turns || [];
+		if (turns.length > 0) {
+			const lastTurn = turns[turns.length - 1];
+			currentStory = lastTurn.story_text;
+			currentChoices = lastTurn.choices;
+			currentImageUrl = lastTurn.image_url;
+			funNugget = lastTurn.fun_nugget || "";
+			round = lastTurn.round;
+
+			choicesHistory = turns
+				.map((t: any) => t.choice_made)
+				.filter((c: any) => c !== null && c !== undefined);
+		}
+
 		alert("Die Geschichte braucht zu lange. Bitte versuche es erneut.");
 		loading = false;
 		gamePhase = "playing";
-		// Revert optimistic update
-		choicesHistory = choicesHistory.slice(0, -1);
 	}
 
 	async function pollForImage(sessionIdToPoll: string, roundToPoll: number) {
@@ -408,9 +463,6 @@
 		loading = true;
 		gamePhase = "loading";
 
-		// Optimistically add the choice to history for immediate display during loading
-		choicesHistory = [...choicesHistory, choiceText];
-
 		try {
 			const response = await fetch("/api/game/maerchenweber/turn", {
 				method: "POST",
@@ -455,8 +507,6 @@
 		} catch (error) {
 			console.error("Error processing turn:", error);
 
-			// Revert the optimistic update on error
-			choicesHistory = choicesHistory.slice(0, -1);
 			loading = false;
 			gamePhase = "playing";
 

@@ -136,33 +136,30 @@ class ImageGenerator:
                 style_description=None  # Style comes from text only
             )
 
-            # Step 7: Save to MongoDB as ready
-            await self.collection.update_one(
-                {"_id": ObjectId(session_id)},
+            # Step 7: Update turn's image_url atomically
+            result = await self.collection.update_one(
+                {"_id": ObjectId(session_id), "turns.round": current_round},
                 {
                     "$set": {
+                        "turns.$.image_url": image_url,
                         "pending_image": {
                             "status": "ready",
                             "round": current_round,
                             "image_url": image_url,
-                            "started_at": datetime.utcnow(),  # Keep original start time
                             "completed_at": datetime.utcnow(),
                             "error": None
-                        }
-                    },
-                    "$push": {
-                        "image_history": {
-                            "round": current_round,
-                            "choice_made": choice_made,
-                            "url": image_url,
-                            "prompt_used": final_prompt,
-                            "characters_in_scene": characters_in_scene
                         }
                     }
                 }
             )
 
-            logger.info(f"✅ Image generation complete for session {session_id}, round {current_round}")
+            if result.modified_count == 0:
+                logger.warning(
+                    f"⚠️ Image generated but turn not found for round {current_round}. "
+                    f"Turn may have been removed during error recovery."
+                )
+            else:
+                logger.info(f"✅ Image generation complete for session {session_id}, round {current_round}")
 
         except Exception as e:
             error_message = str(e)

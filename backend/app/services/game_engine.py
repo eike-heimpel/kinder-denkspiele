@@ -124,6 +124,18 @@ class GameEngine:
             choices = main_choices
 
             with timer.step("Create Session Document"):
+                # Create first turn
+                first_turn = {
+                    "round": 1,
+                    "choice_made": None,  # No choice for first turn
+                    "story_text": story_text,
+                    "choices": choices,
+                    "image_url": None,  # Will be set after image generation
+                    "fun_nugget": fun_nugget,
+                    "started_at": datetime.utcnow(),
+                    "completed_at": None  # Will be set after image completes
+                }
+
                 session_doc = {
                     "userId": user_id,
                     "gameType": "maerchenweber",
@@ -131,17 +143,16 @@ class GameEngine:
                     "character_description": character_description,
                     "story_theme": story_theme,
                     "reading_level": "second_grade",
-                    "history": [story_text],
-                    "history_summary": "",
+                    "turns": [first_turn],
+                    "summary": "",
                     "score": 0,
                     "round": 1,
                     "createdAt": datetime.utcnow(),
                     "lastUpdated": datetime.utcnow(),
-                    # v2.0 fields
+                    "generation_status": "ready",  # Story is ready, image pending
                     "style_guide": style_guide,
                     "character_registry": characters,
-                    "pending_image": None,
-                    "image_history": []
+                    "pending_image": None
                 }
 
                 result = await self.collection.insert_one(session_doc)
@@ -203,18 +214,13 @@ class GameEngine:
                     aspect_ratio="4:3"
                 )
 
-                # Save image to history
+                # Update turn with image URL and mark as complete
                 await self.collection.update_one(
-                    {"_id": ObjectId(session_id)},
+                    {"_id": ObjectId(session_id), "turns.round": 1},
                     {
-                        "$push": {
-                            "image_history": {
-                                "round": 1,
-                                "choice_made": f"Beginne das Abenteuer als {character_name}",
-                                "url": image_url,
-                                "prompt_used": final_prompt,
-                                "characters_in_scene": char_names
-                            }
+                        "$set": {
+                            "turns.$.image_url": image_url,
+                            "turns.$.completed_at": datetime.utcnow()
                         }
                     }
                 )
@@ -258,40 +264,38 @@ class GameEngine:
             AdventureStepResponse with story, image=null, and choices
         """
         try:
-            # 1. Load State
+            # 1. Migrate if needed, then load state and recover from errors
+            await self._migrate_session_if_needed(session_id)
+            await self._recover_incomplete_turns(session_id)
+
             session = await self.collection.find_one({"_id": ObjectId(session_id)})
             if not session:
                 raise ValueError(f"Session not found: {session_id}")
 
-            # 2. Update History
-            history = session.get("history", [])
-            history.append(f"[Wahl]: {choice_text}")
-
-            # Check if we should summarize
+            # 2. Load turns and prepare for new turn
+            turns = session.get("turns", [])
             new_round = session.get("round", 0) + 1
+
+            # 3. Handle summarization (moved to separate task for now, will update later)
             summarization_interval = self.config.get_game_mechanic("summarization_interval", 5)
             recent_turns_to_keep = self.config.get_game_mechanic("recent_turns_to_keep", 5)
-            current_summary = session.get("history_summary", "")
+            current_summary = session.get("summary", "")
 
-            should_summarize = (new_round % summarization_interval) == 0 and len(history) > recent_turns_to_keep
+            should_summarize = (new_round % summarization_interval) == 0 and len(turns) > recent_turns_to_keep
 
             if should_summarize:
                 logger.info(f"Round {new_round}: Generating summary")
-                recent_items_count = recent_turns_to_keep * 2
-                old_history = history[:-recent_items_count] if len(history) > recent_items_count else []
-                recent_history = history[-recent_items_count:] if len(history) > recent_items_count else history
+                old_turns = turns[:-recent_turns_to_keep] if len(turns) > recent_turns_to_keep else []
+                recent_turns = turns[-recent_turns_to_keep:] if len(turns) > recent_turns_to_keep else turns
 
-                if old_history:
-                    new_summary = await self._summarize_history(old_history)
+                if old_turns:
+                    old_history_text = self._turns_to_history_text(old_turns)
+                    new_summary = await self._summarize_history([old_history_text])
                     current_summary = f"{current_summary}\n\n{new_summary}" if current_summary else new_summary
-                else:
-                    recent_history = history
 
-                history_text = f"{current_summary}\n\n---\n\n" + "\n\n".join(recent_history) if current_summary else "\n\n".join(recent_history)
+                history_text = self._turns_to_history_text(recent_turns, summary=current_summary)
             else:
-                history_text = "\n\n".join(history)
-                if current_summary:
-                    history_text = f"{current_summary}\n\n---\n\n{history_text}"
+                history_text = self._turns_to_history_text(turns, summary=current_summary)
 
             # 3. Load character registry and format for prompt
             character_registry = session.get("character_registry", [])
@@ -352,20 +356,30 @@ class GameEngine:
             # Use the 3 main choices directly
             choices = main_choices
 
-            # 8. Save State (WITHOUT image)
-            history.append(story_text)
+            # 8. Save new turn atomically (mark as complete immediately, image will update async)
+            new_turn = {
+                "round": new_round,
+                "choice_made": choice_text,
+                "story_text": story_text,
+                "choices": choices,
+                "image_url": None,  # Will be set by async image generation
+                "fun_nugget": fun_nugget,
+                "started_at": datetime.utcnow(),
+                "completed_at": datetime.utcnow()  # Complete when story+choices ready
+            }
 
             update_doc = {
+                "$push": {"turns": new_turn},
                 "$set": {
-                    "history": history,
                     "character_registry": updated_registry,
                     "round": new_round,
+                    "generation_status": "ready",  # Mark as ready for polling
                     "lastUpdated": datetime.utcnow(),
                 }
             }
 
             if should_summarize and current_summary:
-                update_doc["$set"]["history_summary"] = current_summary
+                update_doc["$set"]["summary"] = current_summary
 
             await self.collection.update_one(
                 {"_id": ObjectId(session_id)},
@@ -415,7 +429,7 @@ class GameEngine:
             logger.info(f"🚀 Launched async image generation for round {new_round}")
 
             # 10. Return response WITHOUT image (null)
-            choices_history = self._extract_choices_from_history(history)
+            choices_history = [t.get("choice_made") for t in turns if t.get("choice_made")]
 
             return AdventureStepResponse(
                 story_text=story_text,
@@ -546,6 +560,143 @@ class GameEngine:
             logger.error(f"Error generating fun nugget: {e}")
             return "Wusstest du? Jede Geschichte, die du erlebst, ist einzigartig und magisch!"
 
+    async def _migrate_session_if_needed(self, session_id: str) -> bool:
+        """Migrate old history[] format to new turns[] format.
+
+        Args:
+            session_id: The session ID to check and migrate
+
+        Returns:
+            True if migration was performed, False if already migrated
+        """
+        session = await self.collection.find_one({"_id": ObjectId(session_id)})
+        if not session:
+            return False
+
+        # Check if already migrated
+        if "turns" in session:
+            return False  # Already using new format
+
+        # Check if old format exists
+        if "history" not in session:
+            logger.warning(f"Session {session_id} has neither turns nor history")
+            return False
+
+        logger.info(f"Migrating session {session_id} from history[] to turns[]")
+
+        history = session.get("history", [])
+        image_history = session.get("image_history", [])
+        turns = []
+
+        # Parse history: alternating "[Wahl]: choice" and story text
+        # First entry is always story (no choice)
+        current_turn = {
+            "round": 1,
+            "choice_made": None,
+            "story_text": "",
+            "choices": [],  # Old format doesn't store choices
+            "image_url": None,
+            "fun_nugget": "",
+            "started_at": session.get("createdAt", datetime.utcnow()),
+            "completed_at": session.get("createdAt", datetime.utcnow())
+        }
+
+        for i, entry in enumerate(history):
+            if entry.startswith("[Wahl]: "):
+                # Save previous turn before starting new one
+                if current_turn.get("story_text"):
+                    # Try to find matching image
+                    for img in image_history:
+                        if img.get("round") == current_turn["round"]:
+                            current_turn["image_url"] = img.get("url")
+                            break
+                    turns.append(current_turn)
+
+                # Start new turn with this choice
+                current_turn = {
+                    "round": len(turns) + 1,
+                    "choice_made": entry[8:],  # Remove "[Wahl]: " prefix
+                    "story_text": "",
+                    "choices": [],
+                    "image_url": None,
+                    "fun_nugget": "",
+                    "started_at": datetime.utcnow(),
+                    "completed_at": datetime.utcnow()
+                }
+            else:
+                # This is story text for current turn
+                current_turn["story_text"] = entry
+
+        # Add last turn if it has content
+        if current_turn.get("story_text"):
+            # Try to find matching image
+            for img in image_history:
+                if img.get("round") == current_turn["round"]:
+                    current_turn["image_url"] = img.get("url")
+                    break
+            turns.append(current_turn)
+
+        # Update session with new format
+        await self.collection.update_one(
+            {"_id": ObjectId(session_id)},
+            {
+                "$set": {
+                    "turns": turns,
+                    "summary": session.get("history_summary", "")
+                },
+                "$unset": {
+                    "history": "",
+                    "history_summary": "",
+                    "image_history": ""
+                }
+            }
+        )
+
+        logger.info(f"✅ Migrated session {session_id}: {len(turns)} turns created")
+        return True
+
+    async def _recover_incomplete_turns(self, session_id: str) -> bool:
+        """Remove any incomplete turns on session load for error recovery.
+
+        Args:
+            session_id: The session ID to recover
+
+        Returns:
+            True if recovery was needed, False otherwise
+        """
+        session = await self.collection.find_one({"_id": ObjectId(session_id)})
+        if not session:
+            return False
+
+        turns = session.get("turns", [])
+        if not turns:
+            return False
+
+        # Filter to only complete turns (have completed_at timestamp)
+        complete_turns = [t for t in turns if t.get("completed_at")]
+
+        if len(complete_turns) < len(turns):
+            # Had incomplete turns, revert
+            logger.warning(
+                f"Session {session_id}: Recovering from incomplete state. "
+                f"Removing {len(turns) - len(complete_turns)} incomplete turn(s)"
+            )
+
+            await self.collection.update_one(
+                {"_id": ObjectId(session_id)},
+                {
+                    "$set": {
+                        "turns": complete_turns,
+                        "generation_status": "ready" if complete_turns else "error",
+                        "round": len(complete_turns),
+                        "lastUpdated": datetime.utcnow()
+                    }
+                }
+            )
+            return True
+
+        return False
+
     def _extract_choices_from_history(self, history: List[str]) -> List[str]:
         """Extract user choices from history for journey recap."""
         choices = []
@@ -554,6 +705,32 @@ class GameEngine:
                 choice_text = entry[len("[Wahl]: "):]
                 choices.append(choice_text)
         return choices
+
+    def _turns_to_history_text(self, turns: List[Dict[str, Any]], summary: str = "") -> str:
+        """Convert turns array to history text for LLM context.
+
+        Args:
+            turns: List of turn objects from MongoDB
+            summary: Optional summary of old turns
+
+        Returns:
+            Formatted history text for LLM prompts
+        """
+        lines = []
+        for turn in turns:
+            choice_made = turn.get("choice_made")
+            if choice_made:
+                lines.append(f"[Wahl]: {choice_made}")
+            story_text = turn.get("story_text", "")
+            if story_text:
+                lines.append(story_text)
+
+        history_text = "\n\n".join(lines)
+
+        if summary:
+            history_text = f"{summary}\n\n---\n\n{history_text}"
+
+        return history_text
 
     async def create_session(
         self,
@@ -583,19 +760,15 @@ class GameEngine:
             "story_theme": story_theme,
             "reading_level": "second_grade",
             "generation_status": "generating",  # Status for polling
-            "history": [],
-            "history_summary": "",
+            "turns": [],  # Atomic turns: {round, choice_made, story_text, choices, image_url, fun_nugget, completed_at}
+            "summary": "",  # Summary of old turns for context management
             "score": 0,
-            "round": 1,
+            "round": 0,  # Starts at 0, first turn will be round 1
             "createdAt": datetime.utcnow(),
             "lastUpdated": datetime.utcnow(),
             "style_guide": "",
             "character_registry": [],
-            "pending_image": None,
-            "image_history": [],
-            "current_story": "",
-            "current_choices": [],
-            "fun_nugget": ""
+            "pending_image": None
         }
 
         result = await self.collection.insert_one(session_doc)
@@ -626,24 +799,8 @@ class GameEngine:
                 story_theme=session["story_theme"],
             )
 
-            # Update session with the generated story
-            await self.collection.update_one(
-                {"_id": ObjectId(session_id)},
-                {
-                    "$set": {
-                        "generation_status": "ready",
-                        "current_story": result["step"].story_text,
-                        "current_choices": result["step"].choices,
-                        "first_image_url": result["step"].image_url,
-                        "fun_nugget": result["step"].fun_nugget,
-                        "history": [result["step"].story_text],
-                        "style_guide": session.get("style_guide", ""),
-                        "character_registry": session.get("character_registry", []),
-                        "image_history": session.get("image_history", []),
-                        "lastUpdated": datetime.utcnow()
-                    }
-                }
-            )
+            # Session already has turns[] from start_adventure, no need to update
+            # The start_adventure method already handles creating the first turn
 
             logger.info(f"Successfully generated story for session {session_id}")
 
@@ -674,23 +831,10 @@ class GameEngine:
             logger.info(f"Starting background turn processing for session {session_id}")
 
             # Run the full turn generation logic
-            result = await self.process_turn(
+            # process_turn already handles everything including saving the turn
+            await self.process_turn(
                 session_id=session_id,
                 choice_text=choice_text,
-            )
-
-            # Update session with the generated story
-            await self.collection.update_one(
-                {"_id": ObjectId(session_id)},
-                {
-                    "$set": {
-                        "generation_status": "ready",
-                        "current_story": result.story_text,
-                        "current_choices": result.choices,
-                        "fun_nugget": result.fun_nugget,
-                        "lastUpdated": datetime.utcnow()
-                    }
-                }
             )
 
             logger.info(f"Successfully generated turn for session {session_id}")
@@ -698,7 +842,8 @@ class GameEngine:
         except Exception as e:
             logger.error(f"Error generating turn for session {session_id}: {e}")
 
-            # Mark session as error
+            # Mark session as error and revert incomplete turn
+            await self._recover_incomplete_turns(session_id)
             await self.collection.update_one(
                 {"_id": ObjectId(session_id)},
                 {
