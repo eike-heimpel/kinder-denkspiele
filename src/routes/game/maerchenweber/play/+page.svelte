@@ -9,8 +9,14 @@
 
 	type GamePhase = "setup" | "playing" | "loading" | "gameOver";
 
-	// Game state
-	let gamePhase = $state<GamePhase>("setup");
+	// URL params
+	const userId = $derived($page.url.searchParams.get("userId") || "");
+	const existingSessionId = $derived(
+		$page.url.searchParams.get("sessionId") || "",
+	);
+
+	// Game state - initialize to "loading" if continuing existing session
+	let gamePhase = $state<GamePhase>(existingSessionId ? "loading" : "setup");
 	let sessionId = $state<string>("");
 
 	// Setup phase
@@ -52,12 +58,6 @@
 	let lastTiming = $state<any>(null);
 	let lastError = $state<any>(null);
 	let warnings = $state<string[]>([]);
-
-	// URL params
-	const userId = $derived($page.url.searchParams.get("userId") || "");
-	const existingSessionId = $derived(
-		$page.url.searchParams.get("sessionId") || "",
-	);
 
 	onMount(async () => {
 		if (!userId) {
