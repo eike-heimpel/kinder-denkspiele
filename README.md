@@ -8,16 +8,16 @@ A full-stack cognitive training game platform for German-speaking children (ages
 
 ## 🤖 For AI Agents
 
-**START HERE:** [AI-GUIDE.md](./AI-GUIDE.md)
+**START HERE:** [CLAUDE.md](./CLAUDE.md)
 
 Complete documentation for AI agents includes:
-- [AI-GUIDE.md](./AI-GUIDE.md) - Main entry point and navigation
-- [TECH-STACK.md](./TECH-STACK.md) - Technical specifications
-- [ARCHITECTURE.md](./ARCHITECTURE.md) - System design
-- [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) - Common issues
-- [DECISIONS.md](./DECISIONS.md) - Why we made specific choices
-- [API-REFERENCE.md](./API-REFERENCE.md) - Complete API documentation
-- [THEMING.md](./THEMING.md) - UI customization guide
+- [CLAUDE.md](./CLAUDE.md) - Main entry point and navigation
+- [TECH-STACK.md](./docs/TECH-STACK.md) - Technical specifications
+- [ARCHITECTURE.md](./docs/ARCHITECTURE.md) - System design
+- [TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) - Common issues
+- [DECISIONS.md](./docs/DECISIONS.md) - Why we made specific choices
+- [API-REFERENCE.md](./docs/API-REFERENCE.md) - Complete API documentation
+- [THEMING.md](./docs/THEMING.md) - UI customization guide
 
 ---
 
