@@ -1,6 +1,8 @@
 # Kinder Denkspiele
 
-Spielerisch lernen und Gedächtnis trainieren - Ein kinderfreundliches deutsches Spiel entwickelt mit SvelteKit und Svelte 5.
+A full-stack cognitive training game platform for German-speaking children (ages 4-10), featuring AI-powered adaptive puzzles and storytelling.
+
+**Tech Stack:** SvelteKit 2 + Svelte 5 + TypeScript + Tailwind v4 + MongoDB + FastAPI + LLM Integration
 
 ---
 
@@ -21,192 +23,142 @@ Complete documentation for AI agents includes:
 
 ## 🎮 Features
 
-### Spiele
-- **Verbales Gedächtnis** 🗣️: Teste dein Gedächtnis mit deutschen Wörtern
-- **Visuelles Gedächtnis** 🎯: Merke dir die Position von farbigen Quadraten (3x3 oder 4x4 Grid)
-- **Reaktionszeit** ⚡: Teste deine Reaktionsgeschwindigkeit mit dem grünen/roten Bildschirm-Test
+### 5 Cognitive Training Games
+- **Verbales Gedächtnis** 🗣️: Word recognition and working memory training
+- **Visuelles Gedächtnis** 🎯: Spatial memory with adaptive grid sizes (3x3 to 4x4)
+- **Reaktionszeit** ⚡: Processing speed and reaction time measurement
+- **Logic Lab** 🧪: **LLM-powered adaptive logic puzzles** with real-time difficulty adjustment (Gemini 2.5 Flash)
+- **Märchenweber** 📖: **AI storytelling engine** with multiple LLM agents for interactive narratives (FastAPI microservice)
 
-### Allgemein
-- **Zwei Schwierigkeitsgrade**: Einfach (für 5-6 Jahre) und Schwer (für 7-8 Jahre)
-- **Mehrere Spieler**: Jedes Kind kann sein eigenes Profil haben
-- **Statistiken-Seite**: Zeige historische Performance für alle Spiele
-- **Tablet-Optimiert**: Große Touch-Targets, keine Hover-Abhängigkeiten
-- **Kid-Friendly UI**: Große Buttons, bunte Farben, einfache Navigation
-- **Wissenschaftlich fundiert**: Spiele trainieren kognitive Fähigkeiten (Arbeitsgedächtnis, Verarbeitungsgeschwindigkeit)
+### Platform Highlights
+- **AI Integration**: OpenRouter + Gemini for adaptive gameplay and narrative generation
+- **Microservice Architecture**: SvelteKit frontend + FastAPI backend for LLM-heavy features
+- **3 Difficulty Levels**: Easy (4-6 years), Hard (7-8 years), Extra Hard (9-10 years)
+- **Multi-user System**: Individual profiles with historical performance tracking
+- **Two-tier Authentication**: Site-wide access control + admin panel
+- **Production-ready**: Layered architecture, comprehensive error handling, unit tests
 
-## 🏗️ Architektur
+## 🏗️ Architecture
 
-Das Projekt folgt einer klaren Schichtenarchitektur:
+Clean layered architecture with microservice separation:
 
 ```
-src/
+src/                        # SvelteKit Frontend
 ├── lib/
-│   ├── types/              # TypeScript Typ-Definitionen
-│   ├── db/                 # Datenbankverbindung
-│   ├── repositories/       # Datenbank-Operationen (User, GameSession)
-│   ├── services/           # Geschäftslogik (WordService, GameEngine, VisualMemoryEngine)
-│   ├── data/               # Statische Daten (Wortpools)
-│   └── components/         # Wiederverwendbare UI-Komponenten
+│   ├── types/             # TypeScript interfaces
+│   ├── repositories/      # Database layer (MongoDB)
+│   ├── services/          # Business logic (8 game engines + LLM integration)
+│   ├── prompts/           # LLM prompt templates (YAML + Jinja2)
+│   └── components/        # Reusable UI components
 └── routes/
-    ├── api/                # API-Endpunkte
-    │   ├── users/
-    │   ├── game/verbal-memory/
-    │   └── game/visual-memory/
-    └── game/               # Spiel-Seiten
-        ├── verbal-memory/
-        └── visual-memory/
+    ├── api/               # RESTful API endpoints
+    ├── game/              # Game UI pages (5 games)
+    ├── admin/             # Admin dashboard
+    └── stats/             # Performance analytics
+
+backend/                   # FastAPI Microservice
+├── app/
+│   ├── services/          # LLM orchestration (multi-agent)
+│   └── routers/           # Story generation API
+└── config.yaml            # Prompt configuration
 ```
 
-### Schichten-Erklärung:
+**Design Principles:**
+- Strict layer separation (UI → API → Service → Repository → Database)
+- Dependency injection for testability
+- Repository pattern for data access
+- Service layer for all business logic
 
-1. **Types Layer**: Definiert alle TypeScript-Typen und Interfaces
-2. **Database Layer**: MongoDB-Verbindung und Client
-3. **Repository Layer**: Abstrahiert Datenbank-Operationen
-4. **Service Layer**: Beinhaltet Geschäftslogik und Spielmechanik
-5. **API Layer**: SvelteKit Server-Endpunkte
-6. **UI Layer**: Svelte 5 Komponenten und Seiten
+## 🚀 Quick Start
 
-## 🚀 Setup
-
-### Voraussetzungen
-
-- Node.js 24+ (oder 22.12+)
+### Prerequisites
+- Node.js 24+ (or 22.12+)
+- Python 3.12+ (for Märchenweber backend)
 - Docker & Docker Compose
-- npm oder pnpm
 
 ### Installation
 
-1. **Repository klonen**
-   ```bash
-   cd kinder-denkspiele
-   ```
+```bash
+# 1. Install dependencies
+npm install
 
-2. **Dependencies installieren**
-   ```bash
-   npm install
-   ```
+# 2. Configure environment (.env file)
+MONGODB_URI=mongodb://localhost:27017/humanbenchmark
+GLOBA_SITE_PASSWORD=your_site_password
+OPENROUTER_API_KEY=sk-or-v1-...
+MAERCHENWEBER_API_URL=http://localhost:8000
+MAERCHENWEBER_API_KEY=your_backend_key
 
-3. **Environment-Variablen einrichten**
-   
-   Erstelle eine `.env` Datei im Projekt-Root:
-   ```bash
-   MONGODB_URI=mongodb://localhost:27017/kinder-denkspiele
-   ```
+# 3. Start MongoDB
+docker-compose up -d
 
-4. **MongoDB starten**
-   ```bash
-   docker-compose up -d
-   ```
+# 4. Start SvelteKit (port 5173)
+npm run dev
 
-5. **Entwicklungsserver starten**
-   ```bash
-   npm run dev
-   ```
-
-6. **Öffne den Browser**
-   
-   Navigiere zu `http://localhost:5173`
-
-## 🎯 Verwendung
-
-1. **Spieler erstellen**: Klicke auf "Neuer Spieler" und gib einen Namen ein
-2. **Spieler auswählen**: Wähle einen Spieler aus der Liste
-3. **Spiel starten**: Wähle "Verbales Gedächtnis" und einen Schwierigkeitsgrad
-4. **Spielen**: Entscheide, ob du jedes Wort schon gesehen hast oder nicht
-   - Tastatur: `←` oder `N` für NEU, `→` oder `G` für GESEHEN
-   - Oder klicke die großen Buttons
-5. **Statistiken ansehen**: Klicke "Statistiken ansehen" um historische Performance zu sehen
-
-## 📦 Erweiterbarkeit
-
-### Neue Spiele hinzufügen
-
-1. **Typ hinzufügen**: In `src/lib/types/index.ts`
-   ```typescript
-   export type GameType = 'verbal-memory' | 'reaction-time';
-   ```
-
-2. **Service erstellen**: In `src/lib/services/`
-   ```typescript
-   export class ReactionTimeEngine { ... }
-   ```
-
-3. **API-Endpunkte**: In `src/routes/api/game/reaction-time/`
-
-4. **UI-Komponente**: In `src/routes/game/reaction-time/`
-
-### Wortpools erweitern
-
-Bearbeite `src/lib/data/word-pools.ts`:
-```typescript
-export const germanWordPools: WordPool = {
-  easy: [...],
-  hard: [...]
-};
+# 5. Start FastAPI backend (port 8000) - optional, for Märchenweber
+cd backend
+uv run uvicorn app.main:app --reload
 ```
 
-### Neue Repository-Methoden
+Open `http://localhost:5173`
 
-Erweitere `src/lib/repositories/`:
-```typescript
-async getLeaderboard(gameType: GameType): Promise<User[]> {
-  // Implementation
-}
+## 🛠️ Key Technical Implementations
+
+### LLM Integration
+- **Logic Lab**: Adaptive puzzle generation using OpenRouter + Gemini 2.5 Flash
+- **Märchenweber**: Multi-agent storytelling with configurable YAML prompts
+- **Prompt Management**: Jinja2 templates with structured output validation
+
+### Data Flow
 ```
+User Action → SvelteKit Route → API Endpoint → Service Layer → Repository → MongoDB
+                                      ↓
+                              LLM Service (OpenRouter)
+```
+
+### Testing
+- **32 unit tests** covering game engines and business logic
+- **Type-safe** TypeScript throughout
+- **Error handling** with structured logging
 
 ## 🛠️ Tech Stack
 
-- **SvelteKit**: Full-stack Framework
-- **Svelte 5**: UI Framework (mit Runes)
-- **TypeScript**: Type Safety
-- **Tailwind CSS**: Styling
-- **MongoDB**: Datenbank
-- **Docker**: Containerisierung
+**Frontend:**
+- SvelteKit 2 + Svelte 5 (with runes)
+- TypeScript
+- Tailwind CSS v4
+- Vitest (unit tests)
 
-## 📝 API-Endpunkte
+**Backend:**
+- FastAPI (Python microservice)
+- MongoDB (shared database)
+- OpenRouter (LLM gateway)
+- Gemini 2.5 Flash (primary model)
 
-### Users
-- `GET /api/users` - Alle Benutzer abrufen
-- `POST /api/users` - Neuen Benutzer erstellen
-- `GET /api/users/[id]` - Benutzer nach ID
-- `DELETE /api/users/[id]` - Benutzer löschen
+**Infrastructure:**
+- Docker Compose
+- RESTful API design
+- YAML-based configuration
 
-### Verbal Memory Game
-- `POST /api/game/verbal-memory/start` - Spiel starten
-- `POST /api/game/verbal-memory/answer` - Antwort senden
-- `GET /api/game/verbal-memory/stats` - Statistiken abrufen
+## 📚 Documentation
 
-### Visual Memory Game
-- `POST /api/game/visual-memory/start` - Spiel starten
-- `POST /api/game/visual-memory/answer` - Antwort senden (mit previousTargets für Feedback)
-- `GET /api/game/visual-memory/stats` - Statistiken abrufen
+- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - System design and patterns
+- **[API-REFERENCE.md](./docs/API-REFERENCE.md)** - Complete API documentation
+- **[LOGIC-LAB.md](./docs/LOGIC-LAB.md)** - LLM puzzle implementation
+- **[backend/CLAUDE.md](./backend/CLAUDE.md)** - Märchenweber storytelling engine
+- **[TECH-STACK.md](./docs/TECH-STACK.md)** - Version details and gotchas
 
-## 🔧 Scripts
+## 🔧 Development Commands
 
 ```bash
-npm run dev          # Entwicklungsserver starten
-npm run build        # Produktions-Build erstellen
-npm run preview      # Produktions-Build testen
+npm run dev          # Start SvelteKit dev server (port 5173)
+npm run build        # Production build
 npm run check        # TypeScript type checking
-npm test             # Unit tests ausführen
-npm run test:ui      # Tests mit UI ausführen
+npm test             # Run unit tests (32 tests)
+docker-compose up -d # Start MongoDB
+cd backend && uv run uvicorn app.main:app --reload  # Start FastAPI (port 8000)
 ```
 
-## 🧪 Tests
+## 📄 License
 
-Das Projekt enthält Unit-Tests für die kritische Spiellogik:
-
-- **Verbal Memory:**
-  - **GameEngine Tests**: Spielmechanik, Punktevergabe, Leben, Wortauswahl
-  - **WordService Tests**: Wortauswahl, Ausschlusslogik, Zufälligkeit
-- **Visual Memory:** Manuell getestet mit Playwright
-- **Gesamt:** 32 Tests (31 passing, 1 skipped)
-
-```bash
-npm test           # Tests ausführen
-npm test -- --watch # Watch Mode
-```
-
-## 📄 Lizenz
-
-Dieses Projekt ist für persönlichen Gebrauch bestimmt.
+Personal project for portfolio purposes.
